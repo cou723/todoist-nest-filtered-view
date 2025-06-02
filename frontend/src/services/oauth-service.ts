@@ -26,22 +26,10 @@ export class OAuthService {
   generateAuthUrl(): string {
     // SDKのgetAuthStateParameter関数を使用してstateを生成
     const state = getAuthStateParameter();
-    console.log("🔐 [OAuth] 生成されたstate:", state);
 
     // stateをlocalStorageとsessionStorageの両方に保存（CSRF攻撃対策）
     localStorage.setItem("oauth_state", state);
     sessionStorage.setItem("oauth_state", state);
-    console.log("🔐 [OAuth] stateをlocalStorage/sessionStorageに保存しました");
-
-    // 保存されたstateを確認
-    const savedStateLocal = localStorage.getItem("oauth_state");
-    const savedStateSession = sessionStorage.getItem("oauth_state");
-    console.log(
-      "🔐 [OAuth] 保存確認 - localStorage:",
-      savedStateLocal,
-      "sessionStorage:",
-      savedStateSession
-    );
 
     // 手動で認証URLを構築（redirect_uriパラメータを含める）
     const baseUrl = "https://todoist.com/oauth/authorize";
@@ -54,9 +42,6 @@ export class OAuthService {
     });
 
     const authUrl = `${baseUrl}?${params.toString()}`;
-    console.log("🔐 [OAuth] 生成された認証URL:", authUrl);
-    console.log("🔐 [OAuth] リダイレクトURI:", this.config.redirectUri);
-
     return authUrl;
   }
 
@@ -67,27 +52,10 @@ export class OAuthService {
     code: string,
     state: string
   ): Promise<TokenResponse> {
-    console.log("🔐 [OAuth] トークン交換開始");
-    console.log("🔐 [OAuth] 受信したcode:", code);
-    console.log("🔐 [OAuth] 受信したstate:", state);
-
     // state検証（localStorageとsessionStorageの両方をチェック）
     const savedStateLocal = localStorage.getItem("oauth_state");
     const savedStateSession = sessionStorage.getItem("oauth_state");
     const savedState = savedStateLocal || savedStateSession;
-
-    console.log(
-      "🔐 [OAuth] 保存されていたstate - localStorage:",
-      savedStateLocal,
-      "sessionStorage:",
-      savedStateSession
-    );
-    console.log("🔐 [OAuth] 使用するstate:", savedState);
-    console.log("🔐 [OAuth] state比較:", {
-      received: state,
-      saved: savedState,
-      match: savedState === state,
-    });
 
     // stateが見つからない場合でも、基本的なフォーマットチェックを行う
     if (!savedState) {
@@ -102,14 +70,11 @@ export class OAuthService {
         console.error("🔐 [OAuth] エラー: stateが無効な形式です");
         throw new Error("Invalid state parameter: Invalid format");
       }
-
-      console.log("🔐 [OAuth] state基本検証成功（ストレージ検証はスキップ）");
     } else {
       if (savedState !== state) {
         console.error("🔐 [OAuth] エラー: stateが一致しません");
         throw new Error("Invalid state parameter: State mismatch");
       }
-      console.log("🔐 [OAuth] state検証成功");
     }
 
     // stateを削除（両方から）
@@ -118,34 +83,15 @@ export class OAuthService {
 
     // プロキシサーバー経由でトークン交換を実行（CORS問題を回避）
     try {
-      console.log("🔐 [OAuth] プロキシサーバー経由でトークン交換を開始");
-
       const proxyUrl =
         import.meta.env.VITE_PROXY_URL || "http://localhost:8000";
 
-      // 診断用ログ追加
-      console.log("🔍 [Debug] 環境情報:");
-      console.log("  - フロントエンドURL:", window.location.origin);
-      console.log("  - プロキシURL:", proxyUrl);
-      console.log("  - リダイレクトURI:", this.config.redirectUri);
-      console.log(
-        "  - 環境変数 VITE_PROXY_URL:",
-        import.meta.env.VITE_PROXY_URL
-      );
-      console.log("  - プロトコル:", window.location.protocol);
-
       const requestUrl = `${proxyUrl}/oauth/token`;
-      console.log("🔍 [Debug] リクエスト詳細:");
-      console.log("  - リクエストURL:", requestUrl);
-      console.log("  - メソッド: POST");
-      console.log("  - ヘッダー: Content-Type: application/json");
-
       const requestBody = {
         client_id: this.config.clientId,
         code: code,
         redirect_uri: this.config.redirectUri,
       };
-      console.log("  - リクエストボディ:", requestBody);
 
       const response = await fetch(requestUrl, {
         method: "POST",
@@ -155,34 +101,14 @@ export class OAuthService {
         body: JSON.stringify(requestBody),
       });
 
-      console.log("🔍 [Debug] レスポンス受信:");
-      console.log("  - ステータス:", response.status);
-      console.log("  - ステータステキスト:", response.statusText);
-      console.log(
-        "  - ヘッダー:",
-        Object.fromEntries(response.headers.entries())
-      );
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("🔍 [Debug] エラーレスポンス詳細:");
-        console.error("  - ステータス:", response.status);
-        console.error("  - エラーテキスト:", errorText);
-
-        // ネットワークエラーかCORSエラーかを判定
-        if (response.status === 0) {
-          console.error(
-            "🔍 [Debug] ネットワークエラーまたはCORSエラーの可能性"
-          );
-        }
-
         throw new Error(
           `HTTP error! status: ${response.status}, message: ${errorText}`
         );
       }
 
       const tokenData = await response.json();
-      console.log("🔐 [OAuth] トークン取得成功:", tokenData);
 
       // トークンをlocalStorageに保存
       localStorage.setItem("todoist_token", tokenData.access_token);
@@ -193,23 +119,6 @@ export class OAuthService {
       };
     } catch (error) {
       console.error("🔐 [OAuth] トークン取得エラー:", error);
-
-      // より詳細なエラー診断
-      console.error("🔍 [Debug] エラー詳細分析:");
-      console.error("  - エラータイプ:", error?.constructor?.name);
-      console.error(
-        "  - エラーメッセージ:",
-        error instanceof Error ? error.message : String(error)
-      );
-
-      if (error instanceof TypeError) {
-        console.error(
-          "🔍 [Debug] TypeErrorが発生 - ネットワーク接続またはCORSの問題の可能性"
-        );
-        console.error("  - プロキシサーバーが起動しているか確認してください");
-        console.error("  - CORS設定が正しいか確認してください");
-        console.error("  - HTTPSとHTTPの混在がないか確認してください");
-      }
 
       const errorMessage =
         error instanceof Error ? error.message : String(error);

@@ -34,30 +34,15 @@ function setCorsHeaders(headers: Headers): void {
   headers.set("Access-Control-Allow-Credentials", "true");
   headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   headers.set("Access-Control-Allow-Headers", "Content-Type");
-
-  // 診断用ログ追加
-  console.log("🔍 [Debug] CORS設定:");
-  console.log("  - Access-Control-Allow-Origin:", ALLOWED_ORIGIN);
-  console.log("  - Access-Control-Allow-Methods: POST, OPTIONS");
-  console.log("  - Access-Control-Allow-Headers: Content-Type");
 }
 
 async function handleOAuthToken(request: Request): Promise<Response> {
   const headers = new Headers();
 
-  // 診断用ログ追加
-  console.log("🔍 [Debug] リクエスト受信:");
-  console.log("  - メソッド:", request.method);
-  console.log("  - URL:", request.url);
-  console.log("  - Origin:", request.headers.get("Origin"));
-  console.log("  - User-Agent:", request.headers.get("User-Agent"));
-  console.log("  - Referer:", request.headers.get("Referer"));
-
   setCorsHeaders(headers);
 
   // プリフライトリクエストの処理
   if (request.method === "OPTIONS") {
-    console.log("🔍 [Debug] プリフライトリクエストを処理中");
     return new Response(null, { status: 200, headers });
   }
 
@@ -201,7 +186,4 @@ async function handler(request: Request): Promise<Response> {
 }
 
 // サーバー起動
-console.log("🚀 Deno プロキシサーバーが起動しました");
-console.log(`🌐 CORS Origin: ${ALLOWED_ORIGIN}`);
-
 serve(handler);

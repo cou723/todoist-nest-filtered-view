@@ -39,11 +39,7 @@ export class AuthComponent extends LitElement {
   }
 
   private async checkOAuthCallback() {
-    console.log("🔐 [Auth] OAuth コールバックをチェック中");
-    console.log("🔐 [Auth] 現在のURL:", window.location.href);
-
     const params = this.oauthService.extractAuthParams(window.location.href);
-    console.log("🔐 [Auth] 抽出されたパラメータ:", params);
 
     if (params.error) {
       console.error("🔐 [Auth] OAuth認証エラー:", params.error);
@@ -54,7 +50,6 @@ export class AuthComponent extends LitElement {
     }
 
     if (params.code && params.state) {
-      console.log("🔐 [Auth] codeとstateが見つかりました - 認証処理を開始");
       this.isProcessingAuth = true;
       this.authError = "";
 
@@ -63,7 +58,6 @@ export class AuthComponent extends LitElement {
           params.code,
           params.state
         );
-        console.log("🔐 [Auth] トークン取得成功");
 
         this.dispatchEvent(
           new CustomEvent("auth-login", {
@@ -91,9 +85,7 @@ export class AuthComponent extends LitElement {
   }
 
   private handleOAuthLogin() {
-    console.log("🔐 [Auth] OAuth認証を開始");
     const authUrl = this.oauthService.generateAuthUrl();
-    console.log("🔐 [Auth] リダイレクト先:", authUrl);
     window.location.href = authUrl;
   }
 
