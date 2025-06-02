@@ -1,6 +1,6 @@
 import { LitElement, css, html } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import type { TaskWithParent, Project } from "./types/task.js";
+import type { TaskWithParent } from "./types/task.js";
 import { TodoistService } from "./services/todoist-service.js";
 import { OAuthService } from "./services/oauth-service.js";
 import { getOAuthConfig } from "./config/oauth-config.js";

@@ -2,16 +2,10 @@ import type {
   Permission,
   AuthTokenResponse,
 } from "@doist/todoist-api-typescript/dist/authentication.js";
-import {
-  getAuthStateParameter,
-  getAuthorizationUrl,
-  getAuthToken,
-  revokeAuthToken,
-} from "@doist/todoist-api-typescript/dist/authentication.js";
+import { getAuthStateParameter } from "@doist/todoist-api-typescript/dist/authentication.js";
 
 export interface OAuthConfig {
   clientId: string;
-  clientSecret: string;
   redirectUri: string;
   permissions: Permission[];
 }
@@ -126,21 +120,62 @@ export class OAuthService {
     try {
       console.log("🔐 [OAuth] プロキシサーバー経由でトークン交換を開始");
 
-      const response = await fetch("http://localhost:8000/oauth/token", {
+      const proxyUrl =
+        import.meta.env.VITE_PROXY_URL || "http://localhost:8000";
+
+      // 診断用ログ追加
+      console.log("🔍 [Debug] 環境情報:");
+      console.log("  - フロントエンドURL:", window.location.origin);
+      console.log("  - プロキシURL:", proxyUrl);
+      console.log("  - リダイレクトURI:", this.config.redirectUri);
+      console.log(
+        "  - 環境変数 VITE_PROXY_URL:",
+        import.meta.env.VITE_PROXY_URL
+      );
+      console.log("  - プロトコル:", window.location.protocol);
+
+      const requestUrl = `${proxyUrl}/oauth/token`;
+      console.log("🔍 [Debug] リクエスト詳細:");
+      console.log("  - リクエストURL:", requestUrl);
+      console.log("  - メソッド: POST");
+      console.log("  - ヘッダー: Content-Type: application/json");
+
+      const requestBody = {
+        client_id: this.config.clientId,
+        code: code,
+        redirect_uri: this.config.redirectUri,
+      };
+      console.log("  - リクエストボディ:", requestBody);
+
+      const response = await fetch(requestUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          client_id: this.config.clientId,
-          client_secret: this.config.clientSecret,
-          code: code,
-          redirect_uri: this.config.redirectUri,
-        }),
+        body: JSON.stringify(requestBody),
       });
+
+      console.log("🔍 [Debug] レスポンス受信:");
+      console.log("  - ステータス:", response.status);
+      console.log("  - ステータステキスト:", response.statusText);
+      console.log(
+        "  - ヘッダー:",
+        Object.fromEntries(response.headers.entries())
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error("🔍 [Debug] エラーレスポンス詳細:");
+        console.error("  - ステータス:", response.status);
+        console.error("  - エラーテキスト:", errorText);
+
+        // ネットワークエラーかCORSエラーかを判定
+        if (response.status === 0) {
+          console.error(
+            "🔍 [Debug] ネットワークエラーまたはCORSエラーの可能性"
+          );
+        }
+
         throw new Error(
           `HTTP error! status: ${response.status}, message: ${errorText}`
         );
@@ -158,6 +193,24 @@ export class OAuthService {
       };
     } catch (error) {
       console.error("🔐 [OAuth] トークン取得エラー:", error);
+
+      // より詳細なエラー診断
+      console.error("🔍 [Debug] エラー詳細分析:");
+      console.error("  - エラータイプ:", error?.constructor?.name);
+      console.error(
+        "  - エラーメッセージ:",
+        error instanceof Error ? error.message : String(error)
+      );
+
+      if (error instanceof TypeError) {
+        console.error(
+          "🔍 [Debug] TypeErrorが発生 - ネットワーク接続またはCORSの問題の可能性"
+        );
+        console.error("  - プロキシサーバーが起動しているか確認してください");
+        console.error("  - CORS設定が正しいか確認してください");
+        console.error("  - HTTPSとHTTPの混在がないか確認してください");
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to exchange code for token: ${errorMessage}`);
@@ -225,10 +278,18 @@ export class OAuthService {
     if (token) {
       try {
         // SDKのrevokeAuthToken関数を使用してサーバー側でトークンを無効化
-        await revokeAuthToken({
-          clientId: this.config.clientId,
-          clientSecret: this.config.clientSecret,
-          accessToken: token,
+        // プロキシサーバー経由でトークンを無効化
+        const proxyUrl =
+          import.meta.env.VITE_PROXY_URL || "http://localhost:8000";
+        await fetch(`${proxyUrl}/oauth/revoke`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            client_id: this.config.clientId,
+            access_token: token,
+          }),
         });
       } catch (error) {
         console.warn("Failed to revoke token on server:", error);
