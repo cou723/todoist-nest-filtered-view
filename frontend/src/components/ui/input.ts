@@ -15,18 +15,6 @@ export class UIInput extends LitElement {
   @property({ type: Boolean })
   disabled: boolean = false;
 
-  private handleInput(e: Event) {
-    const input = e.target as HTMLInputElement;
-    this.value = input.value;
-    this.dispatchEvent(
-      new CustomEvent("input-change", {
-        detail: { value: this.value },
-        bubbles: true,
-        composed: true,
-      })
-    );
-  }
-
   render() {
     return html`
       <input
@@ -34,7 +22,17 @@ export class UIInput extends LitElement {
         .value=${this.value}
         placeholder=${this.placeholder}
         ?disabled=${this.disabled}
-        @input=${this.handleInput}
+        @input=${(e: Event) => {
+          const input = e.target as HTMLInputElement;
+          this.value = input.value;
+          this.dispatchEvent(
+            new CustomEvent("input-change", {
+              detail: { value: this.value },
+              bubbles: true,
+              composed: true,
+            })
+          );
+        }}
       />
     `;
   }

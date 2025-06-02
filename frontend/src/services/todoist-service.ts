@@ -114,6 +114,7 @@ export class TodoistService {
         }
 
         enrichedTask.parentTaskName = parentTaskName || "不明な親タスク";
+        enrichedTask.parentTaskId = task.parentId;
 
         // 祖タスク名も取得
         if (this.allTasksCache.has(task.parentId)) {
@@ -139,6 +140,7 @@ export class TodoistService {
 
             enrichedTask.grandparentTaskName =
               grandparentTaskName || "不明な祖タスク";
+            enrichedTask.grandparentTaskId = parentTask.parentId;
           }
         }
       }
@@ -162,6 +164,13 @@ export class TodoistService {
     });
 
     await Promise.all(fetchPromises);
+  }
+
+  // タスクを完了にする
+  async completeTask(taskId: string): Promise<void> {
+    await this.api.closeTask(taskId);
+    // キャッシュからタスクを削除
+    this.allTasksCache.delete(taskId);
   }
 
   // キャッシュをクリアするメソッド（必要に応じて使用）

@@ -1,9 +1,9 @@
 import { LitElement, css, html } from "lit";
-import { customElement, state } from "lit/decorators.js";
-import type { TaskWithParent } from "./types/task.js";
-import { TodoistService } from "./services/todoist-service.js";
-import { OAuthService } from "./services/oauth-service.js";
-import { getOAuthConfig } from "./config/oauth-config.js";
+import { customElement } from "lit/decorators.js";
+import { AuthController } from "./controllers/auth-controller.js";
+import { TaskController } from "./controllers/task-controller.js";
+import { FilterController } from "./controllers/filter-controller.js";
+import { when } from "./utils/template-utils.js";
 import "./components/auth-component.js";
 import "./components/task-filter.js";
 import "./components/task-list.js";
@@ -11,172 +11,92 @@ import "./components/ui/theme-toggle.js";
 
 @customElement("app-element")
 export class AppElement extends LitElement {
-  @state()
-  private isAuthenticated: boolean = false;
-
-  @state()
-  private tasks: TaskWithParent[] = [];
-
-  @state()
-  private loading: boolean = false;
-
-  @state()
-  private error: string = "";
-
-  private todoistService: TodoistService | null = null;
-  private currentRequestController: AbortController | null = null;
-  private oauthService: OAuthService;
-
-  constructor() {
-    super();
-    this.oauthService = new OAuthService(getOAuthConfig());
-  }
+  // Reactive Controllers
+  private authController = new AuthController(this);
+  private taskController = new TaskController(this);
+  private filterController = new FilterController(this);
 
   connectedCallback() {
     super.connectedCallback();
-    this.checkAuthenticationStatus();
-  }
-
-  private checkAuthenticationStatus() {
-    const token = this.oauthService.getStoredToken();
-    if (token && this.oauthService.isTokenValid()) {
-      this.isAuthenticated = true;
-      this.initializeService();
-    } else {
-      // 無効なトークンがある場合はクリア
-      this.oauthService.clearAuth();
-      this.isAuthenticated = false;
+    // 認証状態が確認された後にタスクサービスを初期化
+    if (this.authController.isAuthenticated) {
+      this.initializeTaskService();
     }
   }
 
-  private async initializeService() {
-    const token = this.oauthService.getStoredToken();
+  private async initializeTaskService() {
+    const token = this.authController.getStoredToken();
     if (!token) return;
 
-    this.todoistService = new TodoistService(token);
-    await this.fetchAllTasks();
-  }
-
-  private async fetchAllTasks() {
-    if (!this.todoistService) return;
-
-    // 進行中のリクエストをキャンセル
-    if (this.currentRequestController) {
-      this.currentRequestController.abort();
-    }
-    this.currentRequestController = new AbortController();
-
-    this.loading = true;
-    this.error = "";
-    try {
-      this.tasks = await this.todoistService.getAllTasks();
-    } catch (e: any) {
-      // AbortErrorの場合は無視（意図的なキャンセル）
-      if (e.name === "AbortError") {
-        return;
-      }
-      this.error = "タスク取得に失敗しました: " + (e?.message || e);
-      this.tasks = [];
-    } finally {
-      this.loading = false;
-      this.currentRequestController = null;
-    }
-  }
-
-  private async fetchTasksByFilter(query: string) {
-    if (!this.todoistService || !query.trim()) return;
-
-    // 進行中のリクエストをキャンセル
-    if (this.currentRequestController) {
-      this.currentRequestController.abort();
-    }
-    this.currentRequestController = new AbortController();
-
-    this.loading = true;
-    this.error = "";
-    try {
-      this.tasks = await this.todoistService.getTasksByFilter(query);
-    } catch (e: any) {
-      // AbortErrorの場合は無視（意図的なキャンセル）
-      if (e.name === "AbortError") {
-        return;
-      }
-      this.error = "フィルタリングに失敗しました: " + (e?.message || e);
-      this.tasks = [];
-    } finally {
-      this.loading = false;
-      this.currentRequestController = null;
-    }
+    this.taskController.initializeService(token);
+    await this.taskController.fetchAllTasks();
   }
 
   private async handleAuthLogin(e: CustomEvent) {
     const { token } = e.detail;
-    this.isAuthenticated = true;
-    // 既存のサービスがある場合はキャッシュをクリアしてから新しいサービスを作成
-    if (this.todoistService) {
-      this.todoistService.clearCache();
-    }
-    this.todoistService = new TodoistService(token);
-    await this.fetchAllTasks();
+    this.authController.login(token);
+
+    // タスクサービスを再初期化
+    this.taskController.reinitializeService(token);
+    await this.taskController.fetchAllTasks();
   }
 
   private handleAuthLogout() {
-    // 進行中のリクエストをキャンセル
-    if (this.currentRequestController) {
-      this.currentRequestController.abort();
-      this.currentRequestController = null;
-    }
-
-    // OAuth認証情報をクリア
-    this.oauthService.clearAuth();
-
-    this.isAuthenticated = false;
-    this.tasks = [];
-    this.todoistService = null;
-    this.error = "";
+    this.authController.logout();
+    this.taskController.clearService();
+    this.filterController.clearFilter();
   }
 
   private async handleFilterApply(e: CustomEvent) {
     const { query } = e.detail;
+    this.filterController.applyFilter(query);
+
     if (query.trim()) {
-      await this.fetchTasksByFilter(query);
+      await this.taskController.fetchTasksByFilter(query);
     } else {
-      await this.fetchAllTasks();
+      await this.taskController.fetchAllTasks();
     }
   }
 
   private async handleFilterClear() {
-    await this.fetchAllTasks();
+    this.filterController.clearFilter();
+    await this.taskController.fetchAllTasks();
+  }
+
+  private async handleCompleteTask(taskId: string) {
+    await this.taskController.completeTask(taskId);
   }
 
   render() {
     return html`
       <div class="app-container">
         <div class="header">
-          <h1>Todoist タスクリスト</h1>
+          <h1>タスク</h1>
           <theme-toggle></theme-toggle>
         </div>
 
         <auth-component
-          .isAuthenticated=${this.isAuthenticated}
+          .isAuthenticated=${this.authController.isAuthenticated}
           @auth-login=${this.handleAuthLogin}
           @auth-logout=${this.handleAuthLogout}
         ></auth-component>
 
-        ${this.isAuthenticated
-          ? html`
-              <task-filter
-                @filter-apply=${this.handleFilterApply}
-                @filter-clear=${this.handleFilterClear}
-              ></task-filter>
+        ${when(
+          this.authController.isAuthenticated,
+          html`
+            <task-filter
+              @filter-apply=${this.handleFilterApply}
+              @filter-clear=${this.handleFilterClear}
+            ></task-filter>
 
-              <task-list
-                .tasks=${this.tasks}
-                .loading=${this.loading}
-                .error=${this.error}
-              ></task-list>
-            `
-          : ""}
+            <task-list
+              .tasks=${this.taskController.tasks}
+              .loading=${this.taskController.loading}
+              .error=${this.taskController.error}
+              .onCompleteTask=${this.handleCompleteTask.bind(this)}
+            ></task-list>
+          `
+        )}
       </div>
     `;
   }
@@ -184,8 +104,8 @@ export class AppElement extends LitElement {
   static styles = css`
     :host {
       max-width: 480px;
-      margin: 2rem auto;
-      padding: 2rem;
+      margin: 0.5rem auto;
+      padding: 1rem;
       text-align: center;
       display: block;
       background: var(--card-bg);
@@ -198,19 +118,19 @@ export class AppElement extends LitElement {
     .app-container {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 0.5rem;
     }
 
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
 
     .header h1 {
       margin: 0;
-      font-size: 1.5rem;
+      font-size: 1.1rem;
       color: var(--text-color);
     }
   `;

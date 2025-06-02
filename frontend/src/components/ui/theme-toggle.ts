@@ -23,15 +23,13 @@ export class ThemeToggle extends LitElement {
     this.unsubscribe?.();
   }
 
-  private handleToggle() {
-    this.themeService.toggleTheme();
-  }
-
   render() {
     const isDark = this.currentTheme === "dark";
     return html`
       <button
-        @click=${this.handleToggle}
+        @click=${() => {
+          this.themeService.toggleTheme();
+        }}
         aria-label=${isDark
           ? "ライトモードに切り替え"
           : "ダークモードに切り替え"}

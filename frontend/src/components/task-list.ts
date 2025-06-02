@@ -2,7 +2,8 @@ import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { TaskWithParent } from "../types/task.js";
 import { layoutStyles } from "../styles/common.js";
-import "./task-item.js";
+import { sortTasksByPriority } from "../utils/task-utils.js";
+import "./task/index.js";
 
 @customElement("task-list")
 export class TaskList extends LitElement {
@@ -14,6 +15,9 @@ export class TaskList extends LitElement {
 
   @property({ type: String })
   error: string = "";
+
+  @property({ type: Function })
+  onCompleteTask?: (taskId: string) => void;
 
   render() {
     if (this.loading) {
@@ -28,9 +32,17 @@ export class TaskList extends LitElement {
       return html`<p class="no-tasks">タスクがありません</p>`;
     }
 
+    const sortedTasks = sortTasksByPriority(this.tasks);
+
     return html`
       <ul class="task-list">
-        ${this.tasks.map((task) => html`<task-item .task=${task}></task-item>`)}
+        ${sortedTasks.map(
+          (task) =>
+            html`<task-item
+              .task=${task}
+              .onCompleteTask=${this.onCompleteTask}
+            ></task-item>`
+        )}
       </ul>
     `;
   }

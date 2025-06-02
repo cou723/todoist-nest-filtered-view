@@ -26,3 +26,26 @@
 - 各UIコンポーネントは独立して動作し、再利用可能な設計とする
 - UIコンポーネントは自身のスタイルを完全に内包する
 - プロパティとイベントを通じて外部とのやり取りを行う
+
+## 条件付きレンダリングのガイドライン
+- 「条件がtruthyなら表示し、そうでなければ何も表示しない」場合は、`when`ユーティリティ関数を使用する
+- Litでは論理AND演算子（`&&`）を使うとfalsy値（`false`、`0`など）がそのまま表示されてしまうため避ける
+- `when`関数は`src/utils/template-utils.ts`で定義されており、内部的に三項演算子と`nothing`を使用している
+- 例: `${when(isVisible, html`<div>表示内容</div>`)}` （推奨：簡潔で読みやすい）
+- 例: `${isVisible ? html`<div>表示内容</div>` : nothing}` （代替案：直接的だが冗長）
+- 例: `${isVisible && html`<div>表示内容</div>`}` （非推奨：falsyの場合に値が表示される）
+
+### when関数の使用例
+```typescript
+// 基本的な使用
+${when(user, html`<span>Hello, ${user.name}!</span>`)}
+
+// 複合条件
+${when(items && items.length > 0, html`<ul>...</ul>`)}
+
+// オプショナルチェーンとの組み合わせ
+${when(user?.isAdmin, html`<button>管理者メニュー</button>`)}
+```
+
+## タスク終了時のチェック
+タスク終了時のチェックはユーザーがするので開発用サーバーなどは立ち上げず`pnpm run build`でビルドして動作確認を行うこと。
