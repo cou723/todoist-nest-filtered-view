@@ -6,18 +6,15 @@ import { when } from "../../../utils/template-utils.js";
 @customElement("task-meta-due-date")
 export class TaskMetaDueDate extends LitElement {
   @property({ type: Object })
-  due?: { date: string; datetime?: string };
+  public due!: { date: string; datetime?: string | null };
 
-  render() {
-    return when(
-      this.due,
-      html`<span class="due-date due-${getDueDateUrgency(this.due!)}">
-        📅 ${formatDueDate(this.due!)}
-      </span>`
-    );
+  public render() {
+    return html`<span class="due-date due-${getDueDateUrgency(this.due)}">
+      📅 ${formatDueDate(this.due)}
+    </span>`;
   }
 
-  static styles = css`
+  public static styles = css`
     .due-date {
       margin-right: 0.5em;
       font-weight: 500;

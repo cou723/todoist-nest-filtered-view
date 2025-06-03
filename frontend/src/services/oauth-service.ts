@@ -23,7 +23,7 @@ export class OAuthService {
   /**
    * OAuth認証URLを生成（SDKの関数を使用）
    */
-  generateAuthUrl(): string {
+  public generateAuthUrl(): string {
     // SDKのgetAuthStateParameter関数を使用してstateを生成
     const state = getAuthStateParameter();
 
@@ -48,7 +48,7 @@ export class OAuthService {
   /**
    * 認証コードからアクセストークンを取得（SDKの関数を使用）
    */
-  async exchangeCodeForToken(
+  public async exchangeCodeForToken(
     code: string,
     state: string
   ): Promise<TokenResponse> {
@@ -129,7 +129,7 @@ export class OAuthService {
   /**
    * URLからコードとstateを抽出
    */
-  extractAuthParams(url: string): {
+  public extractAuthParams(url: string): {
     code?: string;
     state?: string;
     error?: string;
@@ -147,14 +147,14 @@ export class OAuthService {
   /**
    * 保存されたトークンを取得
    */
-  getStoredToken(): string | null {
+  public getStoredToken(): string | null {
     return localStorage.getItem("todoist_token");
   }
 
   /**
    * トークンが有効かチェック
    */
-  isTokenValid(): boolean {
+  public isTokenValid(): boolean {
     const token = this.getStoredToken();
     if (!token) return false;
 
@@ -170,43 +170,11 @@ export class OAuthService {
   /**
    * 認証情報をクリア（ローカルのみ）
    */
-  clearAuth(): void {
+  public clearAuth(): void {
     localStorage.removeItem("todoist_token");
     localStorage.removeItem("todoist_refresh_token");
     localStorage.removeItem("todoist_token_expires_at");
     localStorage.removeItem("oauth_state");
     sessionStorage.removeItem("oauth_state");
-  }
-
-  /**
-   * 認証情報をクリアし、サーバー側でもトークンを無効化（SDKの関数を使用）
-   */
-  async revokeAndClearAuth(): Promise<void> {
-    const token = this.getStoredToken();
-
-    if (token) {
-      try {
-        // SDKのrevokeAuthToken関数を使用してサーバー側でトークンを無効化
-        // プロキシサーバー経由でトークンを無効化
-        const proxyUrl =
-          import.meta.env.VITE_PROXY_URL || "http://localhost:8000";
-        await fetch(`${proxyUrl}/oauth/revoke`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            client_id: this.config.clientId,
-            access_token: token,
-          }),
-        });
-      } catch (error) {
-        console.warn("Failed to revoke token on server:", error);
-        // サーバー側での無効化に失敗してもローカルの認証情報はクリアする
-      }
-    }
-
-    // ローカルの認証情報をクリア
-    this.clearAuth();
   }
 }

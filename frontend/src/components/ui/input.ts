@@ -4,18 +4,18 @@ import { customElement, property } from "lit/decorators.js";
 @customElement("ui-input")
 export class UIInput extends LitElement {
   @property({ type: String })
-  type: "text" | "password" = "text";
+  public type: "text" | "password" = "text";
 
   @property({ type: String })
-  placeholder: string = "";
+  public placeholder = "";
 
   @property({ type: String })
-  value: string = "";
+  public value = "";
 
   @property({ type: Boolean })
-  disabled: boolean = false;
+  public disabled = false;
 
-  render() {
+  public render() {
     return html`
       <input
         type=${this.type}
@@ -37,7 +37,7 @@ export class UIInput extends LitElement {
     `;
   }
 
-  static styles = css`
+  public static styles = css`
     input {
       padding: 0.5em;
       font-size: 1em;

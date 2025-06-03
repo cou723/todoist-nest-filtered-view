@@ -4,12 +4,12 @@ import { customElement, property } from "lit/decorators.js";
 @customElement("task-content")
 export class TaskContent extends LitElement {
   @property({ type: String })
-  content!: string;
+  public content!: string;
 
   @property({ type: String })
-  taskId!: string;
+  public taskId!: string;
 
-  render() {
+  public render() {
     return html`
       <div class="task-content">
         <a
@@ -24,7 +24,7 @@ export class TaskContent extends LitElement {
     `;
   }
 
-  static styles = css`
+  public static styles = css`
     .task-content {
       font-weight: bold;
       margin-bottom: 0.2em;

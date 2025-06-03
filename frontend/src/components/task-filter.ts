@@ -8,20 +8,20 @@ import "./ui/modal.js";
 @customElement("task-filter")
 export class TaskFilter extends LitElement {
   @state()
-  private filterQuery: string = "";
+  private filterQuery = "";
 
   @state()
-  private modalOpen: boolean = false;
+  private modalOpen = false;
 
   private debounceTimer: number | null = null;
   private readonly DEBOUNCE_DELAY = 500; // 500ms
 
-  connectedCallback() {
+  public connectedCallback() {
     super.connectedCallback();
     this.filterQuery = localStorage.getItem("todoist_filter_query") || "";
   }
 
-  disconnectedCallback() {
+  public disconnectedCallback() {
     super.disconnectedCallback();
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
@@ -42,7 +42,7 @@ export class TaskFilter extends LitElement {
     this.modalOpen = false;
   }
 
-  render() {
+  public render() {
     const hasFilter = this.filterQuery.trim() !== "";
 
     return html`
@@ -137,7 +137,7 @@ export class TaskFilter extends LitElement {
     `;
   }
 
-  static styles = [
+  public static styles = [
     layoutStyles,
     css`
       .filter-container {

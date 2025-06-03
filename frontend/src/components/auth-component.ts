@@ -9,13 +9,13 @@ import "./ui/input.js";
 @customElement("auth-component")
 export class AuthComponent extends LitElement {
   @property({ type: Boolean })
-  isAuthenticated: boolean = false;
+  private isAuthenticated = false;
 
   @state()
-  private token: string = "";
+  private token = "";
 
   @state()
-  private showManualTokenInput: boolean = false;
+  private showManualTokenInput = false;
 
   private authController: AuthController;
 
@@ -24,7 +24,7 @@ export class AuthComponent extends LitElement {
     this.authController = new AuthController(this);
   }
 
-  connectedCallback() {
+  public connectedCallback() {
     super.connectedCallback();
     this.token = this.authController.getStoredToken() || "";
 
@@ -35,7 +35,7 @@ export class AuthComponent extends LitElement {
     this.checkOAuthCallback();
   }
 
-  updated(changedProperties: Map<string, any>) {
+  public updated(changedProperties: Map<string, any>) {
     super.updated(changedProperties);
 
     // コントローラーの認証状態が変更された場合、プロパティを同期
@@ -99,7 +99,7 @@ export class AuthComponent extends LitElement {
     this.authController.clearAuthError();
   }
 
-  render() {
+  public render() {
     if (this.isAuthenticated) {
       return html`
         <div class="header">
@@ -138,7 +138,7 @@ export class AuthComponent extends LitElement {
 
         ${when(
           this.authController.authError,
-          html`
+          () => html`
             <div class="error-message">${this.authController.authError}</div>
           `
         )}
@@ -205,7 +205,7 @@ export class AuthComponent extends LitElement {
     `;
   }
 
-  static styles = [
+  public static styles = [
     layoutStyles,
     css`
       .auth-box {

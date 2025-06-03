@@ -3,19 +3,21 @@ import { customElement, property } from "lit/decorators.js";
 import "./priority.js";
 import "./due-date.js";
 import "./labels.js";
+import { ifDefined } from "lit/directives/if-defined.js";
+import { when } from "../../../utils/template-utils.js";
 
 @customElement("task-meta")
 export class TaskMeta extends LitElement {
   @property({ type: Number })
-  priority!: number;
+  public priority!: number;
 
   @property({ type: Object })
-  due?: { date: string; datetime?: string };
+  public due!: { date: string; datetime?: string | null };
 
   @property({ type: Array })
-  labels?: string[];
+  public labels?: string[];
 
-  render() {
+  public render() {
     return html`
       <div class="task-meta">
         <task-meta-priority .priority=${this.priority}></task-meta-priority>
@@ -25,7 +27,7 @@ export class TaskMeta extends LitElement {
     `;
   }
 
-  static styles = css`
+  public static styles = css`
     .task-meta {
       margin-top: 0.2em;
       padding-left: 0.5em;

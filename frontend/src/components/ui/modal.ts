@@ -4,10 +4,10 @@ import { customElement, property } from "lit/decorators.js";
 @customElement("ui-modal")
 export class Modal extends LitElement {
   @property({ type: Boolean })
-  open = false;
+  public open = false;
 
   @property()
-  title = "";
+  public title = "";
 
   private close() {
     this.dispatchEvent(
@@ -24,17 +24,17 @@ export class Modal extends LitElement {
     }
   }
 
-  connectedCallback() {
+  public connectedCallback() {
     super.connectedCallback();
     document.addEventListener("keydown", this.handleEscapeKey.bind(this));
   }
 
-  disconnectedCallback() {
+  public disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener("keydown", this.handleEscapeKey.bind(this));
   }
 
-  render() {
+  public render() {
     if (!this.open) return html``;
 
     return html`
@@ -59,7 +59,7 @@ export class Modal extends LitElement {
     `;
   }
 
-  static styles = css`
+  public static styles = css`
     .modal-backdrop {
       position: fixed;
       top: 0;

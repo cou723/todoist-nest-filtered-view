@@ -4,17 +4,11 @@ import { when } from "../../utils/template-utils.js";
 
 @customElement("parent-task-display")
 export class ParentTaskDisplay extends LitElement {
-  @property({ type: String })
-  parentTaskName?: string;
+  @property({ type: Object })
+  public parentTask?: { id: string; name: string };
 
-  @property({ type: String })
-  parentTaskId?: string;
-
-  @property({ type: String })
-  grandparentTaskName?: string;
-
-  @property({ type: String })
-  grandparentTaskId?: string;
+  @property({ type: Object })
+  public grandparentTask?: { id: string; name: string };
 
   private openTaskInTodoist(taskId: string): void {
     window.open(
@@ -25,47 +19,47 @@ export class ParentTaskDisplay extends LitElement {
   }
 
   private get parentTaskDisplay(): string {
-    if (!this.parentTaskName) {
+    if (!this.parentTask?.name) {
       return "";
     }
 
-    if (this.grandparentTaskName) {
-      return `${this.grandparentTaskName} > ${this.parentTaskName}`;
+    if (this.grandparentTask) {
+      return `${this.grandparentTask.name} > ${this.parentTask.name}`;
     }
 
-    return this.parentTaskName;
+    return this.parentTask.name;
   }
 
-  render() {
+  public render() {
     return when(
       this.parentTaskDisplay,
-      html`<div class="parent-task">
-        ${this.grandparentTaskName
-          ? html`
-              <span
-                class="parent-task-link"
-                @click=${() => {
-                  this.openTaskInTodoist(this.grandparentTaskId!);
-                }}
-              >
-                ${this.grandparentTaskName}
-              </span>
-              <span class="separator"> > </span>
-            `
-          : ""}
-        <span
-          class="parent-task-link"
-          @click=${() => {
-            this.openTaskInTodoist(this.parentTaskId!);
-          }}
-        >
-          ${this.parentTaskName}
-        </span>
+      () => html`<div class="parent-task">
+        ${when(
+          this.grandparentTask,
+          (grandparentTask) => html`
+            <span
+              class="parent-task-link"
+              @click=${() => this.openTaskInTodoist(grandparentTask.id)}
+            >
+              ${grandparentTask.name}
+            </span>
+            <span class="separator"> > </span>
+          `
+        )}
+        ${when(
+          this.parentTask,
+          (task) => html`<span
+            class="parent-task-link"
+            @click=${() => this.openTaskInTodoist(task.id)}
+          >
+            ${task.name}
+          </span>`
+        )}
       </div>`
     );
   }
 
-  static styles = css`
+  public static styles = css`
     .parent-task {
       font-size: 0.8em;
       color: var(--text-secondary);

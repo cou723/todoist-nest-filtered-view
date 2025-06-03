@@ -4,13 +4,13 @@ import { customElement, property } from "lit/decorators.js";
 @customElement("task-checkbox")
 export class TaskCheckbox extends LitElement {
   @property({ type: String })
-  taskId!: string;
+  private taskId!: string;
 
   @property({ type: Function })
-  onComplete?: (taskId: string) => void;
+  private onComplete?: (taskId: string) => void;
 
   @property({ type: String })
-  checkboxTitle?: string;
+  private checkboxTitle?: string;
 
   private handleChange() {
     if (this.onComplete) {
@@ -26,7 +26,7 @@ export class TaskCheckbox extends LitElement {
     );
   }
 
-  render() {
+  public render() {
     return html`
       <label class="checkbox-container">
         <input
@@ -40,7 +40,7 @@ export class TaskCheckbox extends LitElement {
     `;
   }
 
-  static styles = css`
+  public static styles = css`
     .checkbox-container {
       position: relative;
       display: inline-block;

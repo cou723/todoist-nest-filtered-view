@@ -5,18 +5,18 @@ import { when } from "../../../utils/template-utils.js";
 @customElement("task-meta-labels")
 export class TaskMetaLabels extends LitElement {
   @property({ type: Array })
-  labels?: string[];
+  public labels?: string[];
 
-  render() {
+  public render() {
     return when(
-      this.labels && this.labels.length > 0,
-      html`<span class="labels"
-        >${this.labels!.map((s) => "@" + s).join(" ")}</span
+      this.labels,
+      (labels) => html`<span class="labels"
+        >${labels.map((s) => "@" + s).join(" ")}</span
       >`
     );
   }
 
-  static styles = css`
+  public static styles = css`
     .labels {
       color: var(--primary-color);
       font-style: italic;

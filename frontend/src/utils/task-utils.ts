@@ -74,9 +74,10 @@ export function formatDueDate(due: any): string {
 /**
  * 期限の緊急度を取得する（スタイリング用）
  */
-export function getDueDateUrgency(
-  due: any
-): "overdue" | "today" | "tomorrow" | "soon" | "normal" {
+export function getDueDateUrgency(due: {
+  date: string;
+  datetime?: string | null;
+}): "overdue" | "today" | "tomorrow" | "soon" | "normal" {
   if (!due || !due.date) {
     return "normal";
   }

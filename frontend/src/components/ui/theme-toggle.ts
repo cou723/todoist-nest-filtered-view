@@ -10,7 +10,7 @@ export class ThemeToggle extends LitElement {
   private themeService = ThemeService.getInstance();
   private unsubscribe?: () => void;
 
-  connectedCallback() {
+  public connectedCallback() {
     super.connectedCallback();
     this.currentTheme = this.themeService.getTheme();
     this.unsubscribe = this.themeService.subscribe((theme) => {
@@ -18,12 +18,12 @@ export class ThemeToggle extends LitElement {
     });
   }
 
-  disconnectedCallback() {
+  public disconnectedCallback() {
     super.disconnectedCallback();
     this.unsubscribe?.();
   }
 
-  render() {
+  public render() {
     const isDark = this.currentTheme === "dark";
     return html`
       <button
@@ -40,7 +40,7 @@ export class ThemeToggle extends LitElement {
     `;
   }
 
-  static styles = css`
+  public static styles = css`
     button {
       padding: 0.5rem;
       font-size: 1.2rem;

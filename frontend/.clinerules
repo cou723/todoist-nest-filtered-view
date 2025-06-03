@@ -1,3 +1,9 @@
+# パッケージ管理ツールはpnpmを使用してください
+# npmコマンドの代わりにpnpmコマンドを使用してください
+# 例:
+#   npm install → pnpm install
+#   npm run build → pnpm run build
+#   npm exec eslint → pnpm exec eslint
 # プロジェクトの概要
 このプロジェクトはユーザーの特定の条件に沿ったTodoistのタスクを取得し、そのタスクの親タスクの名前を含めて表示するクライアントアプリケーションです。
 ## 技術スタック

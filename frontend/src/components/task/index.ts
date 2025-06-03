@@ -5,24 +5,23 @@ import "./checkbox.js";
 import "./parent-display.js";
 import "./meta";
 import "./content.js";
+import { when } from "../../utils/template-utils.js";
 
 @customElement("task-item")
 export class TaskItem extends LitElement {
   @property({ type: Object })
-  task!: TaskWithParent;
+  public task!: TaskWithParent;
 
-  @property({ type: Function })
-  onCompleteTask?: (taskId: string) => void;
+  @property({ attribute: false })
+  public onCompleteTask?: (taskId: string) => void;
 
-  render() {
+  public render() {
     return html`
       <li class="task-item">
         <div class="task-left">
           <parent-task-display
-            .parentTaskName=${this.task.parentTaskName}
-            .parentTaskId=${this.task.parentTaskId}
-            .grandparentTaskName=${this.task.grandparentTaskName}
-            .grandparentTaskId=${this.task.grandparentTaskId}
+            .grandparentTask=${this.task.grandparentTask}
+            .parentTask=${this.task.parentTask}
           ></parent-task-display>
 
           <div class="task-main">
@@ -31,11 +30,14 @@ export class TaskItem extends LitElement {
               .taskId=${this.task.id}
             ></task-content>
 
-            <task-meta
-              .priority=${this.task.priority}
-              .due=${this.task.due}
-              .labels=${this.task.labels}
-            ></task-meta>
+            ${when(
+              this.task.due,
+              (due) => html`<task-meta
+                .priority=${this.task.priority}
+                .due=${due}
+                .labels=${this.task.labels}
+              ></task-meta>`
+            )}
           </div>
         </div>
 
@@ -50,7 +52,7 @@ export class TaskItem extends LitElement {
     `;
   }
 
-  static styles = css`
+  public static styles = css`
     .task-item {
       padding: 0.4em 0;
       border-bottom: 1px solid var(--border-color);

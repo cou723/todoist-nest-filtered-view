@@ -1,41 +1,37 @@
 import { TodoistApi } from "@doist/todoist-api-typescript";
 import type { Task } from "@doist/todoist-api-typescript";
-import type { TaskWithParent, Project } from "../types/task.js";
+import type { TaskWithParent } from "../types/task.js";
 
 export class TodoistService {
   private api: TodoistApi;
   private parentTaskCache: Map<string, string> = new Map();
   private allTasksCache: Map<string, Task> = new Map();
-  private cacheTimestamp: number = 0;
+  private cacheTimestamp = 0;
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5分間キャッシュ
 
   constructor(token: string) {
     this.api = new TodoistApi(token);
   }
 
-  async getAllTasks(): Promise<TaskWithParent[]> {
+  private async getAllTasks(): Promise<TaskWithParent[]> {
     const response = await this.api.getTasks();
     // 全タスクをキャッシュに保存
     this.updateTasksCache(response.results);
     return this.enrichTasksWithParentNames(response.results);
   }
 
-  async getTasksByFilter(query: string): Promise<TaskWithParent[]> {
+  public async getTasksByFilter(query?: string): Promise<TaskWithParent[]> {
+    if (!query || !query.trim()) {
+      // queryが空または未指定の場合は全件取得
+      return this.getAllTasks();
+    }
     const response = await this.api.getTasksByFilter({ query });
     // フィルタリング結果もキャッシュに追加（既存のキャッシュは保持）
     this.updateTasksCache(response.results, false);
     return this.enrichTasksWithParentNames(response.results);
   }
 
-  async getProjects(): Promise<Project[]> {
-    const projectsRes = await this.api.getProjects();
-    return projectsRes.results.map((p: any) => ({
-      id: String(p.id),
-      name: p.name,
-    }));
-  }
-
-  private updateTasksCache(tasks: Task[], clearCache: boolean = true) {
+  private updateTasksCache(tasks: Task[], clearCache = true) {
     const now = Date.now();
 
     // キャッシュが古い場合はクリア
@@ -167,14 +163,14 @@ export class TodoistService {
   }
 
   // タスクを完了にする
-  async completeTask(taskId: string): Promise<void> {
+  public async completeTask(taskId: string): Promise<void> {
     await this.api.closeTask(taskId);
     // キャッシュからタスクを削除
     this.allTasksCache.delete(taskId);
   }
 
   // キャッシュをクリアするメソッド（必要に応じて使用）
-  clearCache() {
+  public clearCache() {
     this.parentTaskCache.clear();
     this.allTasksCache.clear();
     this.cacheTimestamp = 0;

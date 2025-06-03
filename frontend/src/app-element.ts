@@ -16,7 +16,7 @@ export class AppElement extends LitElement {
   private taskController = new TaskController(this);
   private filterController = new FilterController(this);
 
-  connectedCallback() {
+  public connectedCallback() {
     super.connectedCallback();
     // 認証状態が確認された後にタスクサービスを初期化
     if (this.authController.isAuthenticated) {
@@ -29,7 +29,7 @@ export class AppElement extends LitElement {
     if (!token) return;
 
     this.taskController.initializeService(token);
-    await this.taskController.fetchAllTasks();
+    await this.taskController.fetchTasksByFilter();
   }
 
   private async handleAuthLogin(e: CustomEvent) {
@@ -38,7 +38,7 @@ export class AppElement extends LitElement {
 
     // タスクサービスを再初期化
     this.taskController.reinitializeService(token);
-    await this.taskController.fetchAllTasks();
+    await this.taskController.fetchTasksByFilter();
   }
 
   private handleAuthLogout() {
@@ -54,20 +54,20 @@ export class AppElement extends LitElement {
     if (query.trim()) {
       await this.taskController.fetchTasksByFilter(query);
     } else {
-      await this.taskController.fetchAllTasks();
+      await this.taskController.fetchTasksByFilter();
     }
   }
 
   private async handleFilterClear() {
     this.filterController.clearFilter();
-    await this.taskController.fetchAllTasks();
+    await this.taskController.fetchTasksByFilter();
   }
 
   private async handleCompleteTask(taskId: string) {
     await this.taskController.completeTask(taskId);
   }
 
-  render() {
+  public render() {
     return html`
       <div class="app-container">
         <div class="header">
@@ -83,7 +83,7 @@ export class AppElement extends LitElement {
 
         ${when(
           this.authController.isAuthenticated,
-          html`
+          () => html`
             <task-filter
               @filter-apply=${this.handleFilterApply}
               @filter-clear=${this.handleFilterClear}
@@ -101,7 +101,7 @@ export class AppElement extends LitElement {
     `;
   }
 
-  static styles = css`
+  public static styles = css`
     :host {
       max-width: 480px;
       margin: 0.5rem auto;

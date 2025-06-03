@@ -13,30 +13,30 @@ export class TaskController implements ReactiveController {
 
   // 状態
   public tasks: TaskWithParent[] = [];
-  public loading: boolean = false;
-  public error: string = "";
+  public loading = false;
+  public error = "";
 
   constructor(host: TaskControllerHost) {
     this.host = host;
     host.addController(this);
   }
 
-  hostConnected() {
+  public hostConnected() {
     // コントローラーがホストに接続された時の処理
   }
 
-  hostDisconnected() {
+  public hostDisconnected() {
     // 進行中のリクエストをキャンセル
     this.cancelCurrentRequest();
   }
 
   // サービスの初期化
-  initializeService(token: string) {
+  public initializeService(token: string) {
     this.todoistService = new TodoistService(token);
   }
 
   // サービスのクリア
-  clearService() {
+  public clearService() {
     this.cancelCurrentRequest();
     this.todoistService = null;
     this.tasks = [];
@@ -53,36 +53,9 @@ export class TaskController implements ReactiveController {
     }
   }
 
-  // 全タスクの取得
-  async fetchAllTasks(): Promise<void> {
-    if (!this.todoistService) return;
-
-    this.cancelCurrentRequest();
-    this.currentRequestController = new AbortController();
-
-    this.loading = true;
-    this.error = "";
-    this.host.requestUpdate();
-
-    try {
-      this.tasks = await this.todoistService.getAllTasks();
-    } catch (e: any) {
-      // AbortErrorの場合は無視（意図的なキャンセル）
-      if (e.name === "AbortError") {
-        return;
-      }
-      this.error = "タスク取得に失敗しました: " + (e?.message || e);
-      this.tasks = [];
-    } finally {
-      this.loading = false;
-      this.currentRequestController = null;
-      this.host.requestUpdate();
-    }
-  }
-
   // フィルタによるタスク取得
-  async fetchTasksByFilter(query: string): Promise<void> {
-    if (!this.todoistService || !query.trim()) return;
+  public async fetchTasksByFilter(query?: string): Promise<void> {
+    if (!this.todoistService) return;
 
     this.cancelCurrentRequest();
     this.currentRequestController = new AbortController();
@@ -108,7 +81,7 @@ export class TaskController implements ReactiveController {
   }
 
   // タスクを完了にする
-  async completeTask(taskId: string): Promise<void> {
+  public async completeTask(taskId: string): Promise<void> {
     if (!this.todoistService) return;
 
     try {
@@ -123,7 +96,7 @@ export class TaskController implements ReactiveController {
   }
 
   // サービスの再初期化（キャッシュクリア付き）
-  reinitializeService(token: string) {
+  public reinitializeService(token: string) {
     if (this.todoistService) {
       this.todoistService.clearCache();
     }

@@ -11,9 +11,9 @@ export class AuthController implements ReactiveController {
   private oauthService: OAuthService;
 
   // 状態
-  public isAuthenticated: boolean = false;
-  public isProcessingAuth: boolean = false;
-  public authError: string = "";
+  public isAuthenticated = false;
+  public isProcessingAuth = false;
+  public authError = "";
 
   constructor(host: AuthControllerHost) {
     this.host = host;
@@ -21,16 +21,16 @@ export class AuthController implements ReactiveController {
     host.addController(this);
   }
 
-  hostConnected() {
+  public hostConnected() {
     this.checkAuthenticationStatus();
   }
 
-  hostDisconnected() {
+  public hostDisconnected() {
     // 必要に応じてクリーンアップ処理
   }
 
   // 認証状態の確認
-  checkAuthenticationStatus(): void {
+  private checkAuthenticationStatus(): void {
     const token = this.oauthService.getStoredToken();
     if (token && this.oauthService.isTokenValid()) {
       this.isAuthenticated = true;
@@ -42,7 +42,7 @@ export class AuthController implements ReactiveController {
     this.host.requestUpdate();
   }
 
-  login(token: string): void {
+  public login(token: string): void {
     // トークンをLocalStorageに保存
     localStorage.setItem("todoist_token", token);
     this.isAuthenticated = true;
@@ -50,7 +50,7 @@ export class AuthController implements ReactiveController {
     this.host.requestUpdate();
   }
 
-  logout(): void {
+  public logout(): void {
     this.oauthService.clearAuth();
     this.isAuthenticated = false;
     this.authError = "";
@@ -58,30 +58,30 @@ export class AuthController implements ReactiveController {
     this.host.requestUpdate();
   }
 
-  setProcessingAuth(isProcessing: boolean): void {
+  public setProcessingAuth(isProcessing: boolean): void {
     this.isProcessingAuth = isProcessing;
     this.host.requestUpdate();
   }
 
   // 認証エラーの設定
-  setAuthError(error: string): void {
+  public setAuthError(error: string): void {
     this.authError = error;
     this.host.requestUpdate();
   }
 
   // 認証エラーのクリア
-  clearAuthError(): void {
+  public clearAuthError(): void {
     this.authError = "";
     this.host.requestUpdate();
   }
 
   // 保存されたトークンの取得
-  getStoredToken(): string | null {
+  public getStoredToken(): string | null {
     return this.oauthService.getStoredToken();
   }
 
   // OAuth サービスの取得
-  getOAuthService(): OAuthService {
+  public getOAuthService(): OAuthService {
     return this.oauthService;
   }
 }

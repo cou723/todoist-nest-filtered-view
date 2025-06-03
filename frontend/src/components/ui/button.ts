@@ -4,15 +4,15 @@ import { customElement, property } from "lit/decorators.js";
 @customElement("ui-button")
 export class UIButton extends LitElement {
   @property({ type: String })
-  type: "button" | "submit" = "button";
+  public type: "button" | "submit" = "button";
 
   @property({ type: Boolean })
-  disabled: boolean = false;
+  public disabled = false;
 
   @property({ type: String })
-  variant: "default" | "primary" | "secondary" = "default";
+  public variant: "default" | "primary" | "secondary" = "default";
 
-  render() {
+  public render() {
     return html`
       <button
         type=${this.type}
@@ -24,7 +24,7 @@ export class UIButton extends LitElement {
     `;
   }
 
-  static styles = css`
+  public static styles = css`
     button {
       padding: 0.5em 1.5em;
       font-size: 1em;

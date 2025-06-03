@@ -5,9 +5,9 @@ import { getPriorityText } from "../../../utils/task-utils.js";
 @customElement("task-meta-priority")
 export class TaskMetaPriority extends LitElement {
   @property({ type: Number })
-  priority!: number;
+  public priority!: number;
 
-  render() {
+  public render() {
     return html`
       <span class="priority priority-${this.priority}">
         ${getPriorityText(this.priority)}
@@ -15,7 +15,7 @@ export class TaskMetaPriority extends LitElement {
     `;
   }
 
-  static styles = css`
+  public static styles = css`
     .priority {
       margin-bottom: 0.1em;
       font-weight: 500;

@@ -8,18 +8,18 @@ import "./task/index.js";
 @customElement("task-list")
 export class TaskList extends LitElement {
   @property({ type: Array })
-  tasks: TaskWithParent[] = [];
+  private tasks: TaskWithParent[] = [];
 
   @property({ type: Boolean })
-  loading: boolean = false;
+  private loading = false;
 
   @property({ type: String })
-  error: string = "";
+  private error = "";
 
   @property({ type: Function })
-  onCompleteTask?: (taskId: string) => void;
+  private onCompleteTask?: (taskId: string) => void;
 
-  render() {
+  public render() {
     if (this.loading) {
       return html`<p class="loading">読み込み中...</p>`;
     }
@@ -47,7 +47,7 @@ export class TaskList extends LitElement {
     `;
   }
 
-  static styles = [
+  public static styles = [
     layoutStyles,
     css`
       .task-list {

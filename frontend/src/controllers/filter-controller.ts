@@ -8,40 +8,40 @@ export class FilterController implements ReactiveController {
   private host: FilterControllerHost;
 
   // 状態
-  public currentQuery: string = "";
+  public currentQuery = "";
 
   constructor(host: FilterControllerHost) {
     this.host = host;
     host.addController(this);
   }
 
-  hostConnected() {
+  public hostConnected() {
     // コントローラーがホストに接続された時の処理
   }
 
-  hostDisconnected() {
+  public hostDisconnected() {
     // 必要に応じてクリーンアップ処理
   }
 
   // フィルタの適用
-  applyFilter(query: string): void {
+  public applyFilter(query: string): void {
     this.currentQuery = query;
     this.host.requestUpdate();
   }
 
   // フィルタのクリア
-  clearFilter(): void {
+  public clearFilter(): void {
     this.currentQuery = "";
     this.host.requestUpdate();
   }
 
   // 現在のクエリの取得
-  getCurrentQuery(): string {
+  public getCurrentQuery(): string {
     return this.currentQuery;
   }
 
   // フィルタが適用されているかの確認
-  hasActiveFilter(): boolean {
+  public hasActiveFilter(): boolean {
     return this.currentQuery.trim() !== "";
   }
 }

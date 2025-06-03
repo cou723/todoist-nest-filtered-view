@@ -9,7 +9,7 @@ export class ThemeService {
     this.initializeTheme();
   }
 
-  static getInstance(): ThemeService {
+  public static getInstance(): ThemeService {
     if (!ThemeService.instance) {
       ThemeService.instance = new ThemeService();
     }
@@ -51,23 +51,23 @@ export class ThemeService {
     this.listeners.forEach((listener) => listener(this.currentTheme));
   }
 
-  getTheme(): Theme {
+  public getTheme(): Theme {
     return this.currentTheme;
   }
 
-  setTheme(theme: Theme) {
+  private setTheme(theme: Theme) {
     this.currentTheme = theme;
     localStorage.setItem("theme", theme);
     this.applyTheme();
     this.notifyListeners();
   }
 
-  toggleTheme() {
+  public toggleTheme() {
     const newTheme = this.currentTheme === "light" ? "dark" : "light";
     this.setTheme(newTheme);
   }
 
-  subscribe(listener: (theme: Theme) => void): () => void {
+  public subscribe(listener: (theme: Theme) => void): () => void {
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);

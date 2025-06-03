@@ -15,9 +15,9 @@ import type { TemplateResult } from "lit";
  * ${when(user?.name, html`<span>Hello, ${user.name}!</span>`)}
  * ```
  */
-export function when(
-  condition: unknown,
-  template: TemplateResult
+export function when<T>(
+  condition: T,
+  template: (a: NonNullable<T>) => TemplateResult
 ): TemplateResult | typeof nothing {
-  return condition ? template : nothing;
+  return condition ? template(condition) : nothing;
 }
