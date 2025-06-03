@@ -29,7 +29,10 @@ export class AppElement extends LitElement {
     if (!token) return;
 
     this.taskController.initializeService(token);
-    await this.taskController.fetchTasksByFilter();
+    // 初回起動時にもフィルターを反映
+    await this.taskController.fetchTasksByFilter(
+      this.filterController.getCurrentQuery()
+    );
   }
 
   private async handleAuthLogin(e: CustomEvent) {
@@ -38,7 +41,9 @@ export class AppElement extends LitElement {
 
     // タスクサービスを再初期化
     this.taskController.reinitializeService(token);
-    await this.taskController.fetchTasksByFilter();
+    await this.taskController.fetchTasksByFilter(
+      this.filterController.getCurrentQuery()
+    );
   }
 
   private handleAuthLogout() {

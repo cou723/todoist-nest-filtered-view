@@ -5,7 +5,6 @@ import "./checkbox.js";
 import "./parent-display.js";
 import "./meta";
 import "./content.js";
-import { when } from "../../utils/template-utils.js";
 
 @customElement("task-item")
 export class TaskItem extends LitElement {
@@ -30,14 +29,11 @@ export class TaskItem extends LitElement {
               .taskId=${this.task.id}
             ></task-content>
 
-            ${when(
-              this.task.due,
-              (due) => html`<task-meta
-                .priority=${this.task.priority}
-                .due=${due}
-                .labels=${this.task.labels}
-              ></task-meta>`
-            )}
+            <task-meta
+              .priority=${this.task.priority}
+              .due=${this.task.due ?? undefined}
+              .labels=${this.task.labels}
+            ></task-meta>
           </div>
         </div>
 

@@ -16,7 +16,7 @@ export class FilterController implements ReactiveController {
   }
 
   public hostConnected() {
-    // コントローラーがホストに接続された時の処理
+    this.applyFilter(localStorage.getItem("todoist_filter_query") || "");
   }
 
   public hostDisconnected() {

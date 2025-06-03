@@ -1,19 +1,15 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { when } from "../../../utils/template-utils.js";
 
 @customElement("task-meta-labels")
 export class TaskMetaLabels extends LitElement {
   @property({ type: Array })
-  public labels?: string[];
+  public labels!: string[];
 
   public render() {
-    return when(
-      this.labels,
-      (labels) => html`<span class="labels"
-        >${labels.map((s) => "@" + s).join(" ")}</span
-      >`
-    );
+    return html`<span class="labels"
+      >${this.labels.map((s) => "@" + s).join(" ")}</span
+    >`;
   }
 
   public static styles = css`
