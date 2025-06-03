@@ -35,7 +35,7 @@ export class AuthComponent extends LitElement {
     this.checkOAuthCallback();
   }
 
-  public updated(changedProperties: Map<string, any>) {
+  public updated(changedProperties: Map<string, string>) {
     super.updated(changedProperties);
 
     // コントローラーの認証状態が変更された場合、プロパティを同期
@@ -49,7 +49,6 @@ export class AuthComponent extends LitElement {
     const params = oauthService.extractAuthParams(window.location.href);
 
     if (params.error) {
-      console.error("🔐 [Auth] OAuth認証エラー:", params.error);
       this.authController.setAuthError(`認証エラー: ${params.error}`);
       // URLからパラメータを削除
       this.clearUrlParams();
@@ -74,9 +73,11 @@ export class AuthComponent extends LitElement {
             composed: true,
           })
         );
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.authController.setAuthError(
-          `認証に失敗しました: ${error.message}`
+          `認証に失敗しました: ${
+            error instanceof Error ? error.message : String(error)
+          }`
         );
       } finally {
         this.clearUrlParams();

@@ -20,7 +20,6 @@ export function getPriorityText(priority: number): string {
  */
 export function sortTasksByPriority(tasks: TaskWithParent[]): TaskWithParent[] {
   return [...tasks].sort((a, b) => {
-    // 優先順位の数値が大きいほど重要度が高い
     return b.priority - a.priority;
   });
 }
@@ -28,7 +27,10 @@ export function sortTasksByPriority(tasks: TaskWithParent[]): TaskWithParent[] {
 /**
  * 期限を日本語形式でフォーマットする
  */
-export function formatDueDate(due: any): string {
+export function formatDueDate(due: {
+  date: string;
+  datetime?: string | null;
+}): string {
   if (!due || !due.date) {
     return "";
   }
@@ -61,7 +63,7 @@ export function formatDueDate(due: any): string {
     (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
   );
   if (diffDays <= 7) {
-    return `${diffDays}日後`;
+    return `${diffDays + 1}日後`;
   }
 
   // 1週間以上先の場合は日付を表示
@@ -87,12 +89,12 @@ export function getDueDateUrgency(due: {
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
 
-  if (dueDate < today) {
-    return "overdue";
-  }
-
   if (isSameDate(dueDate, today)) {
     return "today";
+  }
+
+  if (dueDate < today) {
+    return "overdue";
   }
 
   if (isSameDate(dueDate, tomorrow)) {

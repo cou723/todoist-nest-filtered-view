@@ -77,15 +77,15 @@ export class TodoistService {
     // 祖タスクIDも収集
     const grandparentIdsToFetch: Set<string> = new Set();
     for (const task of tasks) {
-      if (task.parentId && this.allTasksCache.has(task.parentId)) {
-        const parentTask = this.allTasksCache.get(task.parentId)!;
-        if (
-          parentTask.parentId &&
-          !this.parentTaskCache.has(parentTask.parentId) &&
-          !this.allTasksCache.has(parentTask.parentId)
-        ) {
-          grandparentIdsToFetch.add(parentTask.parentId);
-        }
+      if (!task.parentId) continue;
+      const parentTask = this.allTasksCache.get(task.parentId);
+      if (!parentTask) continue;
+      if (
+        parentTask.parentId &&
+        !this.parentTaskCache.has(parentTask.parentId) &&
+        !this.allTasksCache.has(parentTask.parentId)
+      ) {
+        grandparentIdsToFetch.add(parentTask.parentId);
       }
     }
 
@@ -104,18 +104,22 @@ export class TodoistService {
 
         // キャッシュにない場合は、allTasksCacheから取得
         if (!parentTaskName && this.allTasksCache.has(task.parentId)) {
-          const parentTask = this.allTasksCache.get(task.parentId)!;
-          parentTaskName = parentTask.content;
-          this.parentTaskCache.set(task.parentId, parentTaskName);
+          const parentTask = this.allTasksCache.get(task.parentId);
+          if (parentTask) {
+            parentTaskName = parentTask.content;
+            this.parentTaskCache.set(task.parentId, parentTaskName);
+          }
         }
 
-        enrichedTask.parentTaskName = parentTaskName || "不明な親タスク";
-        enrichedTask.parentTaskId = task.parentId;
+        enrichedTask.parentTask = {
+          name: parentTaskName || "不明な親タスク",
+          id: task.parentId,
+        };
 
         // 祖タスク名も取得
         if (this.allTasksCache.has(task.parentId)) {
-          const parentTask = this.allTasksCache.get(task.parentId)!;
-          if (parentTask.parentId) {
+          const parentTask = this.allTasksCache.get(task.parentId);
+          if (parentTask && parentTask.parentId) {
             let grandparentTaskName = this.parentTaskCache.get(
               parentTask.parentId
             );
@@ -126,17 +130,20 @@ export class TodoistService {
             ) {
               const grandparentTask = this.allTasksCache.get(
                 parentTask.parentId
-              )!;
-              grandparentTaskName = grandparentTask.content;
-              this.parentTaskCache.set(
-                parentTask.parentId,
-                grandparentTaskName
               );
+              if (grandparentTask) {
+                grandparentTaskName = grandparentTask.content;
+                this.parentTaskCache.set(
+                  parentTask.parentId,
+                  grandparentTaskName
+                );
+              }
             }
 
-            enrichedTask.grandparentTaskName =
-              grandparentTaskName || "不明な祖タスク";
-            enrichedTask.grandparentTaskId = parentTask.parentId;
+            enrichedTask.grandparentTask = {
+              name: grandparentTaskName || "不明な祖タスク",
+              id: parentTask.parentId,
+            };
           }
         }
       }
@@ -153,7 +160,7 @@ export class TodoistService {
         const parentTask = await this.api.getTask(parentId);
         this.parentTaskCache.set(parentId, parentTask.content);
         this.allTasksCache.set(parentId, parentTask);
-      } catch (e) {
+      } catch {
         // 親タスク取得に失敗した場合
         this.parentTaskCache.set(parentId, "不明な親タスク");
       }

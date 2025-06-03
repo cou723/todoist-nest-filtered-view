@@ -1,7 +1,6 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { formatDueDate, getDueDateUrgency } from "../../../utils/task-utils.js";
-import { when } from "../../../utils/template-utils.js";
 
 @customElement("task-meta-due-date")
 export class TaskMetaDueDate extends LitElement {

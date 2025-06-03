@@ -66,12 +66,12 @@ export class TaskController implements ReactiveController {
 
     try {
       this.tasks = await this.todoistService.getTasksByFilter(query);
-    } catch (e: any) {
-      // AbortErrorの場合は無視（意図的なキャンセル）
-      if (e.name === "AbortError") {
-        return;
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        // AbortErrorの場合は無視（意図的なキャンセル）
+        if (e.name === "AbortError") return;
+        this.error = "フィルタリングに失敗しました: " + (e?.message || e);
       }
-      this.error = "フィルタリングに失敗しました: " + (e?.message || e);
       this.tasks = [];
     } finally {
       this.loading = false;
@@ -89,8 +89,10 @@ export class TaskController implements ReactiveController {
       // ローカルのタスクリストからも削除
       this.tasks = this.tasks.filter((task) => task.id !== taskId);
       this.host.requestUpdate();
-    } catch (e: any) {
-      this.error = "タスクの完了に失敗しました: " + (e?.message || e);
+    } catch (e: unknown) {
+      if (e instanceof Error)
+        this.error = "タスクの完了に失敗しました: " + (e.message || e);
+      else this.error = "タスクの完了に失敗しました: " + String(e);
       this.host.requestUpdate();
     }
   }

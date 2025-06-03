@@ -6,7 +6,7 @@ export class TaskCheckbox extends LitElement {
   @property({ type: String })
   private taskId!: string;
 
-  @property({ type: Function })
+  @property({ attribute: false })
   private onComplete?: (taskId: string) => void;
 
   @property({ type: String })

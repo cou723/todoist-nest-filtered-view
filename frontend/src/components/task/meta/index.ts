@@ -3,8 +3,6 @@ import { customElement, property } from "lit/decorators.js";
 import "./priority.js";
 import "./due-date.js";
 import "./labels.js";
-import { ifDefined } from "lit/directives/if-defined.js";
-import { when } from "../../../utils/template-utils.js";
 
 @customElement("task-meta")
 export class TaskMeta extends LitElement {

@@ -9,18 +9,21 @@
     "preview": "vite preview",
     "deploy": "vercel --prod --yes",
     "type-check": "tsc --noEmit",
-    "lint": "eslint 'src/**/*.{ts,tsx,js,jsx}'"
+    "lint": "eslint 'src/**/*.{ts,tsx,js,jsx}'",
+    "test": "vitest"
   },
   "dependencies": {
     "@doist/todoist-api-typescript": "^4.0.4",
     "lit": "^3.3.0"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "5",
-    "@typescript-eslint/parser": "5",
-    "eslint": "8",
+    "@typescript-eslint/eslint-plugin": "8.33.1",
+    "@typescript-eslint/parser": "8.33.1",
+    "@typescript-eslint/utils": "8.33.1",
+    "eslint": "8.57.0",
     "typescript": "~5.8.3",
     "vercel": "^39.2.4",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^0.34.1"
   }
 }

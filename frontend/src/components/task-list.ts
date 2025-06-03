@@ -16,7 +16,7 @@ export class TaskList extends LitElement {
   @property({ type: String })
   private error = "";
 
-  @property({ type: Function })
+  @property({ attribute: false })
   private onCompleteTask?: (taskId: string) => void;
 
   public render() {

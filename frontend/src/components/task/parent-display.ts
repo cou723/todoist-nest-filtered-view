@@ -18,45 +18,30 @@ export class ParentTaskDisplay extends LitElement {
     );
   }
 
-  private get parentTaskDisplay(): string {
-    if (!this.parentTask?.name) {
-      return "";
-    }
-
-    if (this.grandparentTask) {
-      return `${this.grandparentTask.name} > ${this.parentTask.name}`;
-    }
-
-    return this.parentTask.name;
-  }
-
   public render() {
-    return when(
-      this.parentTaskDisplay,
-      () => html`<div class="parent-task">
-        ${when(
-          this.grandparentTask,
-          (grandparentTask) => html`
-            <span
-              class="parent-task-link"
-              @click=${() => this.openTaskInTodoist(grandparentTask.id)}
-            >
-              ${grandparentTask.name}
-            </span>
-            <span class="separator"> > </span>
-          `
-        )}
-        ${when(
-          this.parentTask,
-          (task) => html`<span
+    return html`<div class="parent-task">
+      ${when(
+        this.grandparentTask,
+        (grandparentTask) => html`
+          <span
             class="parent-task-link"
-            @click=${() => this.openTaskInTodoist(task.id)}
+            @click=${() => this.openTaskInTodoist(grandparentTask.id)}
           >
-            ${task.name}
-          </span>`
-        )}
-      </div>`
-    );
+            ${grandparentTask.name}
+          </span>
+          <span class="separator"> > </span>
+        `
+      )}
+      ${when(
+        this.parentTask,
+        (task) => html`<span
+          class="parent-task-link"
+          @click=${() => this.openTaskInTodoist(task.id)}
+        >
+          ${task.name}
+        </span>`
+      )}
+    </div>`;
   }
 
   public static styles = css`

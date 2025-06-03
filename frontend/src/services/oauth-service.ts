@@ -59,20 +59,14 @@ export class OAuthService {
 
     // stateが見つからない場合でも、基本的なフォーマットチェックを行う
     if (!savedState) {
-      console.warn(
-        "🔐 [OAuth] 警告: 保存されたstateが見つかりません。stateの基本検証のみ実行します。"
-      );
-
       // stateが有効なUUID形式かチェック
       const uuidRegex =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(state)) {
-        console.error("🔐 [OAuth] エラー: stateが無効な形式です");
         throw new Error("Invalid state parameter: Invalid format");
       }
     } else {
       if (savedState !== state) {
-        console.error("🔐 [OAuth] エラー: stateが一致しません");
         throw new Error("Invalid state parameter: State mismatch");
       }
     }
@@ -118,8 +112,6 @@ export class OAuthService {
         tokenType: tokenData.token_type || "Bearer",
       };
     } catch (error) {
-      console.error("🔐 [OAuth] トークン取得エラー:", error);
-
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to exchange code for token: ${errorMessage}`);
