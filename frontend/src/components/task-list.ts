@@ -1,5 +1,6 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
 import type { TaskWithParent } from "../types/task.js";
 import { layoutStyles } from "../styles/common.js";
 import { sortTasksByPriority } from "../utils/task-utils.js";
@@ -36,12 +37,15 @@ export class TaskList extends LitElement {
 
     return html`
       <ul class="task-list">
-        ${sortedTasks.map(
-          (task) =>
-            html`<task-item
+        ${repeat(
+          sortedTasks,
+          (task) => task.id,
+          (task) => html`
+            <task-item
               .task=${task}
               .onCompleteTask=${this.onCompleteTask}
-            ></task-item>`
+            ></task-item>
+          `
         )}
       </ul>
     `;
