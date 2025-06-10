@@ -20,7 +20,9 @@ export class TodoistService {
     return this.enrichTasksWithParentNames(response.results);
   }
 
-  public async getTasksByFilter(query?: string): Promise<TaskWithParent[]> {
+  public async getTasksWithParentByFilter(
+    query?: string
+  ): Promise<TaskWithParent[]> {
     if (!query || !query.trim()) {
       // queryが空または未指定の場合は全件取得
       return this.getAllTasks();

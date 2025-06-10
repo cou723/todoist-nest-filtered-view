@@ -65,7 +65,7 @@ export class TaskController implements ReactiveController {
     this.host.requestUpdate();
 
     try {
-      this.tasks = await this.todoistService.getTasksByFilter(query);
+      this.tasks = await this.todoistService.getTasksWithParentByFilter(query);
     } catch (e: unknown) {
       if (e instanceof Error) {
         // AbortErrorの場合は無視（意図的なキャンセル）
