@@ -1,6 +1,6 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { TaskWithParent } from "../../types/task.js";
+import type { TaskNode } from "../../types/task.js";
 import "./checkbox.js";
 import "./parent-display.js";
 import "./meta";
@@ -9,7 +9,7 @@ import "./content.js";
 @customElement("task-item")
 export class TaskItem extends LitElement {
   @property({ type: Object })
-  public task!: TaskWithParent;
+  public task!: TaskNode;
 
   @property({ attribute: false })
   public onCompleteTask?: (taskId: string) => void;
@@ -19,8 +19,8 @@ export class TaskItem extends LitElement {
       <li class="task-item">
         <div class="task-left">
           <parent-task-display
-            .grandparentTask=${this.task.grandparentTask}
-            .parentTask=${this.task.parentTask}
+            .grandparentTask=${{ id: this.task.parent?.parentId ?? "" }}
+            .parentTask=${this.task.parent}
           ></parent-task-display>
 
           <div class="task-main">

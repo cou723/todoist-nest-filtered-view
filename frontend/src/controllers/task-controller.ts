@@ -1,5 +1,5 @@
 import type { ReactiveController, ReactiveControllerHost } from "lit";
-import type { TaskWithParent } from "../types/task.js";
+import type { TaskNode } from "../types/task.js";
 import { TodoistService } from "../services/todoist-service.js";
 
 export interface TaskControllerHost extends ReactiveControllerHost {
@@ -12,7 +12,7 @@ export class TaskController implements ReactiveController {
   private currentRequestController: AbortController | null = null;
 
   // 状態
-  public tasks: TaskWithParent[] = [];
+  public tasks: TaskNode[] = [];
   public loading = false;
   public error = "";
 
@@ -65,7 +65,7 @@ export class TaskController implements ReactiveController {
     this.host.requestUpdate();
 
     try {
-      this.tasks = await this.todoistService.getTasksWithParentByFilter(query);
+      this.tasks = await this.todoistService.getTasksTree(query);
     } catch (e: unknown) {
       if (e instanceof Error) {
         // AbortErrorの場合は無視（意図的なキャンセル）

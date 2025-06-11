@@ -5,7 +5,7 @@ import {
   formatDueDate,
   getDueDateUrgency,
 } from "./task-utils.js";
-import type { TaskWithParent } from "../types/task.js";
+import type { TaskNode } from "../types/task.js";
 
 describe("getPriorityText", () => {
   it("returns correct text for each priority", () => {
@@ -25,7 +25,7 @@ describe("sortTasksByPriority", () => {
       { priority: 2 },
       { priority: 3 },
     ];
-    const sorted = sortTasksByPriority(tasks as TaskWithParent[]);
+    const sorted = sortTasksByPriority(tasks as TaskNode[]);
     expect(sorted.map((t) => t.priority)).toEqual([4, 3, 2, 1]);
   });
 });

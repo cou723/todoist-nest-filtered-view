@@ -118,7 +118,6 @@ export class AuthComponent extends LitElement {
             }}
             >ログアウト</ui-button
           >
-          <h2>タスク一覧</h2>
         </div>
       `;
     }

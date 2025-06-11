@@ -1,4 +1,4 @@
-import type { TaskWithParent } from "../types/task.js";
+import type { TaskNode } from "../types/task.js";
 
 export function getPriorityText(priority: number): string {
   switch (priority) {
@@ -18,7 +18,7 @@ export function getPriorityText(priority: number): string {
  * タスクを優先順位順にソートする
  * 優先順位4（緊急/重要）が最上位、1（不急/些末）が最下位
  */
-export function sortTasksByPriority(tasks: TaskWithParent[]): TaskWithParent[] {
+export function sortTasksByPriority(tasks: TaskNode[]): TaskNode[] {
   return [...tasks].sort((a, b) => {
     return b.priority - a.priority;
   });

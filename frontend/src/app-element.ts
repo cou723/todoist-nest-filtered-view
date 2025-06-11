@@ -8,6 +8,7 @@ import "./components/auth-component.js";
 import "./components/task-filter.js";
 import "./components/task-list.js";
 import "./components/ui/theme-toggle.js";
+import "./components/ui/panel.js";
 
 @customElement("app-element")
 export class AppElement extends LitElement {
@@ -75,49 +76,39 @@ export class AppElement extends LitElement {
   public render() {
     return html`
       <div class="app-container">
-        <div class="header">
-          <h1>タスク</h1>
-          <theme-toggle></theme-toggle>
-        </div>
-
-        <auth-component
-          .isAuthenticated=${this.authController.isAuthenticated}
-          @auth-login=${this.handleAuthLogin}
-          @auth-logout=${this.handleAuthLogout}
-        ></auth-component>
-
-        ${when(
-          this.authController.isAuthenticated,
-          () => html`
-            <task-filter
-              @filter-apply=${this.handleFilterApply}
-              @filter-clear=${this.handleFilterClear}
-            ></task-filter>
-
-            <task-list
-              .tasks=${this.taskController.tasks}
-              .loading=${this.taskController.loading}
-              .error=${this.taskController.error}
-              .onCompleteTask=${this.handleCompleteTask.bind(this)}
-            ></task-list>
-          `
-        )}
+        <theme-toggle></theme-toggle>
+        <ui-panel>
+          <div class="header">
+            <h1>タスク</h1>
+          </div>
+          <auth-component
+            .isAuthenticated=${this.authController.isAuthenticated}
+            @auth-login=${this.handleAuthLogin}
+            @auth-logout=${this.handleAuthLogout}
+          ></auth-component>
+          ${when(
+            this.authController.isAuthenticated,
+            () => html`
+              <task-filter
+                @filter-apply=${this.handleFilterApply}
+                @filter-clear=${this.handleFilterClear}
+              ></task-filter>
+              <task-list
+                .tasks=${this.taskController.tasks}
+                .loading=${this.taskController.loading}
+                .error=${this.taskController.error}
+                .onCompleteTask=${this.handleCompleteTask.bind(this)}
+              ></task-list>
+            `
+          )}
+        </ui-panel>
       </div>
     `;
   }
 
   public static styles = css`
     :host {
-      max-width: 480px;
       margin: 0.5rem auto;
-      padding: 1rem;
-      text-align: center;
-      display: block;
-      background: var(--card-bg);
-      border-radius: 8px;
-      box-shadow: 0 2px 8px var(--card-shadow);
-      color: var(--text-color);
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     .app-container {

@@ -1,7 +1,7 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
-import type { TaskWithParent } from "../types/task.js";
+import type { TaskNode } from "../types/task.js";
 import { layoutStyles } from "../styles/common.js";
 import { sortTasksByPriority } from "../utils/task-utils.js";
 import "./task/index.js";
@@ -9,7 +9,7 @@ import "./task/index.js";
 @customElement("task-list")
 export class TaskList extends LitElement {
   @property({ type: Array })
-  private tasks: TaskWithParent[] = [];
+  private tasks: TaskNode[] = [];
 
   @property({ type: Boolean })
   private loading = false;
