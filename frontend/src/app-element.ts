@@ -1,10 +1,11 @@
 import { LitElement, css, html } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { AuthController } from "./controllers/auth-controller.js";
 import { TaskController } from "./controllers/task-controller.js";
 import { FilterController } from "./controllers/filter-controller.js";
 import { when } from "./utils/template-utils.js";
-import "./components/auth-component.js";
+import "./components/auth-button.js";
+import "./components/setting-button.js";
 import "./components/task-filter.js";
 import "./components/task-list.js";
 import "./components/ui/theme-toggle.js";
@@ -16,6 +17,9 @@ export class AppElement extends LitElement {
   private authController = new AuthController(this);
   private taskController = new TaskController(this);
   private filterController = new FilterController(this);
+
+  @state()
+  private filterModalOpen = false;
 
   public connectedCallback() {
     super.connectedCallback();
@@ -80,18 +84,25 @@ export class AppElement extends LitElement {
         <ui-panel>
           <div class="header">
             <h1>タスク</h1>
+            <div class="header-actions">
+              <setting-button
+                @settings-click=${() => (this.filterModalOpen = true)}
+              ></setting-button>
+              <auth-button
+                .isAuthenticated=${this.authController.isAuthenticated}
+                @auth-login=${this.handleAuthLogin}
+                @auth-logout=${this.handleAuthLogout}
+              ></auth-button>
+            </div>
           </div>
-          <auth-component
-            .isAuthenticated=${this.authController.isAuthenticated}
-            @auth-login=${this.handleAuthLogin}
-            @auth-logout=${this.handleAuthLogout}
-          ></auth-component>
           ${when(
             this.authController.isAuthenticated,
             () => html`
               <task-filter
+                .modalOpen=${this.filterModalOpen}
                 @filter-apply=${this.handleFilterApply}
                 @filter-clear=${this.handleFilterClear}
+                @modal-close=${() => (this.filterModalOpen = false)}
               ></task-filter>
               <task-list
                 .tasks=${this.taskController.tasks}
@@ -122,12 +133,21 @@ export class AppElement extends LitElement {
       justify-content: space-between;
       align-items: center;
       margin-bottom: 0.5rem;
+      gap: 2rem;
+      display: flex;
+      align-items: center;
     }
 
     .header h1 {
       margin: 0;
       font-size: 1.1rem;
       color: var(--text-color);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
     }
   `;
 }
