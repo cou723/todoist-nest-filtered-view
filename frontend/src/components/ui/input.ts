@@ -1,5 +1,6 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { resetCss } from "../../styles/reset";
 
 @customElement("ui-input")
 export class UIInput extends LitElement {
@@ -37,34 +38,37 @@ export class UIInput extends LitElement {
     `;
   }
 
-  public static styles = css`
-    input {
-      padding: 0.5em;
-      font-size: 1em;
-      border-radius: 4px;
-      border: 1px solid var(--input-border);
-      background: var(--input-bg);
-      color: var(--text-color);
-      width: 100%;
-      box-sizing: border-box;
-      transition: all 0.25s ease;
-    }
+  public static styles = [
+    resetCss,
+    css`
+      input {
+        padding: 0.5em;
+        font-size: 1em;
+        border-radius: 4px;
+        border: 1px solid var(--input-border);
+        background: var(--input-bg);
+        color: var(--text-color);
+        width: 100%;
+        box-sizing: border-box;
+        transition: all 0.25s ease;
+      }
 
-    input:focus {
-      outline: 2px solid var(--primary-color);
-      outline-offset: 2px;
-      border-color: var(--primary-color);
-    }
+      input:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+        border-color: var(--primary-color);
+      }
 
-    input:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+      input:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
 
-    input::placeholder {
-      color: var(--text-secondary);
-    }
-  `;
+      input::placeholder {
+        color: var(--text-secondary);
+      }
+    `,
+  ];
 }
 
 declare global {

@@ -1,5 +1,6 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { resetCss } from "../../styles/reset";
 
 @customElement("ui-modal")
 export class Modal extends LitElement {
@@ -59,68 +60,71 @@ export class Modal extends LitElement {
     `;
   }
 
-  public static styles = css`
-    .modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
+  public static styles = [
+    resetCss,
+    css`
+      .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
 
-    .modal-content {
-      background: var(--card-bg);
-      border-radius: 8px;
-      box-shadow: 0 4px 16px var(--card-shadow);
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
+      .modal-content {
+        background: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: 0 4px 16px var(--card-shadow);
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
 
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid var(--border-color);
-    }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+      }
 
-    .modal-header h3 {
-      margin: 0;
-      color: var(--text-color);
-      font-size: 1.25rem;
-    }
+      .modal-header h3 {
+        margin: 0;
+        color: var(--text-color);
+        font-size: 1.25rem;
+      }
 
-    .close-button {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--text-color);
-      padding: 0;
-      width: 2rem;
-      height: 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
-      transition: background-color 0.2s ease;
-    }
+      .close-button {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-color);
+        padding: 0;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+      }
 
-    .close-button:hover {
-      background: var(--hover-bg);
-    }
+      .close-button:hover {
+        background: var(--hover-bg);
+      }
 
-    .modal-body {
-      padding: 1.5rem;
-    }
-  `;
+      .modal-body {
+        padding: 1.5rem;
+      }
+    `,
+  ];
 }
 
 declare global {

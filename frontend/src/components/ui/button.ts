@@ -1,5 +1,6 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { resetCss } from "../../styles/reset";
 
 @customElement("ui-button")
 export class UIButton extends LitElement {
@@ -24,58 +25,61 @@ export class UIButton extends LitElement {
     `;
   }
 
-  public static styles = css`
-    button {
-      padding: 0.5em 1.5em;
-      font-size: 1em;
-      border-radius: 4px;
-      border: 1px solid var(--border-color);
-      background: var(--button-bg);
-      color: var(--text-color);
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
+  public static styles = [
+    resetCss,
+    css`
+      button {
+        padding: 0.5em 1.5em;
+        font-size: 1em;
+        border-radius: 4px;
+        border: none;
+        background: var(--button-bg);
+        color: var(--text-color);
+        cursor: pointer;
+        transition: all 0.25s ease;
+      }
 
-    button:hover:not(:disabled) {
-      background-color: var(--button-hover-bg);
-      border-color: var(--primary-color);
-    }
+      button:hover:not(:disabled) {
+        background-color: var(--button-hover-bg);
+        border-color: var(--primary-color);
+      }
 
-    button:focus,
-    button:focus-visible {
-      outline: 2px solid var(--primary-color);
-      outline-offset: 2px;
-    }
+      button:focus,
+      button:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+      }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
 
-    /* Primary variant */
-    button.primary {
-      background-color: var(--primary-color, #007bff);
-      color: white;
-      border-color: var(--primary-color, #007bff);
-    }
+      /* Primary variant */
+      button.primary {
+        background-color: var(--primary-color, #007bff);
+        color: white;
+        border-color: var(--primary-color, #007bff);
+      }
 
-    button.primary:hover:not(:disabled) {
-      background-color: var(--primary-hover-color, #0056b3);
-      border-color: var(--primary-hover-color, #0056b3);
-    }
+      button.primary:hover:not(:disabled) {
+        background-color: var(--primary-hover-color, #0056b3);
+        border-color: var(--primary-hover-color, #0056b3);
+      }
 
-    /* Secondary variant */
-    button.secondary {
-      background-color: transparent;
-      color: var(--text-color);
-      border: 1px solid var(--border-color, #ccc);
-    }
+      /* Secondary variant */
+      button.secondary {
+        background-color: transparent;
+        color: var(--text-color);
+        border: 1px solid var(--border-color, #ccc);
+      }
 
-    button.secondary:hover:not(:disabled) {
-      background-color: var(--secondary-hover-bg, #f8f9fa);
-      border-color: var(--text-color);
-    }
-  `;
+      button.secondary:hover:not(:disabled) {
+        background-color: var(--secondary-hover-bg, #f8f9fa);
+        border-color: var(--text-color);
+      }
+    `,
+  ];
 }
 
 declare global {
