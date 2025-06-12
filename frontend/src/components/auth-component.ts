@@ -1,21 +1,15 @@
 import { LitElement, css, html } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { layoutStyles } from "../styles/common.js";
 import { AuthController } from "../controllers/auth-controller.js";
 import { when } from "../utils/template-utils.js";
 import "./ui/button.js";
-import "./ui/input.js";
 
 @customElement("auth-component")
 export class AuthComponent extends LitElement {
   @property({ type: Boolean })
   private isAuthenticated = false;
 
-  @state()
-  private token = "";
-
-  @state()
-  private showManualTokenInput = false;
 
   private authController: AuthController;
 
@@ -26,8 +20,6 @@ export class AuthComponent extends LitElement {
 
   public connectedCallback() {
     super.connectedCallback();
-    this.token = this.authController.getStoredToken() || "";
-
     // コントローラーの認証状態を同期
     this.isAuthenticated = this.authController.isAuthenticated;
 
@@ -95,10 +87,6 @@ export class AuthComponent extends LitElement {
     window.history.replaceState({}, document.title, url.toString());
   }
 
-  private toggleManualTokenInput() {
-    this.showManualTokenInput = !this.showManualTokenInput;
-    this.authController.clearAuthError();
-  }
 
   public render() {
     if (this.isAuthenticated) {
@@ -107,8 +95,6 @@ export class AuthComponent extends LitElement {
           <ui-button
             @click=${() => {
               this.authController.logout();
-              this.token = "";
-              this.showManualTokenInput = false;
               this.dispatchEvent(
                 new CustomEvent("auth-logout", {
                   bubbles: true,
@@ -142,65 +128,19 @@ export class AuthComponent extends LitElement {
             <div class="error-message">${this.authController.authError}</div>
           `
         )}
-        ${!this.showManualTokenInput
-          ? html`
-              <div class="oauth-section">
-                <p>Todoistアカウントでログインしてください</p>
-                <ui-button
-                  @click=${() => {
-                    const oauthService = this.authController.getOAuthService();
-                    const authUrl = oauthService.generateAuthUrl();
-                    window.location.href = authUrl;
-                  }}
-                  variant="primary"
-                >
-                  Todoistでログイン
-                </ui-button>
-                <ui-button
-                  あー
-                  @click=${this.toggleManualTokenInput}
-                  variant="secondary"
-                >
-                  APIトークンで手動ログイン
-                </ui-button>
-              </div>
-            `
-          : html`
-              <div class="manual-section">
-                <p>Todoist APIトークンを入力してください</p>
-                <ui-input
-                  type="password"
-                  .value=${this.token}
-                  @input-change=${(e: CustomEvent) => {
-                    this.token = e.detail.value;
-                  }}
-                  placeholder="Todoist APIトークン"
-                ></ui-input>
-                <div class="manual-buttons">
-                  <ui-button
-                    @click=${() => {
-                      if (this.token.trim()) {
-                        this.authController.login(this.token);
-                        this.dispatchEvent(
-                          new CustomEvent("auth-login", {
-                            detail: { token: this.token },
-                            bubbles: true,
-                            composed: true,
-                          })
-                        );
-                      }
-                    }}
-                    >ログイン</ui-button
-                  >
-                  <ui-button
-                    @click=${this.toggleManualTokenInput}
-                    variant="secondary"
-                  >
-                    戻る
-                  </ui-button>
-                </div>
-              </div>
-            `}
+        <div class="oauth-section">
+          <p>Todoistアカウントでログインしてください</p>
+          <ui-button
+            @click=${() => {
+              const oauthService = this.authController.getOAuthService();
+              const authUrl = oauthService.generateAuthUrl();
+              window.location.href = authUrl;
+            }}
+            variant="primary"
+          >
+            Todoistでログイン
+          </ui-button>
+        </div>
       </div>
     `;
   }
@@ -222,20 +162,12 @@ export class AuthComponent extends LitElement {
         margin-bottom: 1em;
       }
 
-      .oauth-section,
-      .manual-section {
+      .oauth-section {
         display: flex;
         flex-direction: column;
         gap: 1rem;
         align-items: center;
         width: 100%;
-      }
-
-      .manual-buttons {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        justify-content: center;
       }
 
       .error-message {
@@ -268,10 +200,6 @@ export class AuthComponent extends LitElement {
         }
       }
 
-      ui-input {
-        width: 80%;
-        margin-top: 0.5em;
-      }
 
       h2 {
         color: var(--text-color);
