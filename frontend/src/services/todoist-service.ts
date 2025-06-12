@@ -6,15 +6,12 @@ export class TodoistService {
   private api: TodoistApi;
   private allTasksCache: Map<string, Task> = new Map();
   private pendingFetches: Map<string, Promise<Task | undefined>> = new Map();
-  private cacheTimestamp = 0;
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5分間キャッシュ
 
   constructor(token: string) {
     this.api = new TodoistApi(token);
   }
 
   public async getTasksTree(query?: string): Promise<TaskNode[]> {
-    console.log(`getTasksTree called with query: ${query}`);
     const tasks = await this.fetchTasksByFilter(query);
     return (
       await Promise.all(tasks.map((task) => this.fetchTaskNode(task.id)))
@@ -93,6 +90,5 @@ export class TodoistService {
   // キャッシュをクリアするメソッド（必要に応じて使用）
   public clearCache() {
     this.allTasksCache.clear();
-    this.cacheTimestamp = 0;
   }
 }
