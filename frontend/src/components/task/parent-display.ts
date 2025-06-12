@@ -1,14 +1,11 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { when } from "../../utils/template-utils.js";
+import type { TaskNode } from "../../types/task.js";
 
 @customElement("parent-task-display")
 export class ParentTaskDisplay extends LitElement {
-  @property({ type: Object })
-  public parentTask?: { id: string; name: string };
-
-  @property({ type: Object })
-  public grandparentTask?: { id: string; name: string };
+  @property({ type: Array })
+  public ancestorChain: TaskNode[] = [];
 
   private openTaskInTodoist(taskId: string): void {
     window.open(
@@ -19,28 +16,23 @@ export class ParentTaskDisplay extends LitElement {
   }
 
   public render() {
+    if (this.ancestorChain.length === 0) {
+      return html``;
+    }
+
     return html`<div class="parent-task">
-      ${when(
-        this.grandparentTask,
-        (grandparentTask) => html`
-          <span
-            class="parent-task-link"
-            @click=${() => this.openTaskInTodoist(grandparentTask.id)}
-          >
-            ${grandparentTask.name}
-          </span>
-          <span class="separator"> > </span>
-        `
-      )}
-      ${when(
-        this.parentTask,
-        (task) => html`<span
+      ${this.ancestorChain.map((ancestor, index) => html`
+        <span
           class="parent-task-link"
-          @click=${() => this.openTaskInTodoist(task.id)}
+          @click=${() => this.openTaskInTodoist(ancestor.id)}
         >
-          ${task.name}
-        </span>`
-      )}
+          ${ancestor.content}
+        </span>
+        ${index < this.ancestorChain.length - 1 
+          ? html`<span class="separator"> > </span>` 
+          : ''
+        }
+      `)}
     </div>`;
   }
 

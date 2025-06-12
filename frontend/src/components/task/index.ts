@@ -14,13 +14,24 @@ export class TaskItem extends LitElement {
   @property({ attribute: false })
   public onCompleteTask?: (taskId: string) => void;
 
+  private buildAncestorChain(task: TaskNode): TaskNode[] {
+    const chain: TaskNode[] = [];
+    let current = task.parent;
+    
+    while (current) {
+      chain.unshift(current); // 配列の先頭に追加（最も古い祖先から順番に）
+      current = current.parent;
+    }
+    
+    return chain;
+  }
+
   public render() {
     return html`
       <li class="task-item">
         <div class="task-left">
           <parent-task-display
-            .grandparentTask=${{ id: this.task.parent?.parentId ?? "" }}
-            .parentTask=${this.task.parent}
+            .ancestorChain=${this.buildAncestorChain(this.task)}
           ></parent-task-display>
 
           <div class="task-main">
