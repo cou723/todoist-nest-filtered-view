@@ -6,7 +6,7 @@ import { FilterController } from "./controllers/filter-controller.js";
 import { when } from "./utils/template-utils.js";
 import "./components/auth-button.js";
 import "./components/setting-button.js";
-import "./components/task-filter.js";
+import "./components/setting-modal.js";
 import "./components/task-list.js";
 import "./components/ui/theme-toggle.js";
 import "./components/ui/panel.js";
@@ -19,7 +19,7 @@ export class AppElement extends LitElement {
   private filterController = new FilterController(this);
 
   @state()
-  private filterModalOpen = false;
+  private settingModalOpen = false;
 
   public connectedCallback() {
     super.connectedCallback();
@@ -86,7 +86,7 @@ export class AppElement extends LitElement {
             <h1>タスク</h1>
             <div class="header-actions">
               <setting-button
-                @settings-click=${() => (this.filterModalOpen = true)}
+                @settings-click=${() => (this.settingModalOpen = true)}
               ></setting-button>
               <auth-button
                 .isAuthenticated=${this.authController.isAuthenticated}
@@ -98,12 +98,12 @@ export class AppElement extends LitElement {
           ${when(
             this.authController.isAuthenticated,
             () => html`
-              <task-filter
-                .modalOpen=${this.filterModalOpen}
+              <setting-modal
+                .modalOpen=${this.settingModalOpen}
                 @filter-apply=${this.handleFilterApply}
                 @filter-clear=${this.handleFilterClear}
-                @modal-close=${() => (this.filterModalOpen = false)}
-              ></task-filter>
+                @modal-close=${() => (this.settingModalOpen = false)}
+              ></setting-modal>
               <task-list
                 .tasks=${this.taskController.tasks}
                 .loading=${this.taskController.loading}

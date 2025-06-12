@@ -5,8 +5,8 @@ import "./ui/button.js";
 import "./ui/input.js";
 import "./ui/modal.js";
 
-@customElement("task-filter")
-export class TaskFilter extends LitElement {
+@customElement("setting-modal")
+export class SettingModal extends LitElement {
   @state()
   private filterQuery = "";
 
@@ -157,6 +157,6 @@ export class TaskFilter extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "task-filter": TaskFilter;
+    "setting-modal": SettingModal;
   }
 }
