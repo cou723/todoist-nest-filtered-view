@@ -18,7 +18,7 @@ export class TodoistService {
     ).filter((t) => t != undefined);
   }
 
-  private async fetchTasksByFilter(query?: string): Promise<Task[]> {
+  public async fetchTasksByFilter(query?: string): Promise<Task[]> {
     const response = query
       ? await this.api.getTasksByFilter({ query })
       : await this.api.getTasks();

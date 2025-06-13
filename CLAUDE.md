@@ -1,82 +1,122 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+このファイルは、Claude Code（claude.ai/code）がこのリポジトリ内のコードを扱う際のガイドラインを提供します。
 
-## Project Architecture
+## プロジェクト構成
 
-This is a fullstack Todoist task list application split into two main parts:
+これは、2つの主要部分に分かれたフルスタックのTodoistタスクリストアプリケーションです：
 
-### Frontend (`frontend/`)
-- **Tech Stack**: Lit (Web Components), TypeScript, Vite
-- **Architecture**: Controller-based reactive pattern using Lit's ReactiveController
-- **Key Controllers**:
-  - `AuthController`: Manages OAuth authentication state and token storage
-  - `TaskController`: Handles Todoist task fetching, caching, and operations
-  - `FilterController`: Manages task filtering and query state
-- **Services**: 
-  - `TodoistService`: Core API wrapper around @doist/todoist-api-typescript
-  - `OAuthService`: Handles OAuth flow with proxy server
-  - `ThemeService`: Dark/light theme management
+### フロントエンド（`frontend/`）
 
-### Proxy Server (`proxy/`)
-- **Tech Stack**: Deno, TypeScript
-- **Purpose**: OAuth proxy to handle CORS and secure client secret
-- **Endpoints**:
-  - `/oauth/token`: Exchanges authorization code for access token
-  - `/oauth/revoke`: Revokes access tokens
-- **Deployment**: Deno Deploy
+* **技術スタック**：Lit（Web Components）、TypeScript、Vite
+* **アーキテクチャ**：LitのReactiveControllerを使用したコントローラーベースのリアクティブパターン
+* **主要コントローラー**：
 
-## Development Commands
+  * `AuthController`: OAuth認証状態とトークンの管理を行う
+  * `FilteredTaskController`: フィルタリングされたTodoistタスクの取得、キャッシュ、操作を処理
+  * `FilterController`: タスクのフィルタリングとクエリ状態を管理
+  * `GoalMilestoneController`: @goalタスクのマイルストーン統計を管理
+* **サービス**：
 
-### Frontend
+  * `TodoistService`: `@doist/todoist-api-typescript` をラップした主要API
+  * `OAuthService`: プロキシサーバーを用いたOAuthフローの処理
+  * `ThemeService`: ダーク／ライトテーマの管理
+
+### プロキシサーバー（`proxy/`）
+
+* **技術スタック**：Deno、TypeScript
+* **目的**：CORS対策およびクライアントシークレットの安全な取り扱いを行うOAuthプロキシ
+* **エンドポイント**：
+
+  * `/oauth/token`: 認可コードをアクセストークンに交換
+  * `/oauth/revoke`: アクセストークンの失効
+* **デプロイ先**：Deno Deploy
+
+## 開発用コマンド
+
+### フロントエンド
+
 ```bash
 cd frontend
-pnpm install           # Install dependencies
-pnpm dev              # Start dev server (port 5173)
-pnpm build            # Build for production
-pnpm type-check       # TypeScript type checking
-pnpm lint             # ESLint code checking
-pnpm test             # Run tests with Vitest
+pnpm install           # 依存関係のインストール
+pnpm dev               # 開発サーバーを起動（ポート5173）
+pnpm build             # 本番用ビルド
+pnpm type-check        # TypeScript型チェック
+pnpm lint              # ESLintによるコードチェック
+pnpm test              # Vitestでテストを実行
 ```
 
-### Proxy Server
+### プロキシサーバー
+
 ```bash
 cd proxy
-deno task dev         # Start dev server with watch mode (port 8000)
-deno task start       # Start production server
-deno task fmt         # Format code
-deno task lint        # Lint code
-deno task check       # Type check
+deno task dev          # ウォッチモードで開発サーバー起動（ポート8000）
+deno task start        # 本番用サーバー起動
+deno task fmt          # コードの整形
+deno task lint         # コードのリント
+deno task check        # 型チェック
 ```
 
-### Development Workflow
-- Use `./dev.sh` from root to start both frontend and proxy concurrently
-- Frontend runs on http://localhost:5173
-- Proxy runs on http://localhost:8000
+### 開発ワークフロー
 
-## Key Implementation Details
+* ルートディレクトリの `./dev.sh` を使用して、フロントエンドとプロキシを同時起動可能
+* フロントエンドは [http://localhost:5173](http://localhost:5173) で稼働
+* プロキシは [http://localhost:8000](http://localhost:8000) で稼働
 
-### Task Data Structure
-Tasks are enhanced with parent task information using a recursive `TaskNode` type that includes the full parent chain for nested task display.
+## 主要な実装の詳細
 
-### Authentication Flow
-1. Frontend initiates OAuth flow with Todoist
-2. Proxy server handles token exchange using stored client secret
-3. Tokens are stored in localStorage and managed by AuthController
+### タスクデータ構造
 
-### Task Caching
-TodoistService implements intelligent caching:
-- 5-minute cache duration for API responses
-- Task hierarchy is built recursively with parent task fetching
-- Cache is cleared on task completion operations
+タスクは、親タスク情報を含む再帰的な `TaskNode` 型で拡張されており、ネストされたタスクの表示に対応。
 
-### Component Architecture
-- Uses Lit's reactive controller pattern for state management
-- All components are custom elements following kebab-case naming
-- UI components are in `components/ui/` for reusability
-- Task-specific components use composition pattern
+### 新機能：ゴールマイルストーン統計
 
-### Environment Requirements
-- Node.js 18+ and pnpm for frontend
-- Deno for proxy server
-- Environment variables needed for OAuth configuration
+@goalタスクのうち@non-milestoneタグが付いているタスクの割合を統計表示する機能を追加：
+- `GoalMilestoneController`が@goalタスクを取得・分析
+- リアルタイムで割合を計算・表示
+- 専用パネル`goal-milestone-panel`で常時表示
+
+### 認証フロー
+
+1. フロントエンドがTodoistとのOAuthフローを開始
+2. プロキシサーバーが保存済みクライアントシークレットを使用してトークンを交換
+3. トークンは `localStorage` に保存され、`AuthController` により管理される
+
+### タスクキャッシュ
+
+`TodoistService` はインテリジェントなキャッシュ処理を実装：
+
+* APIレスポンスは5分間キャッシュ
+* 親タスク取得による階層構造を再帰的に構築
+* タスク完了操作時にキャッシュをクリア
+
+### コンポーネントアーキテクチャ
+
+* 状態管理にはLitのReactive Controllerパターンを採用
+* すべてのコンポーネントはkebab-case命名のカスタム要素
+* UIコンポーネントは再利用のために `components/ui/` に配置
+* **主要パネルコンポーネント**：
+  * `app-element`: アプリケーションのメインコンテナ（認証とパネル統合のみ）
+  * `filtered-nested-tasks-panel`: フィルタリングされたタスク一覧の表示と操作
+  * `goal-milestone-panel`: @goalタスクの@non-milestoneタグ割合統計を表示
+* **コンポーネント設計原則**：
+  * 各パネルが独自のコントローラーを持ち、独立して動作
+  * 責任の分離により保守性と再利用性を向上
+  * 合成パターンによる柔軟な組み合わせ
+
+## アーキテクチャの変更履歴
+
+### v2.0 - コンポーネント分離・リファクタリング（最新）
+
+* **TaskController** → **FilteredTaskController**にリネーム（役割を明確化）
+* **パネルコンポーネント化**：
+  * `filtered-nested-tasks-panel`: タスク一覧機能を独立コンポーネント化
+  * `goal-milestone-panel`: ゴール統計専用パネルを追加
+* **app-element簡素化**：認証とパネル統合のみに責任を限定
+* **コントローラーパターン統一**：各パネルが独自のコントローラーを持つ設計
+
+### 動作環境要件
+
+* フロントエンドには Node.js 18+ および pnpm が必要
+* プロキシサーバーには Deno が必要
+* OAuth構成には環境変数の設定が必要

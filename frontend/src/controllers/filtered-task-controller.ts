@@ -2,12 +2,12 @@ import type { ReactiveController, ReactiveControllerHost } from "lit";
 import type { TaskNode } from "../types/task.js";
 import { TodoistService } from "../services/todoist-service.js";
 
-export interface TaskControllerHost extends ReactiveControllerHost {
+export interface FilteredTaskControllerHost extends ReactiveControllerHost {
   requestUpdate(): void;
 }
 
-export class TaskController implements ReactiveController {
-  private host: TaskControllerHost;
+export class FilteredTaskController implements ReactiveController {
+  private host: FilteredTaskControllerHost;
   private todoistService: TodoistService | null = null;
   private currentRequestController: AbortController | null = null;
 
@@ -16,7 +16,7 @@ export class TaskController implements ReactiveController {
   public loading = false;
   public error = "";
 
-  constructor(host: TaskControllerHost) {
+  constructor(host: FilteredTaskControllerHost) {
     this.host = host;
     host.addController(this);
   }
@@ -33,6 +33,11 @@ export class TaskController implements ReactiveController {
   // サービスの初期化
   public initializeService(token: string) {
     this.todoistService = new TodoistService(token);
+  }
+
+  // TodoistServiceへのアクセス
+  public getTodoistService(): TodoistService | null {
+    return this.todoistService;
   }
 
   // サービスのクリア

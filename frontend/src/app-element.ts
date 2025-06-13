@@ -1,118 +1,96 @@
 import { LitElement, css, html } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
 import { AuthController } from "./controllers/auth-controller.js";
-import { TaskController } from "./controllers/task-controller.js";
-import { FilterController } from "./controllers/filter-controller.js";
 import { when } from "./utils/template-utils.js";
 import "./components/auth-button.js";
-import "./components/setting-button.js";
-import "./components/setting-modal.js";
-import "./components/task-list.js";
+import "./components/filtered-nested-tasks-panel.js";
+import "./components/goal-milestone-panel.js";
 import "./components/ui/theme-toggle.js";
-import "./components/ui/panel.js";
 
 @customElement("app-element")
 export class AppElement extends LitElement {
-  // Reactive Controllers
   private authController = new AuthController(this);
-  private taskController = new TaskController(this);
-  private filterController = new FilterController(this);
-
-  @state()
-  private settingModalOpen = false;
 
   public connectedCallback() {
     super.connectedCallback();
-    // 認証状態が確認された後にタスクサービスを初期化
     if (this.authController.isAuthenticated) {
-      this.initializeTaskService();
+      this.initializePanels();
     }
   }
 
-  private async initializeTaskService() {
+  private initializePanels() {
     const token = this.authController.getStoredToken();
     if (!token) return;
 
-    this.taskController.initializeService(token);
-    // 初回起動時にもフィルターを反映
-    await this.taskController.fetchTasksByFilter(
-      this.filterController.getCurrentQuery()
-    );
+    // パネルの初期化は updated() で行う
+    this.requestUpdate();
+  }
+
+  protected updated(changedProperties: Map<string, unknown>) {
+    super.updated(changedProperties);
+    const token = this.authController.getStoredToken();
+    
+    if (token && this.authController.isAuthenticated) {
+      // タスクパネルの初期化
+      const taskPanel = this.shadowRoot?.querySelector('filtered-nested-tasks-panel') as HTMLElement & { 
+        initializeService: (token: string) => void;
+        reinitializeService: (token: string) => void;
+      };
+      if (taskPanel) {
+        taskPanel.initializeService(token);
+      }
+
+      // ゴールマイルストーンパネルの初期化
+      const goalPanel = this.shadowRoot?.querySelector('goal-milestone-panel') as HTMLElement & { 
+        setTodoistService: (service: unknown) => void 
+      };
+      if (goalPanel) {
+        // FilteredTaskControllerから TodoistService を取得する必要があるが、
+        // 今は直接 TodoistService のインスタンスを作成
+        import('./services/todoist-service.js').then(({ TodoistService }) => {
+          const service = new TodoistService(token);
+          goalPanel.setTodoistService(service);
+        });
+      }
+    }
   }
 
   private async handleAuthLogin(e: CustomEvent) {
     const { token } = e.detail;
     this.authController.login(token);
-
-    // タスクサービスを再初期化
-    this.taskController.reinitializeService(token);
-    await this.taskController.fetchTasksByFilter(
-      this.filterController.getCurrentQuery()
-    );
+    this.initializePanels();
   }
 
   private handleAuthLogout() {
     this.authController.logout();
-    this.taskController.clearService();
-    this.filterController.clearFilter();
-  }
-
-  private async handleFilterApply(e: CustomEvent) {
-    const { query } = e.detail;
-    this.filterController.applyFilter(query);
-
-    if (query.trim()) {
-      await this.taskController.fetchTasksByFilter(query);
-    } else {
-      await this.taskController.fetchTasksByFilter();
+    
+    // パネルのクリア
+    const taskPanel = this.shadowRoot?.querySelector('filtered-nested-tasks-panel') as HTMLElement & { 
+      clearService: () => void 
+    };
+    if (taskPanel) {
+      taskPanel.clearService();
     }
-  }
-
-  private async handleFilterClear() {
-    this.filterController.clearFilter();
-    await this.taskController.fetchTasksByFilter();
-  }
-
-  private async handleCompleteTask(taskId: string) {
-    await this.taskController.completeTask(taskId);
   }
 
   public render() {
     return html`
       <div class="app-container">
         <theme-toggle></theme-toggle>
-        <ui-panel>
-          <div class="header">
-            <h1>タスク</h1>
-            <div class="header-actions">
-              <setting-button
-                @settings-click=${() => (this.settingModalOpen = true)}
-              ></setting-button>
-              <auth-button
-                .isAuthenticated=${this.authController.isAuthenticated}
-                @auth-login=${this.handleAuthLogin}
-                @auth-logout=${this.handleAuthLogout}
-              ></auth-button>
-            </div>
-          </div>
-          ${when(
-            this.authController.isAuthenticated,
-            () => html`
-              <setting-modal
-                .modalOpen=${this.settingModalOpen}
-                @filter-apply=${this.handleFilterApply}
-                @filter-clear=${this.handleFilterClear}
-                @modal-close=${() => (this.settingModalOpen = false)}
-              ></setting-modal>
-              <task-list
-                .tasks=${this.taskController.tasks}
-                .loading=${this.taskController.loading}
-                .error=${this.taskController.error}
-                .onCompleteTask=${this.handleCompleteTask.bind(this)}
-              ></task-list>
-            `
-          )}
-        </ui-panel>
+        <div class="auth-header">
+          <auth-button
+            .isAuthenticated=${this.authController.isAuthenticated}
+            @auth-login=${this.handleAuthLogin}
+            @auth-logout=${this.handleAuthLogout}
+          ></auth-button>
+        </div>
+        ${when(
+          this.authController.isAuthenticated,
+          () => html`
+            <filtered-nested-tasks-panel></filtered-nested-tasks-panel>
+            <goal-milestone-panel></goal-milestone-panel>
+          `
+        )}
       </div>
     `;
   }
@@ -128,26 +106,10 @@ export class AppElement extends LitElement {
       gap: 0.5rem;
     }
 
-    .header {
+    .auth-header {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.5rem;
-      gap: 2rem;
-      display: flex;
-      align-items: center;
-    }
-
-    .header h1 {
-      margin: 0;
-      font-size: 1.1rem;
-      color: var(--text-color);
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
+      justify-content: flex-end;
+      padding: 0.5rem;
     }
   `;
 }
