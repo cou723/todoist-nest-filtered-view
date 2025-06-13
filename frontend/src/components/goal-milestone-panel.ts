@@ -13,45 +13,36 @@ export class GoalMilestonePanel extends LitElement {
   }
 
   public render() {
-    if (this.goalMilestoneController.loading) {
-      return html`
-        <ui-panel>
-          <div class="goal-milestone-stats">
-            <h2>ゴール進捗</h2>
-            <p class="loading">読み込み中...</p>
-          </div>
-        </ui-panel>
-      `;
-    }
-
-    if (this.goalMilestoneController.error) {
-      return html`
-        <ui-panel>
-          <div class="goal-milestone-stats">
-            <h2>ゴール進捗</h2>
-            <p class="error">${this.goalMilestoneController.error}</p>
-          </div>
-        </ui-panel>
-      `;
-    }
-
-    const { percentage, goalCount, nonMilestoneCount } = this.goalMilestoneController.calculateGoalMilestoneRatio();
-
     return html`
       <ui-panel>
         <div class="goal-milestone-stats">
-          <h2>ゴール進捗</h2>
-          <div class="stats-content">
-            <div class="percentage">${percentage}%</div>
-            <div class="description">
-              @non-milestone タスクの割合
-            </div>
-            <div class="details">
-              ${nonMilestoneCount} / ${goalCount} タスク
-            </div>
-          </div>
+          <h2>マイルストーン進捗</h2>
+          ${this.renderContent()}
         </div>
       </ui-panel>
+    `;
+  }
+
+  private renderContent() {
+    if (this.goalMilestoneController.loading)
+      return html`<p class="loading">読み込み中...</p>`;
+
+    if (this.goalMilestoneController.error)
+      return html`<p class="error">${this.goalMilestoneController.error}</p>`;
+
+    return this.renderStats();
+  }
+
+  private renderStats() {
+    const { percentage, goalCount, nonMilestoneCount } =
+      this.goalMilestoneController.calculateGoalMilestoneRatio();
+
+    return html`
+      <div class="stats-content">
+        <div class="percentage">${percentage}%</div>
+        <div class="description">@non-milestone タスクの割合</div>
+        <div class="details">${nonMilestoneCount} / ${goalCount} タスク</div>
+      </div>
     `;
   }
 
