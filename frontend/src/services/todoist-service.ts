@@ -1,7 +1,15 @@
 import { TodoistApi } from "@doist/todoist-api-typescript";
-import type { Task } from "@doist/todoist-api-typescript";
+import type { Task, QueryResults } from "@doist/todoist-api-typescript";
 import type { TaskNode as TaskNode } from "../types/task.js";
 
+/**
+ * TodoistService - Todoist API操作とキャッシュ管理
+ * 
+ * パフォーマンス前提:
+ * - 本アプリケーションは中規模のタスク数（〜500件程度）を想定
+ * - 全ページ取得により初回ロードは遅くなるが、その後のキャッシュ効果で高速化
+ * - 大量のタスク（1000件超）がある場合は、UI仮想化やページング表示の実装を検討
+ */
 export class TodoistService {
   private api: TodoistApi;
   private allTasksCache: Map<string, Task> = new Map();
@@ -18,15 +26,27 @@ export class TodoistService {
     ).filter((t) => t != undefined);
   }
 
+  /**
+   * フィルタリングされたタスクを全ページ取得
+   * 注意: 全ページを取得するため、大量のタスクがある場合は初回ロードが遅くなる可能性がある
+   */
   public async fetchTasksByFilter(query?: string): Promise<Task[]> {
-    const response = query
-      ? await this.api.getTasksByFilter({ query })
-      : await this.api.getTasks();
-    const tasks = response.results;
-    tasks.forEach((task) => {
+    let allTasks: Task[] = [];
+    let cursor: string | null = null;
+    
+    do {
+      const response: QueryResults<Task> = query
+        ? await this.api.getTasksByFilter({ query, cursor })
+        : await this.api.getTasks({ cursor });
+      
+      allTasks.push(...response.results);
+      cursor = response.nextCursor;
+    } while (cursor !== null);
+    
+    allTasks.forEach((task) => {
       this.allTasksCache.set(task.id, task);
     });
-    return tasks;
+    return allTasks;
   }
 
   private async fetchTask(id: string): Promise<Task | undefined> {

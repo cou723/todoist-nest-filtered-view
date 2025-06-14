@@ -29,10 +29,12 @@ export class AppElement extends LitElement {
   protected updated(changedProperties: Map<string, unknown>) {
     super.updated(changedProperties);
     const token = this.authController.getStoredToken();
-    
+
     if (token && this.authController.isAuthenticated) {
       // タスクパネルの初期化
-      const taskPanel = this.shadowRoot?.querySelector('filtered-nested-tasks-panel') as HTMLElement & { 
+      const taskPanel = this.shadowRoot?.querySelector(
+        "filtered-nested-tasks-panel"
+      ) as HTMLElement & {
         initializeService: (token: string) => void;
         reinitializeService: (token: string) => void;
       };
@@ -41,13 +43,15 @@ export class AppElement extends LitElement {
       }
 
       // ゴールマイルストーンパネルの初期化
-      const goalPanel = this.shadowRoot?.querySelector('goal-milestone-panel') as HTMLElement & { 
-        setTodoistService: (service: unknown) => void 
+      const goalPanel = this.shadowRoot?.querySelector(
+        "goal-milestone-panel"
+      ) as HTMLElement & {
+        setTodoistService: (service: unknown) => void;
       };
       if (goalPanel) {
         // FilteredTaskControllerから TodoistService を取得する必要があるが、
         // 今は直接 TodoistService のインスタンスを作成
-        import('./services/todoist-service.js').then(({ TodoistService }) => {
+        import("./services/todoist-service.js").then(({ TodoistService }) => {
           const service = new TodoistService(token);
           goalPanel.setTodoistService(service);
         });
@@ -63,10 +67,12 @@ export class AppElement extends LitElement {
 
   private handleAuthLogout() {
     this.authController.logout();
-    
+
     // パネルのクリア
-    const taskPanel = this.shadowRoot?.querySelector('filtered-nested-tasks-panel') as HTMLElement & { 
-      clearService: () => void 
+    const taskPanel = this.shadowRoot?.querySelector(
+      "filtered-nested-tasks-panel"
+    ) as HTMLElement & {
+      clearService: () => void;
     };
     if (taskPanel) {
       taskPanel.clearService();
@@ -76,8 +82,8 @@ export class AppElement extends LitElement {
   public render() {
     return html`
       <div class="app-container">
-        <theme-toggle></theme-toggle>
         <div class="auth-header">
+          <theme-toggle></theme-toggle>
           <auth-button
             .isAuthenticated=${this.authController.isAuthenticated}
             @auth-login=${this.handleAuthLogin}
@@ -87,8 +93,14 @@ export class AppElement extends LitElement {
         ${when(
           this.authController.isAuthenticated,
           () => html`
-            <filtered-nested-tasks-panel></filtered-nested-tasks-panel>
-            <goal-milestone-panel></goal-milestone-panel>
+            <div class="panels-container">
+              <goal-milestone-panel
+                class="goal-milestone-panel"
+              ></goal-milestone-panel>
+              <filtered-nested-tasks-panel
+                class="task-panel"
+              ></filtered-nested-tasks-panel>
+            </div>
           `
         )}
       </div>
@@ -108,8 +120,41 @@ export class AppElement extends LitElement {
 
     .auth-header {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       padding: 0.5rem;
+    }
+
+    .panels-container {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .goal-milestone-panel {
+      grid-column: 1;
+    }
+
+    .task-panel {
+      grid-column: 2;
+    }
+
+    /* レスポンシブ対応: 768px以下でモバイルレイアウト */
+    @media (max-width: 768px) {
+      .panels-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+      }
+
+      .goal-milestone-panel {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .task-panel {
+        grid-column: 1;
+        grid-row: 2;
+      }
     }
   `;
 }
