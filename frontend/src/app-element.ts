@@ -5,6 +5,7 @@ import { when } from "./utils/template-utils.js";
 import "./components/auth-button.js";
 import "./components/filtered-nested-tasks-panel.js";
 import "./components/goal-milestone-panel.js";
+import "./components/date-goal-panel.js";
 import "./components/ui/theme-toggle.js";
 
 @customElement("app-element")
@@ -56,6 +57,19 @@ export class AppElement extends LitElement {
           goalPanel.setTodoistService(service);
         });
       }
+
+      // 日付付きゴールパネルの初期化
+      const dateGoalPanel = this.shadowRoot?.querySelector(
+        "date-goal-panel"
+      ) as HTMLElement & {
+        setTodoistService: (service: unknown) => void;
+      };
+      if (dateGoalPanel) {
+        import("./services/todoist-service.js").then(({ TodoistService }) => {
+          const service = new TodoistService(token);
+          dateGoalPanel.setTodoistService(service);
+        });
+      }
     }
   }
 
@@ -94,9 +108,14 @@ export class AppElement extends LitElement {
           this.authController.isAuthenticated,
           () => html`
             <div class="panels-container">
-              <goal-milestone-panel
-                class="goal-milestone-panel"
-              ></goal-milestone-panel>
+              <div class="left-panels">
+                <goal-milestone-panel
+                  class="goal-milestone-panel"
+                ></goal-milestone-panel>
+                <date-goal-panel
+                  class="date-goal-panel"
+                ></date-goal-panel>
+              </div>
               <filtered-nested-tasks-panel
                 class="task-panel"
               ></filtered-nested-tasks-panel>
@@ -131,7 +150,14 @@ export class AppElement extends LitElement {
       align-items: start;
     }
 
-    .goal-milestone-panel {
+    .left-panels {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .goal-milestone-panel,
+    .date-goal-panel {
       grid-column: 1;
     }
 
@@ -146,7 +172,7 @@ export class AppElement extends LitElement {
         grid-template-rows: auto auto;
       }
 
-      .goal-milestone-panel {
+      .left-panels {
         grid-column: 1;
         grid-row: 1;
       }
