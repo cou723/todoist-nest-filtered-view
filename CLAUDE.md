@@ -16,6 +16,7 @@
   * `FilteredTaskController`: フィルタリングされたTodoistタスクの取得、キャッシュ、操作を処理
   * `FilterController`: タスクのフィルタリングとクエリ状態を管理
   * `GoalMilestoneController`: @goalタスクのマイルストーン統計を管理
+  * `DateGoalController`: 日付付き@goalタスクの期限監視と残り日数表示を管理
 * **サービス**：
 
   * `TodoistService`: `@doist/todoist-api-typescript` をラップした主要API
@@ -76,6 +77,14 @@ deno task check        # 型チェック
 - リアルタイムで割合を計算・表示
 - 専用パネル`goal-milestone-panel`で常時表示
 
+### 新機能：日付付きゴールタスク監視
+
+期限が設定された@goalタスクの監視と残り日数表示機能を追加：
+- `DateGoalController`が日付付きの@goalタスクを取得・監視
+- 期限までの残り日数を色分けして表示（期限切れ：赤、今日：オレンジ、緊急：青、近日：緑、通常：グレー）
+- 専用パネル`date-goal-panel`で常時表示
+- ダークモード完全対応（統一されたテーマシステム使用）
+
 ### 認証フロー
 
 1. フロントエンドがTodoistとのOAuthフローを開始
@@ -99,6 +108,7 @@ deno task check        # 型チェック
   * `app-element`: アプリケーションのメインコンテナ（認証とパネル統合のみ）
   * `filtered-nested-tasks-panel`: フィルタリングされたタスク一覧の表示と操作
   * `goal-milestone-panel`: @goalタスクの@non-milestoneタグ割合統計を表示
+  * `date-goal-panel`: 日付付き@goalタスクの期限監視と残り日数表示
 * **コンポーネント設計原則**：
   * 各パネルが独自のコントローラーを持ち、独立して動作
   * 責任の分離により保守性と再利用性を向上
