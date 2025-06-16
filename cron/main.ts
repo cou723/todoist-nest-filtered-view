@@ -6,7 +6,7 @@
 import { TodoistApi } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
 import type { Task } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
 
-function extractNonMilestoneGoalTasks(
+function findLeafTasks(
   goalLabelTasks: readonly Task[],
   allTasks: readonly Task[],
 ): Task[] {
@@ -33,7 +33,7 @@ function extractNonMilestoneGoalTasks(
   });
 }
 
-function findTaskLabelAddedNonMilestoneTasks(tasks: readonly Task[]): Task[] {
+function findNonMilestoneParentTasks(tasks: readonly Task[]): Task[] {
   const nonMilestoneTasks = tasks.filter((task) =>
     task.labels.includes("non-milestone")
   );
@@ -57,7 +57,7 @@ function findTaskLabelAddedNonMilestoneTasks(tasks: readonly Task[]): Task[] {
   });
 }
 
-function generateBlockedByLabelsFromGoalNames(
+function generateDependencyLabels(
   tasks: readonly Task[],
 ): string[] {
   const goalTasks = tasks.filter((task) => task.labels.includes("goal"));
@@ -66,19 +66,19 @@ function generateBlockedByLabelsFromGoalNames(
     new Set(
       goalTasks.map((task) =>
         (task.parentId
-          ? `blocked-by-${
+          ? `dep-${
             tasks.find((t) => t.id === task.parentId)?.content ?? "unknown"
           }-${task.content}`
-          : `blocked-by-${task.content}`).slice(0, 60)
+          : `dep-${task.content}`).slice(0, 60)
       ),
     ),
   );
 }
 
-function getTaskInfoFromBlockedLabel(
+function parseLabel(
   label: string,
 ): { parentName?: string; taskName: string } {
-  const nameWithoutPrefix = label.replace("blocked-by-", "");
+  const nameWithoutPrefix = label.replace("dep-", "");
   const parts = nameWithoutPrefix.split("-");
 
   if (parts.length >= 2) {
@@ -107,7 +107,7 @@ async function processGoalTasks(api: TodoistApi) {
   const allTasks = [...goalTasks, ...taskTasks];
 
   // @goalタスクのみを抽出（削除チェック用）
-  const goalTasksWithoutTaskLabelSubtasks = extractNonMilestoneGoalTasks(
+  const goalTasksWithoutTaskLabelSubtasks = findLeafTasks(
     goalTasks,
     allTasks,
   );
@@ -146,7 +146,7 @@ async function processGoalTasks(api: TodoistApi) {
   }
 }
 
-async function processNonMilestoneTasks(api: TodoistApi) {
+async function cleanupNonMilestoneTasks(api: TodoistApi) {
   console.log("=== Processing Non-Milestone Tasks ===");
 
   // @non-milestoneタスクのみを効率的に取得
@@ -163,7 +163,7 @@ async function processNonMilestoneTasks(api: TodoistApi) {
   const goalTasks = await api.getTasks({ filter: "@goal" });
   console.log(`Retrieved ${goalTasks.length} @goal tasks from API`);
 
-  const nonMilestoneTasksWithTaskChildren = findTaskLabelAddedNonMilestoneTasks(
+  const nonMilestoneTasksWithTaskChildren = findNonMilestoneParentTasks(
     [
       ...nonMilestoneTasks,
       ...taskTasks,
@@ -197,7 +197,7 @@ async function processNonMilestoneTasks(api: TodoistApi) {
   }
 }
 
-async function processBlockedByLabels(api: TodoistApi) {
+async function manageDependencyLabels(api: TodoistApi) {
   console.log("=== Processing Blocked By Labels ===");
 
   // gcプロジェクトの@goalタスクのみを取得
@@ -209,7 +209,7 @@ async function processBlockedByLabels(api: TodoistApi) {
   console.log(`Retrieved ${allGcTasks.length} total tasks from gc project`);
 
   const existingLabels = await api.getLabels();
-  const requiredBlockedByLabels = generateBlockedByLabelsFromGoalNames(
+  const requiredDependencyLabels = generateDependencyLabels(
     allGcTasks,
   );
 
@@ -217,11 +217,11 @@ async function processBlockedByLabels(api: TodoistApi) {
   const goalTasks = allGcTasks.filter((task) => task.labels.includes("goal"));
 
   console.log(
-    `Found ${requiredBlockedByLabels.length} blocked-by labels to create`,
+    `Found ${requiredDependencyLabels.length} dep- labels to create`,
   );
 
-  // 新しい@blocked-by-ラベルをアカウントに追加
-  for (const labelName of requiredBlockedByLabels) {
+  // 新しい@dep-ラベルをアカウントに追加
+  for (const labelName of requiredDependencyLabels) {
     const existingLabel = existingLabels.find((label) =>
       label.name.slice(0, 60) === labelName
     );
@@ -231,17 +231,17 @@ async function processBlockedByLabels(api: TodoistApi) {
     }
   }
 
-  // 存在しないタスクの@blocked-by-ラベルを削除
-  const existingBlockedLabels = existingLabels.filter((label) =>
-    label.name.startsWith("blocked-by-")
+  // 存在しないタスクの@dep-ラベルを削除
+  const existingDependencyLabels = existingLabels.filter((label) =>
+    label.name.startsWith("dep-")
   );
 
   console.log(
-    `Found ${existingBlockedLabels.length} existing blocked-by labels to check`,
+    `Found ${existingDependencyLabels.length} existing dep- labels to check`,
   );
 
-  for (const label of existingBlockedLabels) {
-    const taskInfo = getTaskInfoFromBlockedLabel(label.name);
+  for (const label of existingDependencyLabels) {
+    const taskInfo = parseLabel(label.name);
     const taskExists = goalTasks.some((task) =>
       task.content === taskInfo.taskName
     );
@@ -265,8 +265,8 @@ async function runAutomation() {
     const api = new TodoistApi(token);
 
     await processGoalTasks(api);
-    await processNonMilestoneTasks(api);
-    await processBlockedByLabels(api);
+    await cleanupNonMilestoneTasks(api);
+    await manageDependencyLabels(api);
 
     console.log(
       `[${new Date().toISOString()}] Automation completed successfully`,
