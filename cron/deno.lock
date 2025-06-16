@@ -1,0 +1,6 @@
+{
+  "version": "5",
+  "remote": {
+    "https://esm.sh/@doist/todoist-api-typescript@3.0.2": "a50d92a8c7414b92882b4dc00177a25f5ade271c2c497e2579d647bf81ac7f57"
+  }
+}
