@@ -4,25 +4,19 @@
  */
 
 import { TodoistApi } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
-import type {
-  Label,
-  Task,
-} from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
+import type { Task } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
 
-function hasLabel(task: Task, labelName: string): boolean {
-  return task.labels.includes(labelName);
-}
-
-
-function findGoalTasksWithoutTaskSubtasks(
-  goalTasks: Task[],
-  allTasks: Task[],
+function extractNonMilestoneGoalTasks(
+  goalLabelTasks: readonly Task[],
+  allTasks: readonly Task[],
 ): Task[] {
-  const goalTasksWithoutNonMilestone = goalTasks.filter((task) =>
-    !hasLabel(task, "non-milestone")
+  const goalTasksWithoutNonMilestone = goalLabelTasks.filter((task) =>
+    !task.labels.includes("non-milestone")
   );
 
-  const taskLabelTasks = allTasks.filter((task) => hasLabel(task, "task"));
+  const taskLabelTasks = allTasks.filter((task) =>
+    task.labels.includes("task")
+  );
 
   console.log(
     `Found ${goalTasksWithoutNonMilestone.length} goal tasks without non-milestone label`,
@@ -30,28 +24,21 @@ function findGoalTasksWithoutTaskSubtasks(
   console.log(`Found ${taskLabelTasks.length} tasks with @task label`);
 
   return goalTasksWithoutNonMilestone.filter((goalTask) => {
-    const hasTaskLabeledSubtasks = taskLabelTasks.some((taskTask) =>
+    return !taskLabelTasks.some((taskTask) =>
       taskTask.parentId === goalTask.id
-    );
-    
-    const hasGoalLabeledSubtasks = goalTasks.some((goalSubtask) =>
-      goalSubtask.parentId === goalTask.id
-    );
-    
-    console.log(
-      `Goal task "${goalTask.content}" (ID: ${goalTask.id}) has @task children: ${hasTaskLabeledSubtasks}, has @goal children: ${hasGoalLabeledSubtasks}`,
-    );
-    
-    // @taskまたは@goalの子タスクがある場合は除外
-    return !hasTaskLabeledSubtasks && !hasGoalLabeledSubtasks;
+    ) &&
+      !goalLabelTasks.some((goalSubtask) =>
+        goalSubtask.parentId === goalTask.id
+      );
   });
 }
 
-function findNonMilestoneTasksWithTaskChildren(tasks: Task[]): Task[] {
+function findTaskLabelAddedNonMilestoneTasks(tasks: readonly Task[]): Task[] {
   const nonMilestoneTasks = tasks.filter((task) =>
-    hasLabel(task, "non-milestone")
+    task.labels.includes("non-milestone")
   );
-  const taskLabelTasks = tasks.filter((task) => hasLabel(task, "task"));
+  const taskLabelTasks = tasks.filter((task) => task.labels.includes("task"));
+  const goalLabelTasks = tasks.filter((task) => task.labels.includes("goal"));
 
   console.log(`Found ${nonMilestoneTasks.length} non-milestone tasks`);
 
@@ -59,38 +46,41 @@ function findNonMilestoneTasksWithTaskChildren(tasks: Task[]): Task[] {
     const hasTaskChildren = taskLabelTasks.some((taskTask) =>
       taskTask.parentId === nonMilestoneTask.id
     );
-    console.log(
-      `Non-milestone task "${nonMilestoneTask.content}" (ID: ${nonMilestoneTask.id}) has @task children: ${hasTaskChildren}`,
+    const hasGoalChildren = goalLabelTasks.some((goalTask) =>
+      goalTask.parentId === nonMilestoneTask.id
     );
-    return hasTaskChildren;
+    const hasTaskOrGoalChildren = hasTaskChildren || hasGoalChildren;
+    console.log(
+      `Non-milestone task "${nonMilestoneTask.content}" (ID: ${nonMilestoneTask.id}) has @task children: ${hasTaskChildren}, @goal children: ${hasGoalChildren}`,
+    );
+    return hasTaskOrGoalChildren;
   });
 }
 
-function generateBlockedByLabelsFromGoalNames(tasks: Task[]): string[] {
-  const goalTasks = tasks.filter(task => hasLabel(task, "goal"));
-  
+function generateBlockedByLabelsFromGoalNames(
+  tasks: readonly Task[],
+): string[] {
+  const goalTasks = tasks.filter((task) => task.labels.includes("goal"));
+
   return Array.from(
     new Set(
-      goalTasks.map(task => {
-        if (task.parentId) {
-          // 親タスクを探す
-          const parentTask = tasks.find(t => t.id === task.parentId);
-          const parentName = parentTask ? parentTask.content : "unknown";
-          return `blocked-by-${parentName}-${task.content}`;
-        } else {
-          // 親タスクがない場合はタスク名のみ
-          return `blocked-by-${task.content}`;
-        }
-      })
-    )
+      goalTasks.map((task) =>
+        (task.parentId
+          ? `blocked-by-${
+            tasks.find((t) => t.id === task.parentId)?.content ?? "unknown"
+          }-${task.content}`
+          : `blocked-by-${task.content}`).slice(0, 60)
+      ),
+    ),
   );
 }
 
-
-function getTaskInfoFromBlockedLabel(label: string): { parentName?: string; taskName: string } {
+function getTaskInfoFromBlockedLabel(
+  label: string,
+): { parentName?: string; taskName: string } {
   const nameWithoutPrefix = label.replace("blocked-by-", "");
   const parts = nameWithoutPrefix.split("-");
-  
+
   if (parts.length >= 2) {
     // 親タスク名-タスク名の形式
     const parentName = parts[0];
@@ -116,16 +106,17 @@ async function processGoalTasks(api: TodoistApi) {
   // 全てのタスクを結合（子タスクチェックのため）
   const allTasks = [...goalTasks, ...taskTasks];
 
-  const goalTasksWithoutSubtasks = findGoalTasksWithoutTaskSubtasks(
+  // @goalタスクのみを抽出（削除チェック用）
+  const goalTasksWithoutTaskLabelSubtasks = extractNonMilestoneGoalTasks(
     goalTasks,
     allTasks,
   );
 
   console.log(
-    `Found ${goalTasksWithoutSubtasks.length} goal tasks to add @non-milestone tag`,
+    `Found ${goalTasksWithoutTaskLabelSubtasks.length} goal tasks to add @non-milestone tag`,
   );
 
-  for (const goalTask of goalTasksWithoutSubtasks) {
+  for (const goalTask of goalTasksWithoutTaskLabelSubtasks) {
     console.log(
       `Processing goal task: ${goalTask.content} (current labels: ${
         goalTask.labels.join(", ")
@@ -143,7 +134,7 @@ async function processGoalTasks(api: TodoistApi) {
     const milestoneContent = `${goalTask.content}のマイルストーンを置く`;
     await api.addTask({
       content: milestoneContent,
-      parentId: goalTask.id
+      parentId: goalTask.id,
     });
     console.log(
       `Created milestone task: "${milestoneContent}" as child of ${goalTask.id}`,
@@ -168,8 +159,17 @@ async function processNonMilestoneTasks(api: TodoistApi) {
   const taskTasks = await api.getTasks({ filter: "@task" });
   console.log(`Retrieved ${taskTasks.length} @task tasks from API`);
 
-  const nonMilestoneTasksWithTaskChildren =
-    findNonMilestoneTasksWithTaskChildren([...nonMilestoneTasks, ...taskTasks]);
+  // @goalタスクも取得（子タスクチェック用）
+  const goalTasks = await api.getTasks({ filter: "@goal" });
+  console.log(`Retrieved ${goalTasks.length} @goal tasks from API`);
+
+  const nonMilestoneTasksWithTaskChildren = findTaskLabelAddedNonMilestoneTasks(
+    [
+      ...nonMilestoneTasks,
+      ...taskTasks,
+      ...goalTasks,
+    ],
+  );
 
   console.log(
     `Found ${nonMilestoneTasksWithTaskChildren.length} non-milestone tasks to remove @non-milestone tag`,
@@ -199,27 +199,31 @@ async function processNonMilestoneTasks(api: TodoistApi) {
 
 async function processBlockedByLabels(api: TodoistApi) {
   console.log("=== Processing Blocked By Labels ===");
-  
+
   // gcプロジェクトの@goalタスクのみを取得
   const gcGoalTasks = await api.getTasks({ filter: "#gc & @goal" });
   console.log(`Retrieved ${gcGoalTasks.length} @goal tasks from gc project`);
-  
+
   // 親タスク情報が必要な場合はgcプロジェクトの全タスクを取得
   const allGcTasks = await api.getTasks({ filter: "#gc" });
   console.log(`Retrieved ${allGcTasks.length} total tasks from gc project`);
-  
-  const existingLabels = await api.getLabels();
-  const requiredBlockedByLabels = generateBlockedByLabelsFromGoalNames(allGcTasks);
-  
-  // @goalタスクのみを抽出（削除チェック用）
-  const goalTasks = allGcTasks.filter(task => hasLabel(task, "goal"));
 
-  console.log(`Found ${requiredBlockedByLabels.length} blocked-by labels to create`);
+  const existingLabels = await api.getLabels();
+  const requiredBlockedByLabels = generateBlockedByLabelsFromGoalNames(
+    allGcTasks,
+  );
+
+  // @goalタスクのみを抽出（削除チェック用）
+  const goalTasks = allGcTasks.filter((task) => task.labels.includes("goal"));
+
+  console.log(
+    `Found ${requiredBlockedByLabels.length} blocked-by labels to create`,
+  );
 
   // 新しい@blocked-by-ラベルをアカウントに追加
   for (const labelName of requiredBlockedByLabels) {
     const existingLabel = existingLabels.find((label) =>
-      label.name === labelName
+      label.name.slice(0, 60) === labelName
     );
     if (!existingLabel) {
       await api.addLabel({ name: labelName, color: "red" });
@@ -238,7 +242,9 @@ async function processBlockedByLabels(api: TodoistApi) {
 
   for (const label of existingBlockedLabels) {
     const taskInfo = getTaskInfoFromBlockedLabel(label.name);
-    const taskExists = goalTasks.some((task) => task.content === taskInfo.taskName);
+    const taskExists = goalTasks.some((task) =>
+      task.content === taskInfo.taskName
+    );
 
     if (!taskExists) {
       await api.deleteLabel(label.id);
