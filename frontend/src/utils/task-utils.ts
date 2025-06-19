@@ -14,12 +14,6 @@ export function getPriorityText(priority: number): string {
   }
 }
 
-/**
- * タスクが@blocked-by-*タグを持つかどうかを判定する
- */
-export function isBlockedTask(task: TaskNode): boolean {
-  return task.labels.some(label => label.startsWith('blocked-by-'));
-}
 
 /**
  * タスクが他のタスクの親かどうかを判定する
@@ -36,25 +30,16 @@ export function filterChildAndIndependentTasks(tasks: TaskNode[]): TaskNode[] {
 }
 
 /**
- * タスクを優先順位順にソートする（階層式ソート）
+ * タスクを優先順位順にソートする
  * 1. 親タスクを除外（子タスクと独立タスクのみ表示）
- * 2. 通常タスク（@blocked-by-*なし）を優先度順
- * 3. ブロックされたタスク（@blocked-by-*あり）を優先度順
+ * 2. 優先度順（高い優先度が上）
  */
 export function sortTasksByPriority(tasks: TaskNode[]): TaskNode[] {
   // まず親タスクを除外
   const childAndIndependentTasks = filterChildAndIndependentTasks(tasks);
   
   return [...childAndIndependentTasks].sort((a, b) => {
-    const aIsBlocked = isBlockedTask(a);
-    const bIsBlocked = isBlockedTask(b);
-    
-    // 通常タスクをブロックされたタスクより上に配置
-    if (aIsBlocked !== bIsBlocked) {
-      return aIsBlocked ? 1 : -1;
-    }
-    
-    // 同じカテゴリ内では優先度順（高い優先度が上）
+    // 優先度順（高い優先度が上）
     return b.priority - a.priority;
   });
 }
