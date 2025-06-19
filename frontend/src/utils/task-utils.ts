@@ -22,12 +22,30 @@ export function isBlockedTask(task: TaskNode): boolean {
 }
 
 /**
+ * タスクが他のタスクの親かどうかを判定する
+ */
+export function isParentTask(task: TaskNode, allTasks: TaskNode[]): boolean {
+  return allTasks.some(t => t.parent?.id === task.id);
+}
+
+/**
+ * 親タスクを除外し、子タスクと独立タスクのみを取得する
+ */
+export function filterChildAndIndependentTasks(tasks: TaskNode[]): TaskNode[] {
+  return tasks.filter(task => !isParentTask(task, tasks));
+}
+
+/**
  * タスクを優先順位順にソートする（階層式ソート）
- * 1. 通常タスク（@blocked-by-*なし）を優先度順
- * 2. ブロックされたタスク（@blocked-by-*あり）を優先度順
+ * 1. 親タスクを除外（子タスクと独立タスクのみ表示）
+ * 2. 通常タスク（@blocked-by-*なし）を優先度順
+ * 3. ブロックされたタスク（@blocked-by-*あり）を優先度順
  */
 export function sortTasksByPriority(tasks: TaskNode[]): TaskNode[] {
-  return [...tasks].sort((a, b) => {
+  // まず親タスクを除外
+  const childAndIndependentTasks = filterChildAndIndependentTasks(tasks);
+  
+  return [...childAndIndependentTasks].sort((a, b) => {
     const aIsBlocked = isBlockedTask(a);
     const bIsBlocked = isBlockedTask(b);
     
