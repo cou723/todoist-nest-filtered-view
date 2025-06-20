@@ -16,11 +16,69 @@ export function getPriorityText(priority: number): string {
 
 /**
  * タスクを優先順位順にソートする（階層式ソート）
- * 1. 通常タスク（@blocked-by-*なし）を優先度順
- * 2. ブロックされたタスク（@blocked-by-*あり）を優先度順
+ * 優先順位が同じ場合は、親タスクの階層における並び順でソートする
  */
 export function sortTasksByPriority(tasks: TaskNode[]): TaskNode[] {
-  return [...tasks].sort((a, b) => b.priority - a.priority);
+  return [...tasks].sort((a, b) => {
+    // 優先順位が異なる場合は優先順位順
+    if (a.priority !== b.priority) {
+      return b.priority - a.priority;
+    }
+    // 優先順位が同じ場合は、階層を考慮したソート
+    return compareTasksHierarchically(a, b);
+  });
+}
+
+/**
+ * 階層を考慮してタスクを比較する
+ * 各階層レベルで親タスクの並び順を比較し、最終的に自身の並び順で比較する
+ */
+function compareTasksHierarchically(a: TaskNode, b: TaskNode): number {
+  // 両方のタスクの祖先チェーンを構築
+  const ancestorsA = buildAncestorChain(a);
+  const ancestorsB = buildAncestorChain(b);
+  
+  // 共通の階層レベルまで比較
+  const minLength = Math.min(ancestorsA.length, ancestorsB.length);
+  
+  for (let i = 0; i < minLength; i++) {
+    const ancestorA = ancestorsA[i];
+    const ancestorB = ancestorsB[i];
+    
+    // 同じ祖先の場合は次の階層へ
+    if (ancestorA.id === ancestorB.id) {
+      continue;
+    }
+    
+    // 異なる祖先の場合は、その祖先同士の並び順で比較
+    return ancestorA.order - ancestorB.order;
+  }
+  
+  // 祖先が全て同じ場合、階層の深さが異なれば浅い方を先に
+  if (ancestorsA.length !== ancestorsB.length) {
+    return ancestorsA.length - ancestorsB.length;
+  }
+  
+  // 同じ階層レベルの場合は、自身の並び順で比較
+  return a.order - b.order;
+}
+
+/**
+ * タスクの祖先チェーンを構築する（ルートから現在のタスクまで）
+ */
+function buildAncestorChain(task: TaskNode): TaskNode[] {
+  const chain: TaskNode[] = [];
+  let current = task.parent;
+  
+  while (current) {
+    chain.unshift(current); // 先頭に追加（古い祖先が先頭）
+    current = current.parent;
+  }
+  
+  // 自分自身も追加
+  chain.push(task);
+  
+  return chain;
 }
 
 /**
