@@ -78,7 +78,7 @@ export class TodoistService {
 
   private async performFetch(id: string): Promise<Task | undefined> {
     try {
-      console.log(`APIからタスクを取得: ${id}`);
+      // console.log(`APIからタスクを取得: ${id}`);
       const task = await this.api.getTask(id);
       this.allTasksCache.set(id, task);
       return task;

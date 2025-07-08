@@ -6,6 +6,7 @@ import "./components/auth-button.js";
 import "./components/filtered-nested-tasks-panel.js";
 import "./components/goal-milestone-panel.js";
 import "./components/date-goal-panel.js";
+import "./components/task-daily-completion-panel.js";
 import "./components/ui/theme-toggle.js";
 
 @customElement("app-element")
@@ -70,6 +71,16 @@ export class AppElement extends LitElement {
           dateGoalPanel.setTodoistService(service);
         });
       }
+
+      // タスク完了統計パネルの初期化
+      const completionPanel = this.shadowRoot?.querySelector(
+        "task-daily-completion-panel"
+      ) as HTMLElement & {
+        setToken: (token: string) => void;
+      };
+      if (completionPanel) {
+        completionPanel.setToken(token);
+      }
     }
   }
 
@@ -90,6 +101,16 @@ export class AppElement extends LitElement {
     };
     if (taskPanel) {
       taskPanel.clearService();
+    }
+
+    // 完了統計パネルのクリア
+    const completionPanel = this.shadowRoot?.querySelector(
+      "task-daily-completion-panel"
+    ) as HTMLElement & {
+      clearToken: () => void;
+    };
+    if (completionPanel) {
+      completionPanel.clearToken();
     }
   }
 
@@ -116,9 +137,14 @@ export class AppElement extends LitElement {
                   class="date-goal-panel"
                 ></date-goal-panel>
               </div>
-              <filtered-nested-tasks-panel
-                class="task-panel"
-              ></filtered-nested-tasks-panel>
+              <div class="right-panels">
+                <task-daily-completion-panel
+                  class="completion-panel"
+                ></task-daily-completion-panel>
+                <filtered-nested-tasks-panel
+                  class="task-panel"
+                ></filtered-nested-tasks-panel>
+              </div>
             </div>
           `
         )}
@@ -145,9 +171,11 @@ export class AppElement extends LitElement {
 
     .panels-container {
       display: grid;
-      grid-template-columns: 300px 1fr;
+      grid-template-columns: 3fr 7fr;
       gap: 1rem;
       align-items: start;
+      width: 100%; /* コンテナの幅を明示的に設定 */
+      overflow: hidden; /* はみ出しを防ぐ */
     }
 
     .left-panels {
@@ -156,13 +184,25 @@ export class AppElement extends LitElement {
       gap: 1rem;
     }
 
+    .right-panels {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-width: 0; /* フレックスアイテムの最小幅を0に設定 */
+      max-width: 100%; /* 親の幅を超えないように制限 */
+    }
+
     .goal-milestone-panel,
     .date-goal-panel {
       grid-column: 1;
     }
 
+    .completion-panel,
     .task-panel {
       grid-column: 2;
+      min-width: 0; /* 内容が親の幅を超えないように制限 */
+      max-width: 100%;
+      overflow-wrap: break-word; /* 長いテキストを強制改行 */
     }
 
     /* レスポンシブ対応: 768px以下でモバイルレイアウト */
@@ -177,7 +217,7 @@ export class AppElement extends LitElement {
         grid-row: 1;
       }
 
-      .task-panel {
+      .right-panels {
         grid-column: 1;
         grid-row: 2;
       }
