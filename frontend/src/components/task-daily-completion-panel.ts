@@ -1,17 +1,29 @@
 import { LitElement, css, html } from "lit";
 import { customElement } from "lit/decorators.js";
+import { ref, createRef, type Ref } from "lit/directives/ref.js";
+import { Chart, type ChartConfiguration, registerables } from "chart.js";
 import { TaskDailyCompletionController } from "../controllers/task-daily-completion-controller.js";
 import "./ui/panel.js";
+
+// Chart.jsのコンポーネントを登録
+Chart.register(...registerables);
 
 @customElement("task-daily-completion-panel")
 export class TaskDailyCompletionPanel extends LitElement {
   private completionController = new TaskDailyCompletionController(this);
+  private chartInstance: Chart | null = null;
+  private canvasRef: Ref<HTMLCanvasElement> = createRef();
 
   public setToken(token: string) {
     this.completionController.initializeService(token);
   }
 
   public clearToken() {
+    // チャートを破棄
+    if (this.chartInstance) {
+      this.chartInstance.destroy();
+      this.chartInstance = null;
+    }
     this.completionController.clearService();
   }
 
@@ -24,6 +36,17 @@ export class TaskDailyCompletionPanel extends LitElement {
         </div>
       </ui-panel>
     `;
+  }
+
+  protected updated() {
+    // DOM更新後にチャートを更新
+    const stats = this.completionController.dailyCompletionStats;
+    if (stats.length > 0) {
+      // 次のフレームでチャートを更新（DOM要素が確実に存在することを保証）
+      requestAnimationFrame(() => {
+        this.updateChart(stats);
+      });
+    }
   }
 
   private renderContent() {
@@ -40,10 +63,9 @@ export class TaskDailyCompletionPanel extends LitElement {
   }
 
   private renderStats() {
-    const stats = this.completionController.dailyCompletionStats;
-    const maxCount = this.completionController.getMaxCompletionCount();
     const totalCount = this.completionController.getTotalCompletionCount();
     const avgCount = this.completionController.getAverageCompletionCount();
+    const maxCount = this.completionController.getMaxCompletionCount();
 
     return html`
       <div class="stats-container">
@@ -63,103 +85,81 @@ export class TaskDailyCompletionPanel extends LitElement {
         </div>
         
         <div class="chart-container">
-          ${this.renderLineChart(stats, maxCount)}
+          <canvas ${ref(this.canvasRef)}></canvas>
         </div>
       </div>
     `;
   }
 
-  private renderLineChart(stats: Array<{ date: string; count: number; displayDate: string }>, maxCount: number) {
-    if (stats.length === 0) return html``;
+  private updateChart(stats: Array<{ date: string; count: number; displayDate: string }>) {
+    if (!this.canvasRef.value) return;
 
-    const chartWidth = 100; // SVG viewport percentage
-    const chartHeight = 100; // SVG viewport percentage
-    const padding = 10; // パディング（%）
+    const canvas = this.canvasRef.value;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    // データポイントを計算
-    const points = stats.map((stat, index) => {
-      const x = padding + (index / (stats.length - 1)) * (chartWidth - 2 * padding);
-      const y = maxCount > 0 
-        ? chartHeight - padding - ((stat.count / maxCount) * (chartHeight - 2 * padding))
-        : chartHeight - padding;
-      return { x, y, count: stat.count, displayDate: stat.displayDate };
-    });
-
-    // SVGパスを生成
-    const pathData = points.map((point, index) => 
-      `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
-    ).join(' ');
-
-    return html`
-      <div class="line-chart">
-        <svg viewBox="0 0 ${chartWidth} ${chartHeight}" class="chart-svg">
-          <!-- グリッドライン -->
-          ${this.renderGridLines(chartWidth, chartHeight, padding, maxCount)}
-          
-          <!-- 折れ線 -->
-          <path d="${pathData}" class="line-path" fill="none" stroke="var(--primary-color)" stroke-width="2"/>
-          
-          <!-- データポイント -->
-          ${points.map(point => html`
-            <circle 
-              cx="${point.x}" 
-              cy="${point.y}" 
-              r="3" 
-              class="data-point"
-              fill="var(--primary-color)"
-            >
-              <title>${point.displayDate}: ${point.count}件</title>
-            </circle>
-          `)}
-        </svg>
-        
-        <!-- X軸ラベル -->
-        <div class="x-axis-labels">
-          ${stats.map((stat, index) => {
-            const shouldShow = index % Math.ceil(stats.length / 7) === 0 || index === stats.length - 1;
-            return shouldShow ? html`
-              <div class="x-label" style="left: ${padding + (index / (stats.length - 1)) * (chartWidth - 2 * padding)}%">
-                ${stat.displayDate}
-              </div>
-            ` : '';
-          })}
-        </div>
-      </div>
-    `;
-  }
-
-  private renderGridLines(chartWidth: number, chartHeight: number, padding: number, maxCount: number) {
-    const gridLines = [];
-    const steps = Math.min(5, maxCount + 1); // 最大5本のグリッド線
-    
-    for (let i = 0; i <= steps; i++) {
-      const y = chartHeight - padding - (i / steps) * (chartHeight - 2 * padding);
-      const value = Math.round((i / steps) * maxCount);
-      
-      gridLines.push(html`
-        <line 
-          x1="${padding}" 
-          y1="${y}" 
-          x2="${chartWidth - padding}" 
-          y2="${y}" 
-          class="grid-line"
-          stroke="var(--border-color)" 
-          stroke-width="0.5"
-          opacity="0.5"
-        />
-        <text 
-          x="${padding - 2}" 
-          y="${y + 1}" 
-          class="y-label"
-          fill="var(--text-muted)"
-          font-size="3"
-          text-anchor="end"
-          dominant-baseline="middle"
-        >${value}</text>
-      `);
+    // 既存のチャートを破棄
+    if (this.chartInstance) {
+      this.chartInstance.destroy();
     }
-    
-    return gridLines;
+
+    // データが空の場合はチャートを作成しない
+    if (stats.length === 0) {
+      return;
+    }
+
+    const config: ChartConfiguration = {
+      type: 'line',
+      data: {
+        labels: stats.map(stat => stat.displayDate),
+        datasets: [{
+          label: '@taskタスク完了数',
+          data: stats.map(stat => stat.count),
+          borderColor: 'rgb(99, 102, 241)',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          tension: 0.1,
+          fill: false,
+          pointBackgroundColor: 'rgb(99, 102, 241)',
+          pointBorderColor: 'rgb(99, 102, 241)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              callback: function(value) {
+                return value + '件';
+              }
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)',
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)',
+            }
+          }
+        },
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        }
+      }
+    };
+
+    this.chartInstance = new Chart(ctx, config);
   }
 
   public static styles = css`
@@ -221,7 +221,7 @@ export class TaskDailyCompletionPanel extends LitElement {
     }
 
     .chart-container {
-      min-height: 200px;
+      height: 200px;
       padding: 1rem;
       border: 1px solid var(--border-color);
       border-radius: 0.375rem;
@@ -229,61 +229,9 @@ export class TaskDailyCompletionPanel extends LitElement {
       position: relative;
     }
 
-    .line-chart {
-      position: relative;
-      width: 100%;
-      height: 150px;
-    }
-
-    .chart-svg {
-      width: 100%;
-      height: 100%;
-      overflow: visible;
-    }
-
-    .line-path {
-      transition: stroke-width 0.2s ease;
-    }
-
-    .line-path:hover {
-      stroke-width: 3;
-    }
-
-    .data-point {
-      transition: r 0.2s ease;
-      cursor: pointer;
-    }
-
-    .data-point:hover {
-      r: 4;
-      filter: drop-shadow(0 0 3px var(--primary-color));
-    }
-
-    .grid-line {
-      opacity: 0.3;
-    }
-
-    .y-label {
-      font-family: inherit;
-      font-size: 10px;
-    }
-
-    .x-axis-labels {
-      position: absolute;
-      bottom: -25px;
-      left: 0;
-      right: 0;
-      height: 20px;
-    }
-
-    .x-label {
-      position: absolute;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      transform: translateX(-50%);
-      text-align: center;
-      line-height: 1.2;
-      white-space: nowrap;
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
     }
   `;
 }
