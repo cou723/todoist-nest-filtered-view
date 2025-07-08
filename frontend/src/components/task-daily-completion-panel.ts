@@ -63,27 +63,103 @@ export class TaskDailyCompletionPanel extends LitElement {
         </div>
         
         <div class="chart-container">
-          <div class="chart">
-            ${stats.map(stat => this.renderBar(stat, maxCount))}
-          </div>
+          ${this.renderLineChart(stats, maxCount)}
         </div>
       </div>
     `;
   }
 
-  private renderBar(stat: { date: string; count: number; displayDate: string }, maxCount: number) {
-    const height = maxCount > 0 ? (stat.count / maxCount) * 100 : 0;
-    
+  private renderLineChart(stats: Array<{ date: string; count: number; displayDate: string }>, maxCount: number) {
+    if (stats.length === 0) return html``;
+
+    const chartWidth = 100; // SVG viewport percentage
+    const chartHeight = 100; // SVG viewport percentage
+    const padding = 10; // パディング（%）
+
+    // データポイントを計算
+    const points = stats.map((stat, index) => {
+      const x = padding + (index / (stats.length - 1)) * (chartWidth - 2 * padding);
+      const y = maxCount > 0 
+        ? chartHeight - padding - ((stat.count / maxCount) * (chartHeight - 2 * padding))
+        : chartHeight - padding;
+      return { x, y, count: stat.count, displayDate: stat.displayDate };
+    });
+
+    // SVGパスを生成
+    const pathData = points.map((point, index) => 
+      `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+    ).join(' ');
+
     return html`
-      <div class="bar-container">
-        <div class="bar-wrapper">
-          <div class="bar" style="height: ${height}%">
-            <div class="bar-value ${stat.count > 0 ? 'has-value' : ''}">${stat.count}</div>
-          </div>
+      <div class="line-chart">
+        <svg viewBox="0 0 ${chartWidth} ${chartHeight}" class="chart-svg">
+          <!-- グリッドライン -->
+          ${this.renderGridLines(chartWidth, chartHeight, padding, maxCount)}
+          
+          <!-- 折れ線 -->
+          <path d="${pathData}" class="line-path" fill="none" stroke="var(--primary-color)" stroke-width="2"/>
+          
+          <!-- データポイント -->
+          ${points.map(point => html`
+            <circle 
+              cx="${point.x}" 
+              cy="${point.y}" 
+              r="3" 
+              class="data-point"
+              fill="var(--primary-color)"
+            >
+              <title>${point.displayDate}: ${point.count}件</title>
+            </circle>
+          `)}
+        </svg>
+        
+        <!-- X軸ラベル -->
+        <div class="x-axis-labels">
+          ${stats.map((stat, index) => {
+            const shouldShow = index % Math.ceil(stats.length / 7) === 0 || index === stats.length - 1;
+            return shouldShow ? html`
+              <div class="x-label" style="left: ${padding + (index / (stats.length - 1)) * (chartWidth - 2 * padding)}%">
+                ${stat.displayDate}
+              </div>
+            ` : '';
+          })}
         </div>
-        <div class="bar-label">${stat.displayDate}</div>
       </div>
     `;
+  }
+
+  private renderGridLines(chartWidth: number, chartHeight: number, padding: number, maxCount: number) {
+    const gridLines = [];
+    const steps = Math.min(5, maxCount + 1); // 最大5本のグリッド線
+    
+    for (let i = 0; i <= steps; i++) {
+      const y = chartHeight - padding - (i / steps) * (chartHeight - 2 * padding);
+      const value = Math.round((i / steps) * maxCount);
+      
+      gridLines.push(html`
+        <line 
+          x1="${padding}" 
+          y1="${y}" 
+          x2="${chartWidth - padding}" 
+          y2="${y}" 
+          class="grid-line"
+          stroke="var(--border-color)" 
+          stroke-width="0.5"
+          opacity="0.5"
+        />
+        <text 
+          x="${padding - 2}" 
+          y="${y + 1}" 
+          class="y-label"
+          fill="var(--text-muted)"
+          font-size="3"
+          text-anchor="end"
+          dominant-baseline="middle"
+        >${value}</text>
+      `);
+    }
+    
+    return gridLines;
   }
 
   public static styles = css`
@@ -150,72 +226,64 @@ export class TaskDailyCompletionPanel extends LitElement {
       border: 1px solid var(--border-color);
       border-radius: 0.375rem;
       background: var(--surface-color);
+      position: relative;
     }
 
-    .chart {
-      display: flex;
-      align-items: end;
-      gap: 2px;
+    .line-chart {
+      position: relative;
+      width: 100%;
       height: 150px;
-      overflow-x: auto;
-      padding-bottom: 1rem;
     }
 
-    .bar-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 40px;
+    .chart-svg {
+      width: 100%;
       height: 100%;
+      overflow: visible;
     }
 
-    .bar-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: end;
-      width: 100%;
-      position: relative;
+    .line-path {
+      transition: stroke-width 0.2s ease;
     }
 
-    .bar {
-      width: 100%;
-      background: var(--primary-color);
-      border-radius: 2px 2px 0 0;
-      min-height: 4px;
-      position: relative;
-      transition: background-color 0.2s ease;
+    .line-path:hover {
+      stroke-width: 3;
     }
 
-    .bar:hover {
-      background: var(--primary-hover-color);
+    .data-point {
+      transition: r 0.2s ease;
+      cursor: pointer;
     }
 
-    .bar-value {
+    .data-point:hover {
+      r: 4;
+      filter: drop-shadow(0 0 3px var(--primary-color));
+    }
+
+    .grid-line {
+      opacity: 0.3;
+    }
+
+    .y-label {
+      font-family: inherit;
+      font-size: 10px;
+    }
+
+    .x-axis-labels {
       position: absolute;
-      top: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.7rem;
-      font-weight: bold;
-      color: var(--text-color);
-      opacity: 0;
-      transition: opacity 0.2s ease;
+      bottom: -25px;
+      left: 0;
+      right: 0;
+      height: 20px;
     }
 
-    .bar-value.has-value {
-      opacity: 1;
-    }
-
-    .bar:hover .bar-value {
-      opacity: 1;
-    }
-
-    .bar-label {
+    .x-label {
+      position: absolute;
       font-size: 0.7rem;
       color: var(--text-muted);
-      margin-top: 0.25rem;
+      transform: translateX(-50%);
       text-align: center;
       line-height: 1.2;
+      white-space: nowrap;
     }
   `;
 }
