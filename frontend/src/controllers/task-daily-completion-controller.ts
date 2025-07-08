@@ -57,9 +57,7 @@ export class TaskDailyCompletionController implements ReactiveController {
     try {
       this.dailyCompletionStats =
         await this.todoistSyncService.getDailyCompletionStats(days);
-    } catch (e) {
-      console.error("Error fetching daily completion stats:", e);
-
+    } catch {
       this.error = "@taskタスクの完了統計の取得に失敗しました";
     } finally {
       this.loading = false;

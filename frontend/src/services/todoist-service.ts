@@ -52,14 +52,12 @@ export class TodoistService {
   private async fetchTask(id: string): Promise<Task | undefined> {
     const cachedTask = this.allTasksCache.get(id);
     if (cachedTask) {
-      console.log(`キャッシュからタスクを取得: ${id} ${cachedTask.content}`);
       return cachedTask;
     }
 
     // 既に同じタスクを取得中の場合は、その Promise を返す
     const pendingFetch = this.pendingFetches.get(id);
     if (pendingFetch) {
-      console.log(`既存のリクエストを待機: ${id}`);
       return await pendingFetch;
     }
 

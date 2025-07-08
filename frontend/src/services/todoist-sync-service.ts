@@ -45,15 +45,8 @@ export class TodoistSyncService {
 
     const data = await response.json();
     
-    console.log("Completed API生レスポンス（全体構造）:", Object.keys(data));
-    console.log("Completed API生レスポンス（詳細）:", data);
-    console.log("data.items:", data.items);
-    console.log("受信したアイテム数:", data.items?.length || 0);
-    
     // completed/get_allエンドポイントからは直接完了済みタスクが返される
     const completedItems = data.items || [];
-    
-    console.log("完了済みタスク数:", completedItems.length);
     
     // APIレスポンスをバリデーション
     const validatedData = v.parse(CompletedTasksResponseSchema, { items: completedItems });
@@ -99,16 +92,11 @@ export class TodoistSyncService {
     until?: string
   ): Promise<CompletedTask[]> {
     const allCompletedTasks = await this.getCompletedTasks(since, until);
-    
-    console.log("全完了タスク数:", allCompletedTasks.length);
-    console.log("完了タスクのサンプル:", allCompletedTasks.slice(0, 3));
 
     const filteredTasks = allCompletedTasks.filter((task) => {
-      console.log(`タスク "${task.content}" のラベル:`, task.labels);
       return task.labels.includes("task");
     });
     
-    console.log("@taskラベル付きタスク数:", filteredTasks.length);
     return filteredTasks;
   }
 
