@@ -83,7 +83,7 @@ export class TaskDailyCompletionPanel extends LitElement {
             <div class="stat-value">${maxCount}件</div>
           </div>
         </div>
-        
+
         <div class="chart-container">
           <canvas ${ref(this.canvasRef)}></canvas>
         </div>
@@ -91,11 +91,13 @@ export class TaskDailyCompletionPanel extends LitElement {
     `;
   }
 
-  private updateChart(stats: Array<{ date: string; count: number; displayDate: string }>) {
+  private updateChart(
+    stats: Array<{ date: string; count: number; displayDate: string }>
+  ) {
     if (!this.canvasRef.value) return;
 
     const canvas = this.canvasRef.value;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // 既存のチャートを破棄
@@ -108,55 +110,62 @@ export class TaskDailyCompletionPanel extends LitElement {
       return;
     }
 
+    // CSS変数から色を取得
+    const computedStyle = getComputedStyle(this);
+    const primaryColor = computedStyle.getPropertyValue('--primary-color').trim();
+    const borderColor = computedStyle.getPropertyValue('--border-color').trim();
+
     const config: ChartConfiguration = {
-      type: 'line',
+      type: "line",
       data: {
-        labels: stats.map(stat => stat.displayDate),
-        datasets: [{
-          label: '@taskタスク完了数',
-          data: stats.map(stat => stat.count),
-          borderColor: 'rgb(99, 102, 241)',
-          backgroundColor: 'rgba(99, 102, 241, 0.1)',
-          tension: 0.1,
-          fill: false,
-          pointBackgroundColor: 'rgb(99, 102, 241)',
-          pointBorderColor: 'rgb(99, 102, 241)',
-          pointRadius: 4,
-          pointHoverRadius: 6,
-        }]
+        labels: stats.map((stat) => stat.displayDate),
+        datasets: [
+          {
+            label: "@taskタスク完了数",
+            data: stats.map((stat) => stat.count),
+            borderColor: primaryColor,
+            backgroundColor: primaryColor + "20", // 透明度を追加
+            tension: 0.1,
+            fill: false,
+            pointBackgroundColor: primaryColor,
+            pointBorderColor: primaryColor,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: false
-          }
+            display: false,
+          },
         },
         scales: {
           y: {
             beginAtZero: true,
             ticks: {
               stepSize: 1,
-              callback: function(value) {
-                return value + '件';
-              }
+              callback: function (value) {
+                return value + "件";
+              },
             },
             grid: {
-              color: 'rgba(0, 0, 0, 0.1)',
-            }
+              color: borderColor,
+            },
           },
           x: {
             grid: {
-              color: 'rgba(0, 0, 0, 0.1)',
-            }
-          }
+              color: borderColor,
+            },
+          },
         },
         interaction: {
           intersect: false,
-          mode: 'index'
-        }
-      }
+          mode: "index",
+        },
+      },
     };
 
     this.chartInstance = new Chart(ctx, config);

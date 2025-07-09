@@ -14,6 +14,66 @@
 - 技術的負債や制約の背景を明確にする
 - リファクタリングや機能追加時に既存の設計思想を尊重できる
 
+## アーキテクチャ概要（Lit初心者向け）
+
+### アーキテクチャの全体像
+
+```
+UI層:
+  app-element
+  ├── auth-button, theme-toggle
+  ├── filtered-nested-tasks-panel
+  ├── goal-milestone-panel
+  ├── date-goal-panel
+  └── task-daily-completion-panel
+
+コントローラー層:
+  AuthController
+  FilteredTaskController
+  GoalMilestoneController
+  DateGoalController
+  TaskDailyCompletionController
+
+サービス層:
+  OAuthService
+  TodoistService (REST API v2)
+  TodoistSyncService (Sync API v9)
+  ThemeService
+
+外部API:
+  Todoist API / OAuth
+```
+
+### データフローの流れ
+
+```
+External APIs → Services → Controllers → Components → UI
+     ↑                                      ↓
+   OAuth        Theme Service          Event Handlers
+```
+
+### ディレクトリ構造と役割分担
+
+詳細なアーキテクチャ説明については、[`docs/lit-architecture.md`](./docs/lit-architecture.md)を参照してください。
+
+#### 基本的な階層構造
+
+```
+7. アプリケーション層: app-element.ts
+6. 機能パネル層: 各種パネルコンポーネント
+5. UIコンポーネント層: components/ui/, components/task/
+4. コントローラー層: controllers/（状態管理とリアクティブ制御）
+3. サービス層: services/（API通信とビジネスロジック）
+2. ユーティリティ層: utils/task-utils.ts, services/theme-service.ts
+1. 基盤層: types/, config/, styles/, utils/template-utils.ts
+```
+
+#### 責務の概要
+
+- **Services層**: 外部システムとの通信とデータ変換
+- **Controllers層**: アプリケーションの状態管理とビジネスルール実装
+- **Components/UI層**: データの表示とユーザー操作の受付
+
 ## プロジェクト構成
 
 これは、2つの主要部分に分かれたフルスタックのTodoistタスクリストアプリケーションです：
@@ -164,19 +224,45 @@ deno task check        # 型チェック
 
 ### コンポーネントアーキテクチャ
 
+#### 設計原則
 * 状態管理にはLitのReactive Controllerパターンを採用
 * すべてのコンポーネントはkebab-case命名のカスタム要素
 * UIコンポーネントは再利用のために `components/ui/` に配置
-* **主要パネルコンポーネント**：
-  * `app-element`: アプリケーションのメインコンテナ（認証とパネル統合のみ）
-  * `filtered-nested-tasks-panel`: フィルタリングされたタスク一覧の表示と操作
-  * `goal-milestone-panel`: @goalタスクの@non-milestoneタグ割合統計を表示
-  * `date-goal-panel`: 日付付き@goalタスクの期限監視と残り日数表示
-  * `task-daily-completion-panel`: @taskタスクの日別完了統計をグラフ表示
-* **コンポーネント設計原則**：
-  * 各パネルが独自のコントローラーを持ち、独立して動作
-  * 責任の分離により保守性と再利用性を向上
-  * 合成パターンによる柔軟な組み合わせ
+
+#### 主要パネルコンポーネント階層
+```
+app-element
+├── auth-button
+├── theme-toggle
+├── goal-milestone-panel
+├── date-goal-panel
+├── task-daily-completion-panel
+└── filtered-nested-tasks-panel
+    ├── setting-button
+    ├── setting-modal
+    └── task-list
+        └── task-item (複数)
+            ├── task-checkbox
+            ├── task-content
+            ├── task-meta
+            └── parent-task-display
+```
+
+#### コンポーネント責任分担
+* **`app-element`**: 認証とパネル統合の統括（ルートコンテナ）
+* **`filtered-nested-tasks-panel`**: タスク一覧の表示と操作
+* **`goal-milestone-panel`**: @goalタスクの@non-milestoneタグ割合統計
+* **`date-goal-panel`**: 日付付き@goalタスクの期限監視と残り日数表示
+* **`task-daily-completion-panel`**: @taskタスクの日別完了統計をグラフ表示
+* **`task-list`**: タスクのソートと一覧表示
+* **`task-item`**: 個別タスクの詳細表示と操作
+
+#### コンポーネント設計原則
+* **独立性**: 各パネルが独自のコントローラーを持ち、独立して動作
+* **責任分離**: ビジネスロジック（Controller）とUI（Component）の分離
+* **再利用性**: UIコンポーネントの汎用性を高める設計
+* **合成パターン**: 小さなコンポーネントの組み合わせによる柔軟性
+* **型安全性**: TypeScriptによる厳密な型チェック
 
 ## アーキテクチャの変更履歴
 
@@ -197,6 +283,6 @@ deno task check        # 型チェック
 
 ### 動作環境要件
 
-* フロントエンドには Node.js 18+ および pnpm が必要
+* フロントエンドには Node.js 22+ および pnpm が必要
 * プロキシサーバーには Deno が必要
 * OAuth構成には環境変数の設定が必要
