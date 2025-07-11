@@ -1,128 +1,342 @@
 /**
- * Test for findGoalTasksWithoutSubtasks function using Deno.test
+ * Test for automation functions: assignNonMilestoneToGoals, createMilestoneTodosForGoals, cleanupNonMilestoneTodos
  */
 
-import { Task } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
-import { assert, assertEquals } from "https://deno.land/std@0.208.0/assert/mod.ts";
+import { Task, TodoistApi } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
+import {
+  assertEquals,
+} from "https://deno.land/std@0.208.0/assert/mod.ts";
+import { TodoService } from "./task-service.ts";
 
-// テスト対象の関数をコピー
-function hasLabel(task: Task, labelName: string): boolean {
-  return task.labels.includes(labelName);
+// モック用のTodoistApi
+class MockTodoistApi {
+  private tasks: Task[] = [];
+  private nextId = 1;
+
+  getTasks(options?: { filter?: string }): Promise<Task[]> {
+    if (options?.filter) {
+      const labelMatch = options.filter.match(/@(\w+)/);
+      if (labelMatch) {
+        const label = labelMatch[1];
+        return Promise.resolve(this.tasks.filter(task => task.labels.includes(label)));
+      }
+    }
+    return Promise.resolve(this.tasks);
+  }
+
+  updateTask(taskId: string, updates: { labels?: string[] }): Promise<void> {
+    const task = this.tasks.find(t => t.id === taskId);
+    if (task && updates.labels) {
+      task.labels = updates.labels;
+    }
+    return Promise.resolve();
+  }
+
+  addTask(task: { content: string; parentId?: string; labels?: string[] }): Promise<void> {
+    const newTask: Task = {
+      id: this.nextId.toString(),
+      content: task.content,
+      labels: task.labels || [],
+      parentId: task.parentId || null,
+      isCompleted: false,
+      projectId: "1",
+      sectionId: null,
+      createdAt: new Date().toISOString(),
+      creatorId: "1",
+      url: "",
+      commentCount: 0,
+      assigneeId: null,
+      assignerId: null,
+      order: 1,
+      priority: 1,
+      due: null,
+      description: "",
+      duration: null,
+    };
+    this.tasks.push(newTask);
+    this.nextId++;
+    return Promise.resolve();
+  }
+
+  deleteTask(taskId: string): Promise<void> {
+    this.tasks = this.tasks.filter(t => t.id !== taskId);
+    return Promise.resolve();
+  }
+
+  // テスト用のヘルパーメソッド
+  setTasks(tasks: Task[]): void {
+    this.tasks = tasks;
+  }
+
+  getTasks_mock(): Task[] {
+    return this.tasks;
+  }
 }
 
-function findGoalTasksWithoutSubtasks(tasks: Task[]): Task[] {
-  const goalTasks = tasks.filter(task => 
-    hasLabel(task, "goal") && !hasLabel(task, "non-milestone")
+// テスト用のタスクデータ作成関数
+function createTestTodo(id: string, content: string, labels: string[], parentId: string | null = null): Task {
+  return {
+    id,
+    content,
+    labels,
+    parentId,
+    isCompleted: false,
+    projectId: "1",
+    sectionId: null,
+    createdAt: new Date().toISOString(),
+    creatorId: "1",
+    url: "",
+    commentCount: 0,
+    assigneeId: null,
+    assignerId: null,
+    order: 1,
+    priority: 1,
+    due: null,
+    description: "",
+    duration: null,
+  };
+}
+
+// テスト対象の関数をインポート
+async function assignNonMilestoneToGoals(todoService: TodoService): Promise<void> {
+  console.log("=== Assigning Non-Milestone to Goals ===");
+
+  const analysis = await TodoService.analyzeTasksForAutomation(
+    todoService.getDataProvider(),
   );
 
-  const taskLabelTasks = tasks.filter(task => hasLabel(task, "task"));
+  console.log(
+    `Found ${analysis.leafGoalTodos.length} goal todos to assign non-milestone`,
+  );
 
-  return goalTasks.filter(goalTask => {
-    const hasTaskLabeledSubtasks = taskLabelTasks.some(taskTask => 
-      taskTask.parentId === goalTask.id
+  for (const goalTodo of analysis.leafGoalTodos) {
+    await todoService.updateTask(goalTodo.id, {
+      labels: [...goalTodo.labels, "non-milestone"],
+    });
+  }
+
+  if (analysis.leafGoalTodos.length > 0) {
+    console.log(
+      `✓ Assigned non-milestone to ${analysis.leafGoalTodos.length} goal todos`,
     );
-    return !hasTaskLabeledSubtasks;
-  });
+  }
 }
 
-// テストデータを作成
-function createTestTasks(): Task[] {
-  const tasks: Task[] = [
-    // Goal task without @task children (should be included)
-    {
-      id: "goal1",
-      content: "Goal without task children",
-      labels: ["goal"],
-      parentId: null,
-    } as Task,
-    
-    // Goal task with @task children (should be excluded)
-    {
-      id: "goal2", 
-      content: "Goal with task children",
-      labels: ["goal"],
-      parentId: null,
-    } as Task,
-    
-    // Task child of goal2
-    {
-      id: "task1",
-      content: "Task child of goal2",
-      labels: ["task"],
-      parentId: "goal2",
-    } as Task,
-    
-    // Goal task with @non-milestone (should be excluded)
-    {
-      id: "goal3",
-      content: "Goal with non-milestone",
-      labels: ["goal", "non-milestone"],
-      parentId: null,
-    } as Task,
-    
-    // Goal task with non-@task children (should be included)
-    {
-      id: "goal4",
-      content: "Goal with non-task children", 
-      labels: ["goal"],
-      parentId: null,
-    } as Task,
-    
-    // Non-task child of goal4
-    {
-      id: "child1",
-      content: "Non-task child of goal4",
-      labels: ["other"],
-      parentId: "goal4",
-    } as Task,
-    
-    // Task with no parent
-    {
-      id: "task2",
-      content: "Standalone task",
-      labels: ["task"],
-      parentId: null,
-    } as Task,
+async function createMilestoneTodosForGoals(todoService: TodoService): Promise<void> {
+  console.log("=== Creating Milestone Todos for Goals ===");
+
+  const allTodos = await todoService.getAllTasks();
+  const nonMilestoneGoalTodos = allTodos.filter((todo) =>
+    todo.labels.includes("goal") &&
+    todo.labels.includes("non-milestone")
+  );
+
+  console.log(`Found ${nonMilestoneGoalTodos.length} non-milestone goal todos`);
+
+  let createdCount = 0;
+  for (const goalTodo of nonMilestoneGoalTodos) {
+    const hasTaskOrGoalChildren = allTodos.some((todo) =>
+      todo.parentId === goalTodo.id &&
+      (todo.labels.includes("task") || todo.labels.includes("goal"))
+    );
+
+    if (hasTaskOrGoalChildren) {
+      console.log(
+        `Skipping milestone creation for "${goalTodo.content}" - has @task or @goal children`,
+      );
+      continue;
+    }
+
+    const existingMilestone = allTodos.find((todo) =>
+      todo.parentId === goalTodo.id &&
+      TodoService.findMilestoneTodos([todo]).length > 0
+    );
+
+    if (existingMilestone) {
+      console.log(
+        `Milestone todo already exists for "${goalTodo.content}"`,
+      );
+      continue;
+    }
+
+    await todoService.addTodo({
+      content: `${goalTodo.content}のマイルストーンを置く`,
+      parentId: goalTodo.id,
+    });
+    createdCount++;
+  }
+
+  if (createdCount > 0) {
+    console.log(`✓ Created ${createdCount} milestone todos`);
+  }
+}
+
+async function cleanupNonMilestoneTodos(todoService: TodoService): Promise<void> {
+  console.log("=== Processing Non-Milestone Todos ===");
+
+  const analysis = await TodoService.analyzeTasksForAutomation(
+    todoService.getDataProvider(),
+  );
+
+  console.log(
+    `Found ${analysis.nonMilestoneParentTodos.length} non-milestone todos to clean up`,
+  );
+
+  for (const todo of analysis.nonMilestoneParentTodos) {
+    const updatedLabels = todo.labels.filter((label) =>
+      label !== "non-milestone"
+    );
+    await todoService.updateTask(todo.id, { labels: updatedLabels });
+  }
+
+  if (analysis.nonMilestoneParentTodos.length > 0) {
+    console.log(
+      `✓ Processed ${analysis.nonMilestoneParentTodos.length} non-milestone todos`,
+    );
+  }
+}
+
+// テスト開始
+Deno.test("assignNonMilestoneToGoals: 子タスクを持たないゴールタスクに@non-milestoneラベルを付与する", async () => {
+  const mockApi = new MockTodoistApi();
+  const todoService = new TodoService(mockApi as unknown as TodoistApi);
+
+  // テストデータをセット
+  const testTasks = [
+    createTestTodo("1", "Goal without children", ["goal"]),
+    createTestTodo("2", "Goal with task child", ["goal"]),
+    createTestTodo("3", "Task child", ["task"], "2"),
+    createTestTodo("4", "Goal with non-milestone", ["goal", "non-milestone"]),
   ];
-  
-  return tasks;
-}
+  mockApi.setTasks(testTasks);
 
-Deno.test("findGoalTasksWithoutSubtasks should return correct tasks", () => {
-  const testTasks = createTestTasks();
-  const result = findGoalTasksWithoutSubtasks(testTasks);
-  
-  // 期待値: goal1 (子なし) と goal4 (@taskでない子あり)
-  const expectedIds = ["goal1", "goal4"];
-  const actualIds = result.map(t => t.id).sort();
-  
-  assertEquals(actualIds.sort(), expectedIds.sort(), "Should return goal1 and goal4");
-  assertEquals(result.length, 2, "Should return exactly 2 tasks");
+  // 関数実行
+  await assignNonMilestoneToGoals(todoService);
+
+  // 結果確認
+  const updatedTasks = mockApi.getTasks_mock();
+  const goalWithoutChildren = updatedTasks.find(t => t.id === "1");
+  const goalWithChildren = updatedTasks.find(t => t.id === "2");
+  const alreadyNonMilestone = updatedTasks.find(t => t.id === "4");
+
+  assertEquals(goalWithoutChildren?.labels, ["goal", "non-milestone"]);
+  assertEquals(goalWithChildren?.labels, ["goal"]);
+  assertEquals(alreadyNonMilestone?.labels, ["goal", "non-milestone"]);
 });
 
-Deno.test("findGoalTasksWithoutSubtasks should exclude goals with @task children", () => {
-  const testTasks = createTestTasks();
-  const result = findGoalTasksWithoutSubtasks(testTasks);
+Deno.test("createMilestoneTodosForGoals: @non-milestoneな@goalタスクのマイルストーンTodoを作成する", async () => {
+  const mockApi = new MockTodoistApi();
+  const todoService = new TodoService(mockApi as unknown as TodoistApi);
+
+  // テストデータをセット
+  const testTasks = [
+    createTestTodo("1", "Goal with non-milestone", ["goal", "non-milestone"]),
+    createTestTodo("2", "Goal with task child", ["goal", "non-milestone"]),
+    createTestTodo("3", "Task child", ["task"], "2"),
+  ];
+  mockApi.setTasks(testTasks);
+
+  // 関数実行
+  await createMilestoneTodosForGoals(todoService);
+
+  // 結果確認
+  const updatedTasks = mockApi.getTasks_mock();
+  const milestoneTodos = updatedTasks.filter(t => t.content.includes("のマイルストーンを置く"));
   
-  // goal2は@taskの子を持つので除外されるべき
-  const goal2Included = result.some(t => t.id === "goal2");
-  assert(!goal2Included, "Should exclude goal2 which has @task children");
+  assertEquals(milestoneTodos.length, 1);
+  assertEquals(milestoneTodos[0].parentId, "1");
+  assertEquals(milestoneTodos[0].content, "Goal with non-milestoneのマイルストーンを置く");
 });
 
-Deno.test("findGoalTasksWithoutSubtasks should exclude goals with @non-milestone", () => {
-  const testTasks = createTestTasks();
-  const result = findGoalTasksWithoutSubtasks(testTasks);
+Deno.test("createMilestoneTodosForGoals: @taskまたは@goalの子タスクを持つゴールはスキップする", async () => {
+  const mockApi = new MockTodoistApi();
+  const todoService = new TodoService(mockApi as unknown as TodoistApi);
+
+  // テストデータをセット
+  const testTasks = [
+    createTestTodo("1", "Goal with task child", ["goal", "non-milestone"]),
+    createTestTodo("2", "Task child", ["task"], "1"),
+    createTestTodo("3", "Goal with goal child", ["goal", "non-milestone"]),
+    createTestTodo("4", "Goal child", ["goal"], "3"),
+  ];
+  mockApi.setTasks(testTasks);
+
+  // 関数実行
+  await createMilestoneTodosForGoals(todoService);
+
+  // 結果確認
+  const updatedTasks = mockApi.getTasks_mock();
+  const milestoneTodos = updatedTasks.filter(t => t.content.includes("のマイルストーンを置く"));
   
-  // goal3は@non-milestoneラベルを持つので除外されるべき
-  const goal3Included = result.some(t => t.id === "goal3");
-  assert(!goal3Included, "Should exclude goal3 which has @non-milestone label");
+  assertEquals(milestoneTodos.length, 0);
 });
 
-Deno.test("findGoalTasksWithoutSubtasks should include goals with non-@task children", () => {
-  const testTasks = createTestTasks();
-  const result = findGoalTasksWithoutSubtasks(testTasks);
+Deno.test("createMilestoneTodosForGoals: 既存のマイルストーンTodoがある場合は重複作成しない", async () => {
+  const mockApi = new MockTodoistApi();
+  const todoService = new TodoService(mockApi as unknown as TodoistApi);
+
+  // テストデータをセット
+  const testTasks = [
+    createTestTodo("1", "Goal with milestone", ["goal", "non-milestone"]),
+    createTestTodo("2", "Goal with milestoneのマイルストーンを置く", [], "1"),
+  ];
+  mockApi.setTasks(testTasks);
+
+  // 関数実行
+  await createMilestoneTodosForGoals(todoService);
+
+  // 結果確認
+  const updatedTasks = mockApi.getTasks_mock();
+  const milestoneTodos = updatedTasks.filter(t => t.content.includes("のマイルストーンを置く"));
   
-  // goal4は@taskでない子を持つので含まれるべき
-  const goal4Included = result.some(t => t.id === "goal4");
-  assert(goal4Included, "Should include goal4 which has non-@task children");
+  assertEquals(milestoneTodos.length, 1);
+});
+
+Deno.test("cleanupNonMilestoneTodos: @taskまたは@goalの子タスクを持つ@non-milestoneタスクからラベルを削除する", async () => {
+  const mockApi = new MockTodoistApi();
+  const todoService = new TodoService(mockApi as unknown as TodoistApi);
+
+  // テストデータをセット
+  const testTasks = [
+    createTestTodo("1", "Non-milestone with task child", ["goal", "non-milestone"]),
+    createTestTodo("2", "Task child", ["task"], "1"),
+    createTestTodo("3", "Non-milestone with goal child", ["goal", "non-milestone"]),
+    createTestTodo("4", "Goal child", ["goal"], "3"),
+    createTestTodo("5", "Non-milestone without children", ["goal", "non-milestone"]),
+  ];
+  mockApi.setTasks(testTasks);
+
+  // 関数実行
+  await cleanupNonMilestoneTodos(todoService);
+
+  // 結果確認
+  const updatedTasks = mockApi.getTasks_mock();
+  const nonMilestoneWithTaskChild = updatedTasks.find(t => t.id === "1");
+  const nonMilestoneWithGoalChild = updatedTasks.find(t => t.id === "3");
+  const nonMilestoneWithoutChildren = updatedTasks.find(t => t.id === "5");
+
+  assertEquals(nonMilestoneWithTaskChild?.labels, ["goal"]);
+  assertEquals(nonMilestoneWithGoalChild?.labels, ["goal"]);
+  assertEquals(nonMilestoneWithoutChildren?.labels, ["goal", "non-milestone"]);
+});
+
+Deno.test("cleanupNonMilestoneTodos: @non-milestoneラベルを持たないタスクには影響しない", async () => {
+  const mockApi = new MockTodoistApi();
+  const todoService = new TodoService(mockApi as unknown as TodoistApi);
+
+  // テストデータをセット
+  const testTasks = [
+    createTestTodo("1", "Goal without non-milestone", ["goal"]),
+    createTestTodo("2", "Task child", ["task"], "1"),
+  ];
+  mockApi.setTasks(testTasks);
+
+  // 関数実行
+  await cleanupNonMilestoneTodos(todoService);
+
+  // 結果確認
+  const updatedTasks = mockApi.getTasks_mock();
+  const goal = updatedTasks.find(t => t.id === "1");
+
+  assertEquals(goal?.labels, ["goal"]);
 });
