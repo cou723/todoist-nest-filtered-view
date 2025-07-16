@@ -41,10 +41,12 @@ export class TaskDailyCompletionPanel extends LitElement {
   protected updated() {
     // DOM更新後にチャートを更新
     const stats = this.completionController.dailyCompletionStats;
-    if (stats.length > 0) {
+    const todayStats = this.completionController.todayTaskStat;
+    
+    if (stats.length > 0 || todayStats) {
       // 次のフレームでチャートを更新（DOM要素が確実に存在することを保証）
       requestAnimationFrame(() => {
-        this.updateChart(stats);
+        this.updateChart(stats, todayStats);
       });
     }
   }
@@ -56,7 +58,7 @@ export class TaskDailyCompletionPanel extends LitElement {
     if (this.completionController.error)
       return html`<p class="error">${this.completionController.error}</p>`;
 
-    if (this.completionController.dailyCompletionStats.length === 0)
+    if (this.completionController.dailyCompletionStats.length === 0 && !this.completionController.todayTaskStat)
       return html`<p class="empty">完了統計データがありません</p>`;
 
     return this.renderStats();
@@ -92,7 +94,8 @@ export class TaskDailyCompletionPanel extends LitElement {
   }
 
   private updateChart(
-    stats: Array<{ date: string; count: number; displayDate: string }>
+    stats: Array<{ date: string; count: number; displayDate: string }>,
+    todayStats?: { date: string; completedCount: number; displayDate: string } | null
   ) {
     if (!this.canvasRef.value) return;
 
@@ -106,8 +109,34 @@ export class TaskDailyCompletionPanel extends LitElement {
     }
 
     // データが空の場合はチャートを作成しない
-    if (stats.length === 0) {
+    if (stats.length === 0 && !todayStats) {
       return;
+    }
+
+    // 完全なデータセットを作成（履歴データ + 当日データ）
+    const allStats = [...stats];
+    
+    // 当日データがある場合は追加
+    if (todayStats) {
+      // 既存の履歴データに当日が含まれているかチェック
+      const todayDate = todayStats.date;
+      const existingTodayIndex = allStats.findIndex(stat => stat.date === todayDate);
+      
+      if (existingTodayIndex >= 0) {
+        // 既存の当日データを更新
+        allStats[existingTodayIndex] = {
+          date: todayDate,
+          count: todayStats.completedCount,
+          displayDate: todayStats.displayDate
+        };
+      } else {
+        // 新しい当日データを追加
+        allStats.push({
+          date: todayDate,
+          count: todayStats.completedCount,
+          displayDate: todayStats.displayDate
+        });
+      }
     }
 
     // CSS変数から色を取得
@@ -118,11 +147,11 @@ export class TaskDailyCompletionPanel extends LitElement {
     const config: ChartConfiguration = {
       type: "line",
       data: {
-        labels: stats.map((stat) => stat.displayDate),
+        labels: allStats.map((stat) => stat.displayDate),
         datasets: [
           {
             label: "@taskタスク完了数",
-            data: stats.map((stat) => stat.count),
+            data: allStats.map((stat) => stat.count),
             borderColor: primaryColor,
             backgroundColor: primaryColor + "20", // 透明度を追加
             tension: 0.1,

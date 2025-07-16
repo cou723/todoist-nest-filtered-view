@@ -101,7 +101,39 @@ export class TodoistSyncService {
   }
 
   /**
-   * 日付別の@taskタスク完了統計を取得
+   * 当日の@taskタスク統計を取得
+   * @returns 当日の完了済み・未完了タスク数
+   */
+  public async getTodayTaskStats(): Promise<TodayTaskStat> {
+    const today = new Date();
+    const todayKey = today.toISOString().split("T")[0];
+    
+    // 当日の開始時刻（00:00:00）
+    const todayStart = new Date(today);
+    todayStart.setHours(0, 0, 0, 0);
+    
+    // 明日の開始時刻（00:00:00）
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    // 当日の完了済みタスクを取得
+    const completedTasks = await this.getCompletedTasksWithTaskLabel(
+      todayStart.toISOString(),
+      tomorrowStart.toISOString()
+    );
+
+    return {
+      date: todayKey,
+      completedCount: completedTasks.length,
+      displayDate: today.toLocaleDateString("ja-JP", {
+        month: "numeric",
+        day: "numeric",
+      }),
+    };
+  }
+
+  /**
+   * 日付別の@taskタスク完了統計を取得（当日も含む）
    * @param days 過去何日分のデータを取得するか
    * @returns 日付別の完了タスク数
    */
@@ -190,6 +222,18 @@ const DailyCompletionStatSchema = v.object({
   displayDate: v.string("表示用日付は文字列である必要があります"),
 });
 
+const TodayTaskStatSchema = v.object({
+  date: v.pipe(
+    v.string("日付は文字列である必要があります"),
+    v.isoDate("日付はISO 8601形式である必要があります")
+  ),
+  completedCount: v.pipe(
+    v.number("完了カウントは数値である必要があります"),
+    v.minValue(0, "完了カウントは0以上である必要があります")
+  ),
+  displayDate: v.string("表示用日付は文字列である必要があります"),
+});
+
 // 型定義（バリデーションスキーマから生成）
 // APIレスポンスの基本型
 type ApiCompletedTask = v.InferOutput<typeof CompletedTaskSchema>;
@@ -201,3 +245,4 @@ export interface CompletedTask extends ApiCompletedTask {
 
 export type CompletedTasksResponse = v.InferOutput<typeof CompletedTasksResponseSchema>;
 export type DailyCompletionStat = v.InferOutput<typeof DailyCompletionStatSchema>;
+export type TodayTaskStat = v.InferOutput<typeof TodayTaskStatSchema>;
