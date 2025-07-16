@@ -116,11 +116,11 @@ External APIs → Services → Controllers → Components → UI
 ```bash
 cd frontend
 pnpm install           # 依存関係のインストール
-pnpm dev               # 開発サーバーを起動（ポート5173）
-pnpm build             # 本番用ビルド
-pnpm type-check        # TypeScript型チェック
-pnpm lint              # ESLintによるコードチェック
-pnpm test              # Vitestでテストを実行
+pnpm run dev           # 開発サーバーを起動（ポート5173）
+pnpm run build         # 本番用ビルド
+pnpm run type-check    # TypeScript型チェック
+pnpm run lint          # ESLintによるコードチェック
+pnpm run test          # Vitestでテストを実行
 ```
 
 ### プロキシサーバー

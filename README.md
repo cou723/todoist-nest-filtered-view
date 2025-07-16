@@ -76,7 +76,7 @@ cd proxy
 # ターミナル2: フロントエンド起動
 cd frontend
 pnpm install
-pnpm dev
+pnpm run dev
 ```
 
 #### 方法2: 並行起動（推奨）
@@ -84,7 +84,7 @@ pnpm dev
 # ルートディレクトリから
 cd frontend && pnpm install && cd ..
 cd proxy && ./start.sh &
-cd frontend && pnpm dev
+cd frontend && pnpm run dev
 ```
 
 ### 4. アクセス
