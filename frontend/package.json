@@ -10,7 +10,9 @@
     "deploy": "vercel --prod --yes",
     "type-check": "tsc --noEmit",
     "lint": "eslint 'src/**/*.{ts,tsx,js,jsx}'",
-    "test": "vitest"
+    "test": "vitest",
+    "prepare": "husky",
+    "lint-staged": "lint-staged"
   },
   "dependencies": {
     "@doist/todoist-api-typescript": "^4.0.4",
@@ -24,9 +26,16 @@
     "@typescript-eslint/parser": "8.33.1",
     "@typescript-eslint/utils": "8.33.1",
     "eslint": "8.57.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
     "typescript": "~5.8.3",
     "vercel": "^43.1.0",
     "vite": "^6.3.5",
     "vitest": "^0.34.1"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx,js,jsx}": [
+      "eslint --fix"
+    ]
   }
 }
