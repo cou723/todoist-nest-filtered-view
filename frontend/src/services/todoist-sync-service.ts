@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { startOfDay, addDays, format, subDays } from "date-fns";
 
 /**
  * TodoistSyncService - Todoist Sync APIを使用した完了済みタスク取得
@@ -25,11 +26,11 @@ export class TodoistSyncService {
   ): Promise<CompletedTask[]> {
     // Sync API v9の完了済みタスク専用エンドポイントを使用
     const url = new URL(`${this.baseUrl}/completed/get_all`);
-    
+
     // クエリパラメータを追加
-    if (since) url.searchParams.append('since', since);
-    if (until) url.searchParams.append('until', until);
-    url.searchParams.append('limit', '200'); // 最大200件取得
+    if (since) url.searchParams.append("since", since);
+    if (until) url.searchParams.append("until", until);
+    url.searchParams.append("limit", "200"); // 最大200件取得
 
     const response = await fetch(url.toString(), {
       method: "GET",
@@ -44,17 +45,19 @@ export class TodoistSyncService {
     }
 
     const data = await response.json();
-    
+
     // completed/get_allエンドポイントからは直接完了済みタスクが返される
     const completedItems = data.items || [];
-    
+
     // APIレスポンスをバリデーション
-    const validatedData = v.parse(CompletedTasksResponseSchema, { items: completedItems });
-    
+    const validatedData = v.parse(CompletedTasksResponseSchema, {
+      items: completedItems,
+    });
+
     // バリデーション成功後に、各アイテムにコンテンツから抽出したラベルを追加
     const enrichedItems: CompletedTask[] = validatedData.items.map((item) => {
       const extractedLabels = this.extractLabelsFromContent(item.content);
-      
+
       return {
         ...item,
         labels: extractedLabels, // コンテンツから抽出したラベルのみを使用
@@ -79,11 +82,11 @@ export class TodoistSyncService {
     const labelRegex = /@(\w+)/g;
     const labels: string[] = [];
     let match;
-    
+
     while ((match = labelRegex.exec(content)) !== null) {
       labels.push(match[1]); // @を除いたラベル名を追加
     }
-    
+
     return labels;
   }
 
@@ -96,7 +99,7 @@ export class TodoistSyncService {
     const filteredTasks = allCompletedTasks.filter((task) => {
       return task.labels.includes("task");
     });
-    
+
     return filteredTasks;
   }
 
@@ -106,15 +109,13 @@ export class TodoistSyncService {
    */
   public async getTodayTaskStats(): Promise<TodayTaskStat> {
     const today = new Date();
-    const todayKey = today.toISOString().split("T")[0];
-    
-    // 当日の開始時刻（00:00:00）
-    const todayStart = new Date(today);
-    todayStart.setHours(0, 0, 0, 0);
-    
-    // 明日の開始時刻（00:00:00）
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const todayKey = format(today, 'yyyy-MM-dd');
+
+    // ローカル時間での当日の開始時刻（00:00:00）
+    const todayStart = startOfDay(today);
+
+    // ローカル時間での明日の開始時刻（00:00:00）
+    const tomorrowStart = startOfDay(addDays(today, 1));
 
     // 当日の完了済みタスクを取得
     const completedTasks = await this.getCompletedTasksWithTaskLabel(
@@ -141,11 +142,10 @@ export class TodoistSyncService {
     days: number = 30
   ): Promise<DailyCompletionStat[]> {
     const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - days);
+    const startDate = subDays(endDate, days);
 
-    const since = startDate.toISOString();
-    const until = endDate.toISOString();
+    const since = startOfDay(startDate).toISOString();
+    const until = startOfDay(addDays(endDate, 1)).toISOString();
 
     const completedTasks = await this.getCompletedTasksWithTaskLabel(
       since,
@@ -156,16 +156,15 @@ export class TodoistSyncService {
 
     completedTasks.forEach((task) => {
       const completedDate = new Date(task.completed_at);
-      const dateKey = completedDate.toISOString().split("T")[0];
+      const dateKey = format(completedDate, 'yyyy-MM-dd');
 
       dailyStats.set(dateKey, (dailyStats.get(dateKey) || 0) + 1);
     });
 
     const result: DailyCompletionStat[] = [];
     for (let i = 0; i < days; i++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
-      const dateKey = date.toISOString().split("T")[0];
+      const date = addDays(startDate, i);
+      const dateKey = format(date, 'yyyy-MM-dd');
 
       const stat = {
         date: dateKey,
@@ -207,7 +206,10 @@ const CompletedTaskSchema = v.object({
 });
 
 const CompletedTasksResponseSchema = v.object({
-  items: v.array(CompletedTaskSchema, "完了済みタスクの配列である必要があります"),
+  items: v.array(
+    CompletedTaskSchema,
+    "完了済みタスクの配列である必要があります"
+  ),
 });
 
 const DailyCompletionStatSchema = v.object({
@@ -222,6 +224,7 @@ const DailyCompletionStatSchema = v.object({
   displayDate: v.string("表示用日付は文字列である必要があります"),
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TodayTaskStatSchema = v.object({
   date: v.pipe(
     v.string("日付は文字列である必要があります"),
@@ -243,6 +246,10 @@ export interface CompletedTask extends ApiCompletedTask {
   labels: string[]; // コンテンツから抽出されたラベル
 }
 
-export type CompletedTasksResponse = v.InferOutput<typeof CompletedTasksResponseSchema>;
-export type DailyCompletionStat = v.InferOutput<typeof DailyCompletionStatSchema>;
+export type CompletedTasksResponse = v.InferOutput<
+  typeof CompletedTasksResponseSchema
+>;
+export type DailyCompletionStat = v.InferOutput<
+  typeof DailyCompletionStatSchema
+>;
 export type TodayTaskStat = v.InferOutput<typeof TodayTaskStatSchema>;

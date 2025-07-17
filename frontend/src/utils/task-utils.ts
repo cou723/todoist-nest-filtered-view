@@ -1,4 +1,5 @@
 import type { TaskNode } from "../types/task.js";
+import { isToday, isTomorrow, differenceInDays, isBefore } from "date-fns";
 
 export function getPriorityText(priority: number): string {
   switch (priority) {
@@ -92,35 +93,28 @@ export function formatDueDate(due: {
     return "";
   }
 
-  const dueDate = new Date(due.date);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
+  const dueDate = new Date(due.date + 'T00:00:00');
 
   // 今日の日付と比較
-  if (isSameDate(dueDate, today)) {
+  if (isToday(dueDate)) {
     return "今日";
   }
 
   // 明日の日付と比較
-  if (isSameDate(dueDate, tomorrow)) {
+  if (isTomorrow(dueDate)) {
     return "明日";
   }
 
   // 過去の日付かチェック
-  if (dueDate < today) {
-    const diffDays = Math.floor(
-      (today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
+  if (isBefore(dueDate, new Date())) {
+    const diffDays = Math.abs(differenceInDays(dueDate, new Date()));
     return `${diffDays}日前`;
   }
 
   // 未来の日付
-  const diffDays = Math.floor(
-    (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const diffDays = differenceInDays(dueDate, new Date());
   if (diffDays <= 7) {
-    return `${diffDays + 1}日後`;
+    return `${diffDays}日後`;
   }
 
   // 1週間以上先の場合は日付を表示
@@ -141,26 +135,21 @@ export function getDueDateUrgency(due: {
     return "normal";
   }
 
-  const dueDate = new Date(due.date);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
+  const dueDate = new Date(due.date + 'T00:00:00');
 
-  if (isSameDate(dueDate, today)) {
+  if (isToday(dueDate)) {
     return "today";
   }
 
-  if (dueDate < today) {
+  if (isBefore(dueDate, new Date())) {
     return "overdue";
   }
 
-  if (isSameDate(dueDate, tomorrow)) {
+  if (isTomorrow(dueDate)) {
     return "tomorrow";
   }
 
-  const diffDays = Math.floor(
-    (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const diffDays = differenceInDays(dueDate, new Date());
   if (diffDays <= 3) {
     return "soon";
   }
@@ -168,13 +157,3 @@ export function getDueDateUrgency(due: {
   return "normal";
 }
 
-/**
- * 2つの日付が同じ日かどうかを判定する
- */
-function isSameDate(date1: Date, date2: Date): boolean {
-  return (
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate()
-  );
-}

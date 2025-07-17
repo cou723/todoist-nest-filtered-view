@@ -1,6 +1,7 @@
 import type { ReactiveController, ReactiveControllerHost } from "lit";
 import type { Task } from "@doist/todoist-api-typescript";
 import { TodoistService } from "../services/todoist-service.js";
+import { differenceInDays, isAfter, startOfDay } from "date-fns";
 
 export interface DateGoalControllerHost extends ReactiveControllerHost {
   requestUpdate(): void;
@@ -64,12 +65,10 @@ export class DateGoalController implements ReactiveController {
         if (!task.due || !task.due.date) return false;
 
         // 今日以降の日付のタスクのみを含める
-        const taskDate = new Date(task.due.date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        taskDate.setHours(0, 0, 0, 0);
+        const taskDate = new Date(task.due.date + 'T00:00:00');
+        const today = startOfDay(new Date());
 
-        return taskDate >= today;
+        return isAfter(taskDate, today) || taskDate.getTime() === today.getTime();
       });
 
       this.dateGoalTasks = tasksWithDate
@@ -88,16 +87,10 @@ export class DateGoalController implements ReactiveController {
 
   // 日付までの日数を計算
   private calculateDaysUntilDate(dateString: string): number {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfDay(new Date());
+    const targetDate = new Date(dateString + 'T00:00:00');
 
-    const targetDate = new Date(dateString);
-    targetDate.setHours(0, 0, 0, 0);
-
-    const diffTime = targetDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays;
+    return differenceInDays(targetDate, today);
   }
 
   // 日付表示用のテキストを取得

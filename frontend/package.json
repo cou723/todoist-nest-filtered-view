@@ -15,6 +15,7 @@
   "dependencies": {
     "@doist/todoist-api-typescript": "^4.0.4",
     "chart.js": "^4.5.0",
+    "date-fns": "^4.1.0",
     "lit": "^3.3.0",
     "valibot": "^1.1.0"
   },
