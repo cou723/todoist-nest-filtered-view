@@ -10,7 +10,7 @@
     "deploy": "vercel --prod --yes",
     "type-check": "tsc --noEmit",
     "lint": "eslint 'src/**/*.{ts,tsx,js,jsx}'",
-    "test": "vitest",
+    "test": "vitest --run",
     "prepare": "husky"
   },
   "dependencies": {
