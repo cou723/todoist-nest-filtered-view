@@ -31,7 +31,7 @@ export class TaskDailyCompletionPanel extends LitElement {
     return html`
       <ui-panel>
         <div class="completion-content">
-          <h2>@taskタスク完了統計</h2>
+          <h2>TaskTodo完了統計</h2>
           ${this.renderContent()}
         </div>
       </ui-panel>
@@ -150,7 +150,7 @@ export class TaskDailyCompletionPanel extends LitElement {
         labels: allStats.map((stat) => stat.displayDate),
         datasets: [
           {
-            label: "@taskタスク完了数",
+            label: "TaskTodo完了数",
             data: allStats.map((stat) => stat.count),
             borderColor: primaryColor,
             backgroundColor: primaryColor + "20", // 透明度を追加

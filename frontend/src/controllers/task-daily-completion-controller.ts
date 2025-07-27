@@ -62,7 +62,7 @@ export class TaskDailyCompletionController implements ReactiveController {
       this.dailyCompletionStats =
         await this.todoistSyncService.getDailyCompletionStats(days);
     } catch {
-      this.error = "@taskタスクの完了統計の取得に失敗しました";
+      this.error = "TaskTodoの完了統計の取得に失敗しました";
     } finally {
       this.loading = false;
       this.host.requestUpdate();
@@ -80,7 +80,7 @@ export class TaskDailyCompletionController implements ReactiveController {
     try {
       this.todayTaskStat = await this.todoistSyncService.getTodayTaskStats();
     } catch {
-      this.error = "当日の@taskタスク統計の取得に失敗しました";
+      this.error = "当日のTaskTodo統計の取得に失敗しました";
     } finally {
       this.loading = false;
       this.host.requestUpdate();

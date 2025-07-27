@@ -48,7 +48,7 @@ export class DateGoalController implements ReactiveController {
     this.host.requestUpdate();
   }
 
-  // 日付付き@goalタスクの取得
+  // 日付付きGoalTodoの取得
   public async fetchDateGoalTasks() {
     if (!this.todoistService) return;
 
