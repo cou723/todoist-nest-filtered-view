@@ -30,22 +30,28 @@ export class DateGoalPanel extends LitElement {
     if (this.dateGoalController.error)
       return html`<p class="error">${this.dateGoalController.error}</p>`;
 
-    if (this.dateGoalController.dateGoalTasks.length === 0)
+    if (this.dateGoalController.dateGoalTodos.length === 0)
       return html`<p class="empty">日付付きゴールタスクがありません</p>`;
 
-    return this.renderTasks();
+    return this.renderTodos();
   }
 
-  private renderTasks() {
+  private renderTodos() {
     return html`
-      <div class="tasks-list">
-        ${this.dateGoalController.dateGoalTasks.map(
-          task => html`
-            <div class="task-item">
-              <div class="task-content">
-                <div class="task-title">${task.content}</div>
-                <div class="task-date ${this.dateGoalController.getDaysUntilDateColorClass(task.daysUntilDate)}">
-                  ${this.dateGoalController.getDaysUntilDateText(task.daysUntilDate)}
+      <div class="todos-list">
+        ${this.dateGoalController.dateGoalTodos.map(
+          (todo) => html`
+            <div class="todo-item">
+              <div class="todo-content">
+                <div class="todo-title">${todo.content}</div>
+                <div
+                  class="todo-date ${this.dateGoalController.getDaysUntilDateColorClass(
+                    todo.daysUntilDate
+                  )}"
+                >
+                  ${this.dateGoalController.getDaysUntilDateText(
+                    todo.daysUntilDate
+                  )}
                 </div>
               </div>
             </div>
@@ -81,13 +87,13 @@ export class DateGoalPanel extends LitElement {
       color: var(--error-color);
     }
 
-    .tasks-list {
+    .todos-list {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
     }
 
-    .task-item {
+    .todo-item {
       padding: 0.75rem;
       border: 1px solid var(--border-color);
       border-radius: 0.375rem;
@@ -95,25 +101,25 @@ export class DateGoalPanel extends LitElement {
       transition: background-color 0.2s ease;
     }
 
-    .task-item:hover {
+    .todo-item:hover {
       background: var(--surface-hover-color);
     }
 
-    .task-content {
+    .todo-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
     }
 
-    .task-title {
+    .todo-title {
       flex: 1;
       font-size: 0.9rem;
       color: var(--text-color);
       word-break: break-word;
     }
 
-    .task-date {
+    .todo-date {
       font-size: 0.8rem;
       font-weight: bold;
       padding: 0.25rem 0.5rem;
@@ -121,27 +127,27 @@ export class DateGoalPanel extends LitElement {
       white-space: nowrap;
     }
 
-    .task-date.overdue {
+    .todo-date.overdue {
       background: var(--error-bg-color);
       color: var(--error-color);
     }
 
-    .task-date.today {
+    .todo-date.today {
       background: var(--warning-bg-color);
       color: var(--warning-color);
     }
 
-    .task-date.urgent {
+    .todo-date.urgent {
       background: var(--info-bg-color);
       color: var(--info-color);
     }
 
-    .task-date.soon {
+    .todo-date.soon {
       background: var(--success-bg-color);
       color: var(--success-color);
     }
 
-    .task-date.normal {
+    .todo-date.normal {
       background: var(--neutral-bg-color);
       color: var(--neutral-color);
     }
