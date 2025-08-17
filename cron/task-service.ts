@@ -4,7 +4,7 @@
  */
 
 import { TodoistApi } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
-import type { Task } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
+import type { Task, Label } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
 
 /**
  * タスクフィルタの設定
@@ -39,6 +39,7 @@ export interface TodoAnalysis {
 export class TodoService {
   private api: TodoistApi;
   private taskCache = new Map<string, Task[]>();
+  private labelCache = new Map<string, Label[]>();
   private cacheExpiry = new Map<string, number>();
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5分
 
@@ -49,7 +50,7 @@ export class TodoService {
   /**
    * 指定されたラベルのタスクを取得（キャッシュ対応）
    */
-  private async getTodosByLabel(label: string): Promise<Task[]> {
+  async getTodosByLabel(label: string): Promise<Task[]> {
     const now = Date.now();
     const cacheKey = `@${label}`;
 
@@ -258,6 +259,7 @@ export class TodoService {
    */
   private clearCache(): void {
     this.taskCache.clear();
+    this.labelCache.clear();
     this.cacheExpiry.clear();
   }
 
@@ -266,5 +268,77 @@ export class TodoService {
    */
   public invalidateCache(): void {
     this.clearCache();
+  }
+
+  /**
+   * 全てのラベルを取得
+   */
+  async getLabels(): Promise<Label[]> {
+    const now = Date.now();
+    const cacheKey = "all_labels";
+
+    // キャッシュチェック
+    if (this.labelCache.has(cacheKey) && this.cacheExpiry.get(cacheKey)! > now) {
+      console.log("Using cached labels");
+      return this.labelCache.get(cacheKey)!;
+    }
+
+    console.log("Fetching labels from API");
+    const labels = await this.api.getLabels();
+
+    // キャッシュに保存
+    this.labelCache.set(cacheKey, labels);
+    this.cacheExpiry.set(cacheKey, now + this.CACHE_DURATION);
+
+    console.log(`Retrieved ${labels.length} labels from API`);
+    return labels;
+  }
+
+  /**
+   * ラベルを作成（重複チェック付き）
+   */
+  async createLabel(name: string): Promise<Label | null> {
+    // 既存ラベルとの重複チェック
+    const existingLabels = await this.getLabels();
+    const duplicate = existingLabels.find(label => label.name === name);
+    
+    if (duplicate) {
+      console.log(`Label "${name}" already exists, skipping creation`);
+      return duplicate;
+    }
+
+    console.log(`Creating new label: ${name}`);
+    const newLabel = await this.api.addLabel({ name });
+    
+    // キャッシュをクリア（変更があったため）
+    this.clearCache();
+    
+    return newLabel;
+  }
+
+  /**
+   * ラベルを削除
+   */
+  async deleteLabel(labelId: string): Promise<void> {
+    await this.api.deleteLabel(labelId);
+    
+    // キャッシュをクリア（変更があったため）
+    this.clearCache();
+  }
+
+  /**
+   * 名前でラベルを検索
+   */
+  async findLabelByName(name: string): Promise<Label | null> {
+    const labels = await this.getLabels();
+    return labels.find(label => label.name === name) || null;
+  }
+
+  /**
+   * dep-で始まるラベルを全て取得
+   */
+  async getDepLabels(): Promise<Label[]> {
+    const labels = await this.getLabels();
+    return labels.filter(label => label.name.startsWith('dep-'));
   }
 }

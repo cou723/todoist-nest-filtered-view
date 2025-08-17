@@ -10,6 +10,7 @@ Todoには@goalもしくは@taskが付与されていることを前提として
 
 import { TodoistApi } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
 import { TodoService } from "./task-service.ts";
+import { DependencyLabelAutomation } from "./dependency-label-automation.ts";
 
 async function assignNonMilestoneToGoals(
   todoService: TodoService,
@@ -129,10 +130,15 @@ async function runAutomation() {
     console.log(`[${new Date().toISOString()}] Starting automation...`);
 
     const todoService = new TodoService(new TodoistApi(token));
+    const dependencyLabelAutomation = new DependencyLabelAutomation(todoService);
 
+    // 既存の処理
     await assignNonMilestoneToGoals(todoService);
     await createMilestoneTodosForGoals(todoService);
     await cleanupNonMilestoneTodos(todoService);
+
+    // 依存関係ラベル管理（新規追加）
+    await dependencyLabelAutomation.manageDependencyLabels();
 
     console.log(
       `[${new Date().toISOString()}] Automation completed successfully`,
