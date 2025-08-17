@@ -2,8 +2,8 @@ import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 
-@customElement("task-meta-labels")
-export class TaskMetaLabels extends LitElement {
+@customElement("todo-meta-labels")
+export class TodoMetaLabels extends LitElement {
   @property({ type: Array })
   public labels!: string[];
 
@@ -29,6 +29,6 @@ export class TaskMetaLabels extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "task-meta-labels": TaskMetaLabels;
+    "todo-meta-labels": TodoMetaLabels;
   }
 }

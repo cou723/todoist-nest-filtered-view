@@ -1,66 +1,66 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { TaskNode } from "../../types/task.js";
+import type { TodoNode } from "../../types/task.js";
 import "./checkbox.js";
 import "./parent-display.js";
-import "./meta";
+import "./meta/index.js";
 import "./content.js";
 
-@customElement("task-item")
-export class TaskItem extends LitElement {
+@customElement("todo-item")
+export class TodoItem extends LitElement {
   @property({ type: Object })
-  public task!: TaskNode;
+  public todo!: TodoNode;
 
   @property({ attribute: false })
-  public onCompleteTask?: (taskId: string) => void;
+  public onCompleteTodo?: (todoId: string) => void;
 
-  private buildAncestorChain(task: TaskNode): TaskNode[] {
-    const chain: TaskNode[] = [];
-    let current = task.parent;
-    
+  private buildAncestorChain(todo: TodoNode): TodoNode[] {
+    const chain: TodoNode[] = [];
+    let current = todo.parent;
+
     while (current) {
       chain.unshift(current); // 配列の先頭に追加（最も古い祖先から順番に）
       current = current.parent;
     }
-    
+
     return chain;
   }
 
   public render() {
     return html`
-      <li class="task-item">
-        <div class="task-left">
-          <parent-task-display
-            .ancestorChain=${this.buildAncestorChain(this.task)}
-          ></parent-task-display>
+      <li class="todo-item">
+        <div class="todo-left">
+          <parent-todo-display
+            .ancestorChain=${this.buildAncestorChain(this.todo)}
+          ></parent-todo-display>
 
-          <div class="task-main">
-            <task-content
-              .content=${this.task.content}
-              .taskId=${this.task.id}
-            ></task-content>
+          <div class="todo-main">
+            <todo-content
+              .content=${this.todo.content}
+              .todoId=${this.todo.id}
+            ></todo-content>
 
-            <task-meta
-              .priority=${this.task.priority}
-              .due=${this.task.due ?? undefined}
-              .labels=${this.task.labels}
-            ></task-meta>
+            <todo-meta
+              .priority=${this.todo.priority}
+              .due=${this.todo.due ?? undefined}
+              .labels=${this.todo.labels}
+            ></todo-meta>
           </div>
         </div>
 
-        <div class="task-actions">
-          <task-checkbox
-            .taskId=${this.task.id}
-            .onComplete=${this.onCompleteTask}
+        <div class="todo-actions">
+          <todo-checkbox
+            .taskId=${this.todo.id}
+            .onComplete=${this.onCompleteTodo}
             checkboxTitle="タスクを完了にする"
-          ></task-checkbox>
+          ></todo-checkbox>
         </div>
       </li>
     `;
   }
 
   public static styles = css`
-    .task-item {
+    .todo-item {
       padding: 0.4em 0;
       border-bottom: 1px solid var(--border-color);
       transition: border-color 0.3s ease;
@@ -70,21 +70,21 @@ export class TaskItem extends LitElement {
       gap: 1em;
     }
 
-    .task-left {
+    .todo-left {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 0.2em;
     }
 
-    .task-main {
+    .todo-main {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 1em;
     }
 
-    .task-actions {
+    .todo-actions {
       display: flex;
       align-items: center;
       width: 60px;
@@ -96,6 +96,6 @@ export class TaskItem extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "task-item": TaskItem;
+    "todo-item": TodoItem;
   }
 }

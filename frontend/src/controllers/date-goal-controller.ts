@@ -1,5 +1,5 @@
 import type { ReactiveController, ReactiveControllerHost } from "lit";
-import type { Task } from "@doist/todoist-api-typescript";
+import type { Task as Todo } from "@doist/todoist-api-typescript";
 import { TodoistService } from "../services/todoist-service.js";
 import { differenceInDays, isAfter, startOfDay } from "date-fns";
 
@@ -7,7 +7,7 @@ export interface DateGoalControllerHost extends ReactiveControllerHost {
   requestUpdate(): void;
 }
 
-export interface DateGoalTask extends Task {
+export interface DateGoalTodo extends Todo {
   daysUntilDate: number;
 }
 
@@ -16,7 +16,7 @@ export class DateGoalController implements ReactiveController {
   private todoistService: TodoistService | null = null;
 
   // 状態
-  public dateGoalTasks: DateGoalTask[] = [];
+  public dateGoalTodos: DateGoalTodo[] = [];
   public loading = false;
   public error = "";
 
@@ -36,20 +36,20 @@ export class DateGoalController implements ReactiveController {
   // サービスの初期化
   public initializeService(service: TodoistService) {
     this.todoistService = service;
-    this.fetchDateGoalTasks();
+    this.fetchDateGoalTodos();
   }
 
   // サービスのクリア
   public clearService() {
     this.todoistService = null;
-    this.dateGoalTasks = [];
+    this.dateGoalTodos = [];
     this.error = "";
     this.loading = false;
     this.host.requestUpdate();
   }
 
   // 日付付きGoalTodoの取得
-  public async fetchDateGoalTasks() {
+  public async fetchDateGoalTodos() {
     if (!this.todoistService) return;
 
     this.loading = true;
@@ -57,24 +57,26 @@ export class DateGoalController implements ReactiveController {
     this.host.requestUpdate();
 
     try {
-      const tasks = await this.todoistService.fetchTasksByFilter(
+      const todos = await this.todoistService.fetchTodosByFilter(
         "@goal & !日付なし"
       );
 
-      const tasksWithDate = tasks.filter((task) => {
-        if (!task.due || !task.due.date) return false;
+      const todosWithDate = todos.filter((t) => {
+        if (!t.due || !t.due.date) return false;
 
         // 今日以降の日付のタスクのみを含める
-        const taskDate = new Date(task.due.date + 'T00:00:00');
+        const todoDate = new Date(t.due.date + "T00:00:00");
         const today = startOfDay(new Date());
 
-        return isAfter(taskDate, today) || taskDate.getTime() === today.getTime();
+        return (
+          isAfter(todoDate, today) || todoDate.getTime() === today.getTime()
+        );
       });
 
-      this.dateGoalTasks = tasksWithDate
-        .map((task) => ({
-          ...task,
-          daysUntilDate: this.calculateDaysUntilDate(task.due?.date ?? ""),
+      this.dateGoalTodos = todosWithDate
+        .map((t) => ({
+          ...t,
+          daysUntilDate: this.calculateDaysUntilDate(t.due?.date ?? ""),
         }))
         .sort((a, b) => a.daysUntilDate - b.daysUntilDate);
     } catch {
@@ -88,7 +90,7 @@ export class DateGoalController implements ReactiveController {
   // 日付までの日数を計算
   private calculateDaysUntilDate(dateString: string): number {
     const today = startOfDay(new Date());
-    const targetDate = new Date(dateString + 'T00:00:00');
+    const targetDate = new Date(dateString + "T00:00:00");
 
     return differenceInDays(targetDate, today);
   }

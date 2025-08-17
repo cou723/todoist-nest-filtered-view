@@ -1,22 +1,22 @@
 import type { ReactiveController, ReactiveControllerHost } from "lit";
-import type { TaskNode } from "../types/task.js";
+import type { TodoNode } from "../types/task.js";
 import { TodoistService } from "../services/todoist-service.js";
 
-export interface FilteredTaskControllerHost extends ReactiveControllerHost {
+export interface FilteredTodoControllerHost extends ReactiveControllerHost {
   requestUpdate(): void;
 }
 
-export class FilteredTaskController implements ReactiveController {
-  private host: FilteredTaskControllerHost;
+export class FilteredTodoController implements ReactiveController {
+  private host: FilteredTodoControllerHost;
   private todoistService: TodoistService | null = null;
   private currentRequestController: AbortController | null = null;
 
   // 状態
-  public tasks: TaskNode[] = [];
+  public todos: TodoNode[] = [];
   public loading = false;
   public error = "";
 
-  constructor(host: FilteredTaskControllerHost) {
+  constructor(host: FilteredTodoControllerHost) {
     this.host = host;
     host.addController(this);
   }
@@ -44,7 +44,7 @@ export class FilteredTaskController implements ReactiveController {
   public clearService() {
     this.cancelCurrentRequest();
     this.todoistService = null;
-    this.tasks = [];
+    this.todos = [];
     this.error = "";
     this.loading = false;
     this.host.requestUpdate();
@@ -59,7 +59,7 @@ export class FilteredTaskController implements ReactiveController {
   }
 
   // フィルタによるタスク取得
-  public async fetchTasksByFilter(query?: string): Promise<void> {
+  public async fetchTodosByFilter(query?: string): Promise<void> {
     if (!this.todoistService) return;
 
     this.cancelCurrentRequest();
@@ -70,14 +70,14 @@ export class FilteredTaskController implements ReactiveController {
     this.host.requestUpdate();
 
     try {
-      this.tasks = await this.todoistService.getTasksTree(query);
+      this.todos = await this.todoistService.getTodosTree(query);
     } catch (e: unknown) {
       if (e instanceof Error) {
         // AbortErrorの場合は無視（意図的なキャンセル）
         if (e.name === "AbortError") return;
         this.error = "フィルタリングに失敗しました: " + (e?.message || e);
       }
-      this.tasks = [];
+      this.todos = [];
     } finally {
       this.loading = false;
       this.currentRequestController = null;
@@ -86,13 +86,13 @@ export class FilteredTaskController implements ReactiveController {
   }
 
   // タスクを完了にする
-  public async completeTask(taskId: string): Promise<void> {
+  public async completeTodo(taskId: string): Promise<void> {
     if (!this.todoistService) return;
 
     try {
-      await this.todoistService.completeTask(taskId);
+      await this.todoistService.completeTodo(taskId);
       // ローカルのタスクリストからも削除
-      this.tasks = this.tasks.filter((task) => task.id !== taskId);
+      this.todos = this.todos.filter((task) => task.id !== taskId);
       this.host.requestUpdate();
     } catch (e: unknown) {
       if (e instanceof Error)

@@ -1,22 +1,22 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
-@customElement("task-content")
-export class TaskContent extends LitElement {
+@customElement("todo-content")
+export class TodoContent extends LitElement {
   @property({ type: String })
   public content!: string;
 
   @property({ type: String })
-  public taskId!: string;
+  public todoId!: string;
 
   public render() {
     return html`
-      <div class="task-content">
+      <div class="todo-content">
         <a
-          href="https://todoist.com/showTask?id=${this.taskId}"
+          href="https://todoist.com/showTask?id=${this.todoId}"
           target="_blank"
           rel="noopener noreferrer"
-          class="task-link"
+          class="todo-link"
         >
           ${this.content}
         </a>
@@ -25,26 +25,26 @@ export class TaskContent extends LitElement {
   }
 
   public static styles = css`
-    .task-content {
+    .todo-content {
       font-weight: bold;
       margin-bottom: 0.2em;
       color: var(--text-color);
       flex: 1;
     }
 
-    .task-link {
+    .todo-link {
       color: inherit;
       text-decoration: none;
       cursor: pointer;
       transition: color 0.2s ease;
     }
 
-    .task-link:hover {
+    .todo-link:hover {
       color: var(--primary-color);
       text-decoration: underline;
     }
 
-    .task-link:focus {
+    .todo-link:focus {
       outline: 2px solid var(--primary-color);
       outline-offset: 2px;
       border-radius: 2px;
@@ -54,6 +54,6 @@ export class TaskContent extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "task-content": TaskContent;
+    "todo-content": TodoContent;
   }
 }

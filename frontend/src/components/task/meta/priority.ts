@@ -2,8 +2,8 @@ import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { getPriorityText } from "../../../utils/task-utils.js";
 
-@customElement("task-meta-priority")
-export class TaskMetaPriority extends LitElement {
+@customElement("todo-meta-priority")
+export class TodoMetaPriority extends LitElement {
   @property({ type: Number })
   public priority!: number;
 
@@ -42,6 +42,6 @@ export class TaskMetaPriority extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "task-meta-priority": TaskMetaPriority;
+    "todo-meta-priority": TodoMetaPriority;
   }
 }

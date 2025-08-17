@@ -1,6 +1,9 @@
 import { TodoistApi } from "@doist/todoist-api-typescript";
-import type { GetTasksResponse, Task } from "@doist/todoist-api-typescript";
-import type { TaskNode as TaskNode } from "../types/task.js";
+import type {
+  GetTasksResponse,
+  Task as Todo,
+} from "@doist/todoist-api-typescript";
+import type { TodoNode as TodoNode } from "../types/task.js";
 
 /**
  * TodoistService - Todoist API操作とキャッシュ管理
@@ -12,17 +15,17 @@ import type { TaskNode as TaskNode } from "../types/task.js";
  */
 export class TodoistService {
   private api: TodoistApi;
-  private allTasksCache: Map<string, Task> = new Map();
-  private pendingFetches: Map<string, Promise<Task | undefined>> = new Map();
+  private allTodosCache: Map<string, Todo> = new Map();
+  private pendingFetches: Map<string, Promise<Todo | undefined>> = new Map();
 
   constructor(token: string) {
     this.api = new TodoistApi(token);
   }
 
-  public async getTasksTree(query?: string): Promise<TaskNode[]> {
-    const tasks = await this.fetchTasksByFilter(query);
+  public async getTodosTree(query?: string): Promise<TodoNode[]> {
+    const todos = await this.fetchTodosByFilter(query);
     return (
-      await Promise.all(tasks.map((task) => this.fetchTaskNode(task.id)))
+      await Promise.all(todos.map((t) => this.fetchTodoNode(t.id)))
     ).filter((t) => t != undefined);
   }
 
@@ -30,8 +33,8 @@ export class TodoistService {
    * フィルタリングされたタスクを全ページ取得
    * 注意: 全ページを取得するため、大量のタスクがある場合は初回ロードが遅くなる可能性がある
    */
-  public async fetchTasksByFilter(query?: string): Promise<Task[]> {
-    let allTasks: Task[] = [];
+  public async fetchTodosByFilter(query?: string): Promise<Todo[]> {
+    let allTodos: Todo[] = [];
     let cursor: string | null = null;
 
     do {
@@ -39,20 +42,20 @@ export class TodoistService {
         ? await this.api.getTasksByFilter({ query, cursor })
         : await this.api.getTasks({ cursor });
 
-      allTasks.push(...response.results);
+      allTodos.push(...response.results);
       cursor = response.nextCursor;
     } while (cursor !== null);
 
-    allTasks.forEach((task) => {
-      this.allTasksCache.set(task.id, task);
+    allTodos.forEach((t) => {
+      this.allTodosCache.set(t.id, t);
     });
-    return allTasks;
+    return allTodos;
   }
 
-  private async fetchTask(id: string): Promise<Task | undefined> {
-    const cachedTask = this.allTasksCache.get(id);
-    if (cachedTask) {
-      return cachedTask;
+  private async fetchTodo(id: string): Promise<Todo | undefined> {
+    const cachedTodo = this.allTodosCache.get(id);
+    if (cachedTodo) {
+      return cachedTodo;
     }
 
     // 既に同じタスクを取得中の場合は、その Promise を返す
@@ -66,47 +69,47 @@ export class TodoistService {
     this.pendingFetches.set(id, fetchPromise);
 
     try {
-      const task = await fetchPromise;
-      return task;
+      const todo = await fetchPromise;
+      return todo;
     } finally {
       // リクエスト完了後にpendingFetchesから削除
       this.pendingFetches.delete(id);
     }
   }
 
-  private async performFetch(id: string): Promise<Task | undefined> {
+  private async performFetch(id: string): Promise<Todo | undefined> {
     try {
       // console.log(`APIからタスクを取得: ${id}`);
-      const task = await this.api.getTask(id);
-      this.allTasksCache.set(id, task);
-      return task;
+      const todo = await this.api.getTask(id);
+      this.allTodosCache.set(id, todo);
+      return todo;
     } catch (error) {
       console.error(`タスクの取得に失敗しました: ${error}`);
       return undefined;
     }
   }
 
-  private async fetchTaskNode(id: string): Promise<TaskNode | undefined> {
-    const task = await this.fetchTask(id);
-    if (!task) return undefined;
+  private async fetchTodoNode(id: string): Promise<TodoNode | undefined> {
+    const todo = await this.fetchTodo(id);
+    if (!todo) return undefined;
 
     return {
-      ...task,
-      parent: task?.parentId
-        ? await this.fetchTaskNode(task.parentId)
+      ...todo,
+      parent: todo?.parentId
+        ? await this.fetchTodoNode(todo.parentId)
         : undefined,
     };
   }
 
   // タスクを完了にする
-  public async completeTask(taskId: string): Promise<void> {
-    await this.api.closeTask(taskId);
+  public async completeTodo(id: string): Promise<void> {
+    await this.api.closeTask(id);
     // キャッシュからタスクを削除
-    this.allTasksCache.delete(taskId);
+    this.allTodosCache.delete(id);
   }
 
   // キャッシュをクリアするメソッド（必要に応じて使用）
   public clearCache() {
-    this.allTasksCache.clear();
+    this.allTodosCache.clear();
   }
 }

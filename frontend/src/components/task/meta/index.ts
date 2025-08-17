@@ -5,8 +5,8 @@ import "./due-date.js";
 import "./labels.js";
 import { when } from "../../../utils/template-utils.js";
 
-@customElement("task-meta")
-export class TaskMeta extends LitElement {
+@customElement("todo-meta")
+export class TodoMeta extends LitElement {
   @property({ type: Number })
   public priority!: number;
 
@@ -18,24 +18,24 @@ export class TaskMeta extends LitElement {
 
   public render() {
     return html`
-      <div class="task-meta">
-        <task-meta-priority .priority=${this.priority}></task-meta-priority>
+      <div class="todo-meta">
+        <todo-meta-priority .priority=${this.priority}></todo-meta-priority>
 
         ${when(
           this.due,
-          (due) => html`<task-meta-due-date .due=${due}></task-meta-due-date>`
+          (due) => html`<todo-meta-due-date .due=${due}></todo-meta-due-date>`
         )}
         ${when(
           this.labels,
           (labels) =>
-            html`<task-meta-labels .labels=${labels}></task-meta-labels>`
+            html`<todo-meta-labels .labels=${labels}></todo-meta-labels>`
         )}
       </div>
     `;
   }
 
   public static styles = css`
-    .task-meta {
+    .todo-meta {
       margin-top: 0.2em;
       padding-left: 0.5em;
       font-size: 0.8em;
@@ -46,6 +46,6 @@ export class TaskMeta extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "task-meta": TaskMeta;
+    "todo-meta": TodoMeta;
   }
 }

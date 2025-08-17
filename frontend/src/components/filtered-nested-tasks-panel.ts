@@ -1,38 +1,38 @@
 import { LitElement, css, html } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { FilteredTaskController } from "../controllers/filtered-task-controller.js";
+import { FilteredTodoController } from "../controllers/filtered-task-controller.js";
 import { FilterController } from "../controllers/filter-controller.js";
 import "./setting-button.js";
 import "./setting-modal.js";
 import "./task-list.js";
 import "./ui/panel.js";
 
-@customElement("filtered-nested-tasks-panel")
-export class FilteredNestedTasksPanel extends LitElement {
-  private filteredTaskController = new FilteredTaskController(this);
+@customElement("filtered-nested-todos-panel")
+export class FilteredNestedTodosPanel extends LitElement {
+  private filteredTodoController = new FilteredTodoController(this);
   private filterController = new FilterController(this);
 
   @state()
   private settingModalOpen = false;
 
   public initializeService(token: string) {
-    this.filteredTaskController.initializeService(token);
+    this.filteredTodoController.initializeService(token);
     // 初回起動時にもフィルターを反映
-    this.fetchTasksByFilter(this.filterController.getCurrentQuery());
+    this.fetchTodosByFilter(this.filterController.getCurrentQuery());
   }
 
   public reinitializeService(token: string) {
-    this.filteredTaskController.reinitializeService(token);
-    this.fetchTasksByFilter(this.filterController.getCurrentQuery());
+    this.filteredTodoController.reinitializeService(token);
+    this.fetchTodosByFilter(this.filterController.getCurrentQuery());
   }
 
   public clearService() {
-    this.filteredTaskController.clearService();
+    this.filteredTodoController.clearService();
     this.filterController.clearFilter();
   }
 
-  private async fetchTasksByFilter(query?: string) {
-    await this.filteredTaskController.fetchTasksByFilter(query);
+  private async fetchTodosByFilter(query?: string) {
+    await this.filteredTodoController.fetchTodosByFilter(query);
   }
 
   private async handleFilterApply(e: CustomEvent) {
@@ -40,19 +40,19 @@ export class FilteredNestedTasksPanel extends LitElement {
     this.filterController.applyFilter(query);
 
     if (query.trim()) {
-      await this.filteredTaskController.fetchTasksByFilter(query);
+      await this.filteredTodoController.fetchTodosByFilter(query);
     } else {
-      await this.filteredTaskController.fetchTasksByFilter();
+      await this.filteredTodoController.fetchTodosByFilter();
     }
   }
 
   private async handleFilterClear() {
     this.filterController.clearFilter();
-    await this.filteredTaskController.fetchTasksByFilter();
+    await this.filteredTodoController.fetchTodosByFilter();
   }
 
-  private async handleCompleteTask(taskId: string) {
-    await this.filteredTaskController.completeTask(taskId);
+  private async handleCompleteTodo(todoId: string) {
+    await this.filteredTodoController.completeTodo(todoId);
   }
 
   public render() {
@@ -72,12 +72,12 @@ export class FilteredNestedTasksPanel extends LitElement {
           @filter-clear=${this.handleFilterClear}
           @modal-close=${() => (this.settingModalOpen = false)}
         ></setting-modal>
-        <task-list
-          .tasks=${this.filteredTaskController.tasks}
-          .loading=${this.filteredTaskController.loading}
-          .error=${this.filteredTaskController.error}
-          .onCompleteTask=${this.handleCompleteTask.bind(this)}
-        ></task-list>
+        <todo-list
+          .todos=${this.filteredTodoController.todos}
+          .loading=${this.filteredTodoController.loading}
+          .error=${this.filteredTodoController.error}
+          .onCompleteTodo=${this.handleCompleteTodo.bind(this)}
+        ></todo-list>
       </ui-panel>
     `;
   }
@@ -109,6 +109,6 @@ export class FilteredNestedTasksPanel extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "filtered-nested-tasks-panel": FilteredNestedTasksPanel;
+    "filtered-nested-todos-panel": FilteredNestedTodosPanel;
   }
 }

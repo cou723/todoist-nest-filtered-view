@@ -1,7 +1,7 @@
-import type { Task } from "@doist/todoist-api-typescript";
+import type { Task as Todo } from "@doist/todoist-api-typescript";
 
-export interface TaskNode extends Task {
-  parent?: TaskNode;
+export interface TodoNode extends Todo {
+  parent?: TodoNode;
 }
 
 export interface Project {
