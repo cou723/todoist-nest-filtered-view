@@ -16,7 +16,7 @@ export class GoalMilestonePanel extends LitElement {
     return html`
       <ui-panel>
         <div class="goal-milestone-stats">
-          <h2>マイルストーン進捗</h2>
+          <h2>非マイルストーンゴールTodo率</h2>
           ${this.renderContent()}
         </div>
       </ui-panel>

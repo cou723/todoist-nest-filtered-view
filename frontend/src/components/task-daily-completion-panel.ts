@@ -31,7 +31,7 @@ export class TodoDailyCompletionPanel extends LitElement {
     return html`
       <ui-panel>
         <div class="completion-content">
-          <h2>TaskTodo完了統計</h2>
+          <h2>作業完了統計</h2>
           ${this.renderContent()}
         </div>
       </ui-panel>
@@ -68,20 +68,33 @@ export class TodoDailyCompletionPanel extends LitElement {
   }
 
   private renderStats() {
-    const totalCount = this.completionController.getTotalCompletionCount();
-    const avgCount = this.completionController.getAverageCompletionCount();
+    const totalCount30Days =
+      this.completionController.getTotalCompletionCount();
+    const totalCount7Days = this.completionController.getLast7DaysTotalCount();
+    const avgCount30Days =
+      this.completionController.getAverageCompletionCount();
+    const avgCount7Days = this.completionController.getLast7DaysAverageCount();
+    const totalDays = this.completionController.getTotalDays();
     const maxCount = this.completionController.getMaxCompletionCount();
 
     return html`
       <div class="stats-container">
         <div class="summary-stats">
           <div class="stat-item">
-            <div class="stat-label">合計</div>
-            <div class="stat-value">${totalCount}件</div>
+            <div class="stat-label">過去7日間合計</div>
+            <div class="stat-value">${totalCount7Days}件</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">平均</div>
-            <div class="stat-value">${avgCount.toFixed(1)}件/日</div>
+            <div class="stat-label">過去30日間合計</div>
+            <div class="stat-value">${totalCount30Days}件</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">過去7日間平均</div>
+            <div class="stat-value">${avgCount7Days.toFixed(1)}件/日</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">過去${totalDays}日間平均</div>
+            <div class="stat-value">${avgCount30Days.toFixed(1)}件/日</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">最大</div>
@@ -161,7 +174,7 @@ export class TodoDailyCompletionPanel extends LitElement {
         labels: allStats.map((stat) => stat.displayDate),
         datasets: [
           {
-            label: "TaskTodo完了数",
+            label: "作業完了数",
             data: allStats.map((stat) => stat.count),
             borderColor: primaryColor,
             backgroundColor: primaryColor + "20", // 透明度を追加
@@ -245,8 +258,8 @@ export class TodoDailyCompletionPanel extends LitElement {
 
     .summary-stats {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.8rem;
     }
 
     .stat-item {

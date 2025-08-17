@@ -90,6 +90,15 @@ export class TodoistSyncService {
     return labels;
   }
 
+  /**
+   * マイルストーンTodoかどうかを判定
+   * @param content Todoのコンテンツ
+   * @returns マイルストーンTodoの場合true
+   */
+  private isMilestoneTodo(content: string): boolean {
+    return /のマイルストーンを置く$/.test(content);
+  }
+
   public async getCompletedTasksWithTaskLabel(
     since?: string,
     until?: string
@@ -97,14 +106,14 @@ export class TodoistSyncService {
     const allCompletedTasks = await this.getCompletedTasks(since, until);
 
     const filteredTasks = allCompletedTasks.filter((task) => {
-      return task.labels.includes("task");
+      return task.labels.includes("task") || this.isMilestoneTodo(task.content);
     });
 
     return filteredTasks;
   }
 
   /**
-   * 当日のTaskTodo統計を取得
+   * 当日の作業統計を取得（TaskTodo + マイルストーンTodo）
    * @returns 当日の完了済み・Todo数
    */
   public async getTodayTodoStats(): Promise<TodayTaskStat> {
@@ -134,7 +143,7 @@ export class TodoistSyncService {
   }
 
   /**
-   * 日付別のTaskTodo完了統計を取得（当日も含む）
+   * 日付別の作業完了統計を取得（TaskTodo + マイルストーンTodo、当日も含む）
    * @param days 過去何日分のデータを取得するか
    * @returns 日付別の完了Todo数
    */

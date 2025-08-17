@@ -62,7 +62,7 @@ export class TodoDailyCompletionController implements ReactiveController {
       this.dailyCompletionStats =
         await this.todoistSyncService.getDailyCompletionStats(days);
     } catch {
-      this.error = "@taskタスクの完了統計の取得に失敗しました";
+      this.error = "作業完了統計の取得に失敗しました";
     } finally {
       this.loading = false;
       this.host.requestUpdate();
@@ -80,7 +80,7 @@ export class TodoDailyCompletionController implements ReactiveController {
     try {
       this.todayTodoStat = await this.todoistSyncService.getTodayTodoStats();
     } catch {
-      this.error = "当日の@taskタスク統計の取得に失敗しました";
+      this.error = "当日の作業統計の取得に失敗しました";
     } finally {
       this.loading = false;
       this.host.requestUpdate();
@@ -119,6 +119,30 @@ export class TodoDailyCompletionController implements ReactiveController {
       this.dailyCompletionStats.length + (this.todayTodoStat ? 1 : 0);
     if (totalDays === 0) return 0;
     return this.getTotalCompletionCount() / totalDays;
+  }
+
+  // 過去7日間の合計完了数を取得（当日を含む）
+  public getLast7DaysTotalCount(): number {
+    const last7DaysStats = this.dailyCompletionStats.slice(-6); // 過去6日分
+    const historicalTotal = last7DaysStats.reduce(
+      (sum, stat) => sum + stat.count,
+      0
+    );
+    const todayCount = this.todayTodoStat?.completedCount || 0;
+    return historicalTotal + todayCount;
+  }
+
+  // 過去7日間の平均完了数を取得（当日を含む）
+  public getLast7DaysAverageCount(): number {
+    const last7DaysStats = this.dailyCompletionStats.slice(-6); // 過去6日分
+    const totalDays = last7DaysStats.length + (this.todayTodoStat ? 1 : 0);
+    if (totalDays === 0) return 0;
+    return this.getLast7DaysTotalCount() / totalDays;
+  }
+
+  // 統計期間の日数を取得
+  public getTotalDays(): number {
+    return this.dailyCompletionStats.length + (this.todayTodoStat ? 1 : 0);
   }
 
   // 最新の完了数を取得（当日がある場合は当日を返す）
