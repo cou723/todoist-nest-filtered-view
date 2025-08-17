@@ -1,6 +1,7 @@
 import type { ReactiveController, ReactiveControllerHost } from "lit";
 import type { TodoNode } from "../types/task.js";
 import { TodoistService } from "../services/todoist-service.js";
+import { hasDepLabelInAncestors } from "../utils/task-utils.js";
 
 export interface FilteredTodoControllerHost extends ReactiveControllerHost {
   requestUpdate(): void;
@@ -59,7 +60,7 @@ export class FilteredTodoController implements ReactiveController {
   }
 
   // フィルタによるタスク取得
-  public async fetchTodosByFilter(query?: string): Promise<void> {
+  public async fetchTodosByFilter(query?: string, hideDepTodos?: boolean): Promise<void> {
     if (!this.todoistService) return;
 
     this.cancelCurrentRequest();
@@ -70,7 +71,14 @@ export class FilteredTodoController implements ReactiveController {
     this.host.requestUpdate();
 
     try {
-      this.todos = await this.todoistService.getTodosTree(query);
+      let todos = await this.todoistService.getTodosTree(query);
+      
+      // dep-系タグフィルタリングを適用
+      if (hideDepTodos) {
+        todos = this.filterDepTodos(todos);
+      }
+      
+      this.todos = todos;
     } catch (e: unknown) {
       if (e instanceof Error) {
         // AbortErrorの場合は無視（意図的なキャンセル）
@@ -100,6 +108,11 @@ export class FilteredTodoController implements ReactiveController {
       else this.error = "タスクの完了に失敗しました: " + String(e);
       this.host.requestUpdate();
     }
+  }
+
+  // dep-系タグを持つTodoをフィルタリングする
+  private filterDepTodos(todos: TodoNode[]): TodoNode[] {
+    return todos.filter(todo => !hasDepLabelInAncestors(todo));
   }
 
   // サービスの再初期化（キャッシュクリア付き）

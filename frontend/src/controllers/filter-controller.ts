@@ -9,6 +9,7 @@ export class FilterController implements ReactiveController {
 
   // 状態
   public currentQuery = "";
+  public hideDepTodos = false;
 
   constructor(host: FilterControllerHost) {
     this.host = host;
@@ -16,7 +17,9 @@ export class FilterController implements ReactiveController {
   }
 
   public hostConnected() {
-    this.applyFilter(localStorage.getItem("todoist_filter_query") || "");
+    const savedQuery = localStorage.getItem("todoist_filter_query") || "";
+    const savedHideDep = localStorage.getItem("todoist_hide_dep_todos") === "true";
+    this.applyFilter(savedQuery, savedHideDep);
   }
 
   public hostDisconnected() {
@@ -24,14 +27,18 @@ export class FilterController implements ReactiveController {
   }
 
   // フィルタの適用
-  public applyFilter(query: string): void {
+  public applyFilter(query: string, hideDepTodos?: boolean): void {
     this.currentQuery = query;
+    if (hideDepTodos !== undefined) {
+      this.hideDepTodos = hideDepTodos;
+    }
     this.host.requestUpdate();
   }
 
   // フィルタのクリア
   public clearFilter(): void {
     this.currentQuery = "";
+    this.hideDepTodos = false;
     this.host.requestUpdate();
   }
 
@@ -40,8 +47,13 @@ export class FilterController implements ReactiveController {
     return this.currentQuery;
   }
 
+  // dep非表示設定の取得
+  public getHideDepTodos(): boolean {
+    return this.hideDepTodos;
+  }
+
   // フィルタが適用されているかの確認
   public hasActiveFilter(): boolean {
-    return this.currentQuery.trim() !== "";
+    return this.currentQuery.trim() !== "" || this.hideDepTodos;
   }
 }

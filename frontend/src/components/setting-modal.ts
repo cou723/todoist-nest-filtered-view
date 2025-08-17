@@ -2,6 +2,7 @@ import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { layoutStyles } from "../styles/common.js";
 import "./ui/button.js";
+import "./ui/checkbox.js";
 import "./ui/input.js";
 import "./ui/modal.js";
 
@@ -9,6 +10,9 @@ import "./ui/modal.js";
 export class SettingModal extends LitElement {
   @state()
   private filterQuery = "";
+
+  @state()
+  private hideDepTodos = false;
 
   @property({ type: Boolean })
   public modalOpen = false;
@@ -19,6 +23,7 @@ export class SettingModal extends LitElement {
   public connectedCallback() {
     super.connectedCallback();
     this.filterQuery = localStorage.getItem("todoist_filter_query") || "";
+    this.hideDepTodos = localStorage.getItem("todoist_hide_dep_todos") === "true";
   }
 
   public disconnectedCallback() {
@@ -31,7 +36,7 @@ export class SettingModal extends LitElement {
   private applyFilter() {
     this.dispatchEvent(
       new CustomEvent("filter-apply", {
-        detail: { query: this.filterQuery },
+        detail: { query: this.filterQuery, hideDepTodos: this.hideDepTodos },
         bubbles: true,
         composed: true,
       })
@@ -86,6 +91,24 @@ export class SettingModal extends LitElement {
               placeholder="例: today, p1, @label_name など"
             ></ui-input>
           </label>
+          
+          <ui-checkbox
+            .checked=${this.hideDepTodos}
+            .label=${"dep-系タグを持つ依存Todo非表示"}
+            .id=${"hide-dep-todos"}
+            @checkbox-change=${(e: CustomEvent) => {
+              this.hideDepTodos = e.detail.checked;
+              localStorage.setItem("todoist_hide_dep_todos", this.hideDepTodos.toString());
+              
+              if (this.debounceTimer) {
+                clearTimeout(this.debounceTimer);
+              }
+
+              this.debounceTimer = window.setTimeout(() => {
+                this.applyFilter();
+              }, this.DEBOUNCE_DELAY);
+            }}
+          ></ui-checkbox>
           <div class="modal-actions">
             <ui-button type="submit">フィルター適用</ui-button>
             <ui-button
@@ -97,7 +120,9 @@ export class SettingModal extends LitElement {
                 }
 
                 this.filterQuery = "";
+                this.hideDepTodos = false;
                 localStorage.removeItem("todoist_filter_query");
+                localStorage.removeItem("todoist_hide_dep_todos");
                 this.dispatchEvent(
                   new CustomEvent("filter-clear", {
                     bubbles: true,

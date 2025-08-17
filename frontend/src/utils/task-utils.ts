@@ -156,3 +156,31 @@ export function getDueDateUrgency(due: {
 
   return "normal";
 }
+
+/**
+ * Todoまたはその祖先にdep-系ラベルが存在するかをチェックする
+ */
+export function hasDepLabelInAncestors(todo: TodoNode): boolean {
+  // 自分自身のラベルをチェック
+  if (hasDepLabel(todo.labels)) {
+    return true;
+  }
+
+  // 祖先のラベルをチェック
+  let current = todo.parent;
+  while (current) {
+    if (hasDepLabel(current.labels)) {
+      return true;
+    }
+    current = current.parent;
+  }
+
+  return false;
+}
+
+/**
+ * ラベル配列にdep-系ラベルが存在するかをチェックする
+ */
+function hasDepLabel(labels: string[]): boolean {
+  return labels.some(label => label.startsWith("dep-"));
+}

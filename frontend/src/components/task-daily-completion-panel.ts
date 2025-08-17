@@ -31,11 +31,7 @@ export class TodoDailyCompletionPanel extends LitElement {
     return html`
       <ui-panel>
         <div class="completion-content">
-<<<<<<< HEAD
-          <h2>TaskTodo完了統計</h2>
-=======
           <h2>作業完了統計</h2>
->>>>>>> fix_commit
           ${this.renderContent()}
         </div>
       </ui-panel>

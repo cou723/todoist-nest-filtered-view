@@ -18,12 +18,18 @@ export class FilteredNestedTodosPanel extends LitElement {
   public initializeService(token: string) {
     this.filteredTodoController.initializeService(token);
     // 初回起動時にもフィルターを反映
-    this.fetchTodosByFilter(this.filterController.getCurrentQuery());
+    this.fetchTodosByFilter(
+      this.filterController.getCurrentQuery(),
+      this.filterController.getHideDepTodos()
+    );
   }
 
   public reinitializeService(token: string) {
     this.filteredTodoController.reinitializeService(token);
-    this.fetchTodosByFilter(this.filterController.getCurrentQuery());
+    this.fetchTodosByFilter(
+      this.filterController.getCurrentQuery(),
+      this.filterController.getHideDepTodos()
+    );
   }
 
   public clearService() {
@@ -31,24 +37,24 @@ export class FilteredNestedTodosPanel extends LitElement {
     this.filterController.clearFilter();
   }
 
-  private async fetchTodosByFilter(query?: string) {
-    await this.filteredTodoController.fetchTodosByFilter(query);
+  private async fetchTodosByFilter(query?: string, hideDepTodos?: boolean) {
+    await this.filteredTodoController.fetchTodosByFilter(query, hideDepTodos);
   }
 
   private async handleFilterApply(e: CustomEvent) {
-    const { query } = e.detail;
-    this.filterController.applyFilter(query);
+    const { query, hideDepTodos } = e.detail;
+    this.filterController.applyFilter(query, hideDepTodos);
 
     if (query.trim()) {
-      await this.filteredTodoController.fetchTodosByFilter(query);
+      await this.filteredTodoController.fetchTodosByFilter(query, hideDepTodos);
     } else {
-      await this.filteredTodoController.fetchTodosByFilter();
+      await this.filteredTodoController.fetchTodosByFilter(undefined, hideDepTodos);
     }
   }
 
   private async handleFilterClear() {
     this.filterController.clearFilter();
-    await this.filteredTodoController.fetchTodosByFilter();
+    await this.filteredTodoController.fetchTodosByFilter(undefined, false);
   }
 
   private async handleCompleteTodo(todoId: string) {
