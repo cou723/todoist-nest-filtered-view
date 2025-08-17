@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Todoist自動化Cronサービス
 
-このディレクトリには、Todoistタスクの自動タグ管理を行うDenoベースのCronサービスが含まれています。
+このディレクトリには、TodoistTodoの自動タグ管理を行うDenoベースのCronサービスが含まれています。
 
 ### 開発コマンド
 
@@ -34,7 +34,7 @@ deno run --allow-net --allow-env --allow-read --env remove_milestone_tasks.ts
 
 ### 基本用語
 
-- **Todo**: Todoistのタスク全般を指す基本単位
+- **Todo**: TodoistのTodo全般を指す基本単位
 - **Goal**: `@goal`ラベルが付いたTodoを指す
 - **Task**: `@task`ラベルが付いたTodoを指す
 
@@ -65,34 +65,27 @@ main.ts (メインの自動化処理)
 │   ├── ラベルフィルタによる効率的なAPI呼び出し
 │   └── @doist/todoist-api-typescript クライアント
 └── 自動化処理
-    ├── processGoalTasks() - @goalタスクの@non-milestone自動付与
-    └── cleanupNonMilestoneTodos() - @non-milestoneタスクの自動剥奪
+    ├── processGoalTasks() - GoalTodoの@non-milestone自動付与
+    └── cleanupNonMilestoneTodos() - @non-milestoneTodoの自動剥奪
 
 remove_milestone_tasks.ts (ユーティリティスクリプト)
-└── TodoService を使用したマイルストーンタスクの一括削除
+└── TodoService を使用したマイルストーンTodoの一括削除
 ```
 
 ### 自動化処理の詳細
 
-#### 1. @goalタスクの自動処理 (`processGoalTasks`)
+#### 1. GoalTodoの自動処理 (`processGoalTasks`)
 
-- **対象**: `@goal`ラベルがあり、`@non-milestone`ラベルがなく、`@task`または`@goal`の子タスクがないタスク
+- **対象**: `@goal`ラベルがあり、`@non-milestone`ラベルがなく、`@task`または`@goal`の子TodoがないTodo
 - **処理**:
-  - 該当タスクに`@non-milestone`ラベルを追加
-  - 「${タスク名}のマイルストーンを置く」という子タスクを作成（ラベルなし）
+  - 該当Todoに`@non-milestone`ラベルを追加
+  - 「${Todo名}のマイルストーンを置く」という子Todoを作成（ラベルなし）
 
-#### 2. @non-milestoneタスクの自動処理 (`cleanupNonMilestoneTodos`)
+#### 2. @non-milestoneTodoの自動処理 (`cleanupNonMilestoneTodos`)
 
-- **対象**: `@non-milestone`ラベルを持つタスクで、`@task`または`@goal`ラベルを持つ子タスクがあるもの
-- **処理**: 該当タスクから`@non-milestone`ラベルを削除
+- **対象**: `@non-milestone`ラベルを持つTodoで、`@task`または`@goal`ラベルを持つ子Todoがあるもの
+- **処理**: 該当Todoから`@non-milestone`ラベルを削除
 
-#### 3. @blocked-by-ラベルの管理（gcプロジェクト限定）
-
-- **対象**: gcプロジェクトの`@goal`ラベル付きタスク
-- **処理**:
-  - 対応する`@blocked-by-*`ラベルを自動生成
-  - 存在しない`@goal`タスクに対応する`@blocked-by-*`ラベルを削除
-  - 新規ラベルは赤色で作成
 
 ### TodoServiceの設計
 
@@ -104,26 +97,26 @@ remove_milestone_tasks.ts (ユーティリティスクリプト)
 
 **主要メソッド**:
 
-- `analyzeTasksForAutomation()` - 自動化処理対象のタスクを分析 (戻り値: `TodoAnalysis`)
-- `getAllRequiredTodos()` - 必要なラベルのタスクを一括取得
-- `findLeafGoalTodos()` - 子タスクを持たないゴールタスクを検索
-- `findNonMilestoneParentTodos()` - @task/@goalの子タスクを持つ@non-milestoneタスクを検索
-- `updateTask()` - タスクのラベル更新
-- `addTodo()` - 新規タスクの作成
-- `deleteTask()` - タスクの削除
-- `getAllTasks()` - 全てのタスクを取得
-- `findMilestoneTasks()` - マイルストーンタスクを特定
+- `analyzeTasksForAutomation()` - 自動化処理対象のTodoを分析 (戻り値: `TodoAnalysis`)
+- `getAllRequiredTodos()` - 必要なラベルのTodoを一括取得
+- `findLeafGoalTodos()` - 子Todoを持たないGoalTodoを検索
+- `findNonMilestoneParentTodos()` - @task/@goalの子Todoを持つ@non-milestoneTodoを検索
+- `updateTask()` - Todoのラベル更新
+- `addTodo()` - 新規Todoの作成
+- `deleteTask()` - Todoの削除
+- `getAllTasks()` - 全てのTodoを取得
+- `findMilestoneTasks()` - マイルストーンTodoを特定
 
 **型定義**:
 
-- `TodoFilters` - タスクフィルタの設定
-- `TodoAnalysis` - タスク分析結果 (`leafGoalTodos`, `nonMilestoneParentTodos`)
+- `TodoFilters` - Todoフィルタの設定
+- `TodoAnalysis` - Todo分析結果 (`leafGoalTodos`, `nonMilestoneParentTodos`)
 
 ### 設計の背景
 
 **API効率化**:
 
-- 全件取得ではなく、ラベルフィルタを使用した必要なタスクのみの取得
+- 全件取得ではなく、ラベルフィルタを使用した必要のTodoのみの取得
 - 公式`@doist/todoist-api-typescript`クライアントを使用
 - 短時間での重複API呼び出しを避けるキャッシュ戦略
 

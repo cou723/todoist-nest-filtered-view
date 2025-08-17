@@ -8,20 +8,20 @@ import { TodoService } from "./task-service.ts";
 
 /**
  * マイルストーンを書く系のTodoを削除する
- * @param taskService TaskService インスタンス
+ * @param todoService TaskService インスタンス
  */
-async function removeMilestoneTodos(taskService: TodoService) {
+async function removeMilestoneTodos(todoService: TodoService) {
   console.log("=== Removing Milestone Todos ===");
 
   // マイルストーンを書く系のTodoを特定
   const milestoneTodos = TodoService.findMilestoneTodos(
-    await taskService.getAllTasks(),
+    await todoService.getAllTasks()
   );
   console.log(`Found ${milestoneTodos.length} milestone todos to remove`);
 
   // 削除対象のTodoを表示
-  for (const task of milestoneTodos) {
-    console.log(`Found milestone todo: "${task.content}" (ID: ${task.id})`);
+  for (const todo of milestoneTodos) {
+    console.log(`Found milestone todo: "${todo.content}" (ID: ${todo.id})`);
   }
 
   // 削除実行の確認
@@ -33,15 +33,15 @@ async function removeMilestoneTodos(taskService: TodoService) {
   console.log(`\n=== Removing ${milestoneTodos.length} milestone todos ===`);
 
   // 各Todoを削除
-  for (const task of milestoneTodos) {
+  for (const todo of milestoneTodos) {
     try {
-      console.log(`Removing todo: "${task.content}" (ID: ${task.id})`);
-      await taskService.deleteTask(task.id);
-      console.log(`✓ Successfully removed todo: "${task.content}"`);
+      console.log(`Removing todo: "${todo.content}" (ID: ${todo.id})`);
+      await todoService.deleteTask(todo.id);
+      console.log(`✓ Successfully removed todo: "${todo.content}"`);
     } catch (error) {
       console.error(
-        `✗ Failed to remove todo: "${task.content}" (ID: ${task.id})`,
-        error,
+        `✗ Failed to remove todo: "${todo.content}" (ID: ${todo.id})`,
+        error
       );
     }
   }
@@ -60,17 +60,15 @@ async function main() {
     }
 
     console.log(
-      `[${new Date().toISOString()}] Starting milestone task removal...`,
+      `[${new Date().toISOString()}] Starting milestone task removal...`
     );
 
     const api = new TodoistApi(token);
-    const taskService = new TodoService(api);
-    await removeMilestoneTodos(taskService);
+    const todoService = new TodoService(api);
+    await removeMilestoneTodos(todoService);
 
     console.log(
-      `[${
-        new Date().toISOString()
-      }] Milestone todo removal completed successfully`,
+      `[${new Date().toISOString()}] Milestone todo removal completed successfully`
     );
   } catch (error) {
     console.error("Error in milestone todo removal:", error);

@@ -14,6 +14,16 @@
 - 技術的負債や制約の背景を明確にする
 - リファクタリングや機能追加時に既存の設計思想を尊重できる
 
+## 用語定義
+
+このプロジェクトでは以下の用語を使用します：
+
+- **Todo**: Todoistに登録される作業項目の総称
+- **TaskTodo**: `@task`ラベルが付いたTodo（実際の作業単位）
+- **GoalTodo**: `@goal`ラベルが付いたTodo（目標や大きな単位の作業）
+
+これらの用語は、ドキュメント、コメント、UI表示において統一して使用されます。
+
 ## アーキテクチャ概要（Lit初心者向け）
 
 ### アーキテクチャの全体像
@@ -87,9 +97,9 @@ External APIs → Services → Controllers → Components → UI
   * `AuthController`: OAuth認証状態とトークンの管理を行う
   * `FilteredTaskController`: フィルタリングされたTodoistタスクの取得、キャッシュ、操作を処理
   * `FilterController`: タスクのフィルタリングとクエリ状態を管理
-  * `GoalMilestoneController`: @goalタスクのマイルストーン統計を管理
-  * `DateGoalController`: 日付付き@goalタスクの期限監視と残り日数表示を管理
-  * `TaskDailyCompletionController`: @taskタスクの日別完了統計を管理
+  * `GoalMilestoneController`: GoalTodoのマイルストーン統計を管理
+  * `DateGoalController`: 日付付きGoalTodoの期限監視と残り日数表示を管理
+  * `TaskDailyCompletionController`: TaskTodoの日別完了統計を管理
 * **サービス**：
 
   * `TodoistService`: `@doist/todoist-api-typescript` をラップした主要API
@@ -144,41 +154,28 @@ deno task check        # 型チェック
 
 ### タスクデータ構造
 
-タスクは、親タスク情報を含む再帰的な `TaskNode` 型で拡張されており、ネストされたタスクの表示に対応。
+Todoは、親Todo情報を含む再帰的な `TaskNode` 型で拡張されており、ネストされたTodoの表示に対応。
 
 ### 新機能：ゴールマイルストーン統計
 
-@goalタスクのうち@non-milestoneタグが付いているタスクの割合を統計表示する機能を追加：
-- `GoalMilestoneController`が@goalタスクを取得・分析
+GoalTodoのうち@non-milestoneタグが付いているTodoの割合を統計表示する機能を追加：
+- `GoalMilestoneController`がGoalTodoを取得・分析
 - リアルタイムで割合を計算・表示
 - 専用パネル`goal-milestone-panel`で常時表示
 
 ### 新機能：日付付きゴールタスク監視
 
-期限が設定された@goalタスクの監視と残り日数表示機能を追加：
-- `DateGoalController`が日付付きの@goalタスクを取得・監視
+期限が設定されたGoalTodoの監視と残り日数表示機能を追加：
+- `DateGoalController`が日付付きのGoalTodoを取得・監視
 - 期限までの残り日数を色分けして表示（期限切れ：赤、今日：オレンジ、緊急：青、近日：緑、通常：グレー）
 - 専用パネル`date-goal-panel`で常時表示
 - ダークモード完全対応（統一されたテーマシステム使用）
 
-### 新機能：依存関係タスクの表示順制御
 
-`@dep-*`タグを使用したタスクの依存関係管理機能を追加：
-- **使用方法**: 依存関係のあるタスクに`@dep-[前提タスク名]`ラベルを付与
-- **表示制御**: 階層式ソートにより依存タスクを自動的に下位に配置
-- **ソート順**:
-  1. 通常タスク（`@dep-*`なし）を優先度順（4→3→2→1）で上位表示
-  2. ブロックされたタスク（`@dep-*`あり）を優先度順で下位表示
-- **実装場所**: `task-utils.ts`の`sortTasksByPriority()`および`isBlockedTask()`関数
-- **設計背景**:
-  - **問題**: タスクの依存関係が視覚的に分からず、前提タスクが完了していないのに依存タスクに取り組んでしまう
-  - **解決方針**: ラベルベースの依存関係管理と表示順制御
-  - **制約対応**: Todoistのラベル名60文字制限により`dep-`は`dependency-`の短縮形を採用
+### 新機能：TaskTodo完了統計グラフ
 
-### 新機能：@taskタスク完了統計グラフ
-
-@taskラベルが付いたタスクの日別完了統計をグラフ表示する機能を追加：
-- **使用方法**: 過去30日間（デフォルト）の@taskタスクの完了数をバーグラフで表示
+TaskTodoの日別完了統計をグラフ表示する機能を追加：
+- **使用方法**: 過去30日間（デフォルト）のTaskTodoの完了数をバーグラフで表示
 - **統計情報**: 合計完了数、平均完了数/日、最大完了数を表示
 - **実装アーキテクチャ**:
   - `TodoistSyncService`: Todoist Sync APIを使用して完了済みタスクの履歴を取得
@@ -186,7 +183,7 @@ deno task check        # 型チェック
   - `task-daily-completion-panel`: インタラクティブなグラフ表示UI
 - **技術的詳細**:
   - REST API v2では完了履歴を取得できないため、Sync API v9を直接使用
-  - 日付範囲での完了タスクフィルタリングと@taskラベルによる絞り込み
+  - 日付範囲での完了Todoフィルタリングと@taskラベルによる絞り込み
   - SVGベースの折れ線グラフ実装（グリッドライン、データポイント、ツールチップ付き）
   - valibotによるAPIレスポンスの実行時型チェックとバリデーション
 - **バリデーション設計の進化**:
@@ -204,9 +201,9 @@ deno task check        # 型チェック
   - **学習**: API調査の重要性と、ドキュメントの不完全さへの対応
 - **ラベル抽出の工夫**:
   - **問題**: Sync APIの完了済みタスクにラベル情報が含まれていない
-  - **解決策**: タスクコンテンツから正規表現`/@(\w+)/g`で@taskのようなラベルを抽出
+  - **解決策**: Todoコンテンツから正規表現`/@(\w+)/g`で@taskのようなラベルを抽出
   - **実装**: `extractLabelsFromContent()`メソッドで自動ラベル抽出
-  - **効果**: APIの制限を回避し、@taskタスクの正確な識別が可能
+  - **効果**: APIの制限を回避し、TaskTodoの正確な識別が可能
 
 ### 認証フロー
 
@@ -251,9 +248,9 @@ app-element
 #### コンポーネント責任分担
 * **`app-element`**: 認証とパネル統合の統括（ルートコンテナ）
 * **`filtered-nested-tasks-panel`**: タスク一覧の表示と操作
-* **`goal-milestone-panel`**: @goalタスクの@non-milestoneタグ割合統計
-* **`date-goal-panel`**: 日付付き@goalタスクの期限監視と残り日数表示
-* **`task-daily-completion-panel`**: @taskタスクの日別完了統計をグラフ表示
+* **`goal-milestone-panel`**: GoalTodoの@non-milestoneタグ割合統計
+* **`date-goal-panel`**: 日付付きGoalTodoの期限監視と残り日数表示
+* **`task-daily-completion-panel`**: TaskTodoの日別完了統計をグラフ表示
 * **`task-list`**: タスクのソートと一覧表示
 * **`task-item`**: 個別タスクの詳細表示と操作
 

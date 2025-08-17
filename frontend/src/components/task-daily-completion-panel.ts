@@ -2,15 +2,15 @@ import { LitElement, css, html } from "lit";
 import { customElement } from "lit/decorators.js";
 import { ref, createRef, type Ref } from "lit/directives/ref.js";
 import { Chart, type ChartConfiguration, registerables } from "chart.js";
-import { TaskDailyCompletionController } from "../controllers/task-daily-completion-controller.js";
+import { TodoDailyCompletionController as TodoDailyCompletionController } from "../controllers/task-daily-completion-controller.js";
 import "./ui/panel.js";
 
 // Chart.jsのコンポーネントを登録
 Chart.register(...registerables);
 
-@customElement("task-daily-completion-panel")
-export class TaskDailyCompletionPanel extends LitElement {
-  private completionController = new TaskDailyCompletionController(this);
+@customElement("todo-daily-completion-panel")
+export class TodoDailyCompletionPanel extends LitElement {
+  private completionController = new TodoDailyCompletionController(this);
   private chartInstance: Chart | null = null;
   private canvasRef: Ref<HTMLCanvasElement> = createRef();
 
@@ -31,7 +31,7 @@ export class TaskDailyCompletionPanel extends LitElement {
     return html`
       <ui-panel>
         <div class="completion-content">
-          <h2>@taskタスク完了統計</h2>
+          <h2>TaskTodo完了統計</h2>
           ${this.renderContent()}
         </div>
       </ui-panel>
@@ -41,8 +41,8 @@ export class TaskDailyCompletionPanel extends LitElement {
   protected updated() {
     // DOM更新後にチャートを更新
     const stats = this.completionController.dailyCompletionStats;
-    const todayStats = this.completionController.todayTaskStat;
-    
+    const todayStats = this.completionController.todayTodoStat;
+
     if (stats.length > 0 || todayStats) {
       // 次のフレームでチャートを更新（DOM要素が確実に存在することを保証）
       requestAnimationFrame(() => {
@@ -58,7 +58,10 @@ export class TaskDailyCompletionPanel extends LitElement {
     if (this.completionController.error)
       return html`<p class="error">${this.completionController.error}</p>`;
 
-    if (this.completionController.dailyCompletionStats.length === 0 && !this.completionController.todayTaskStat)
+    if (
+      this.completionController.dailyCompletionStats.length === 0 &&
+      !this.completionController.todayTodoStat
+    )
       return html`<p class="empty">完了統計データがありません</p>`;
 
     return this.renderStats();
@@ -95,7 +98,11 @@ export class TaskDailyCompletionPanel extends LitElement {
 
   private updateChart(
     stats: Array<{ date: string; count: number; displayDate: string }>,
-    todayStats?: { date: string; completedCount: number; displayDate: string } | null
+    todayStats?: {
+      date: string;
+      completedCount: number;
+      displayDate: string;
+    } | null
   ) {
     if (!this.canvasRef.value) return;
 
@@ -115,34 +122,38 @@ export class TaskDailyCompletionPanel extends LitElement {
 
     // 完全なデータセットを作成（履歴データ + 当日データ）
     const allStats = [...stats];
-    
+
     // 当日データがある場合は追加
     if (todayStats) {
       // 既存の履歴データに当日が含まれているかチェック
       const todayDate = todayStats.date;
-      const existingTodayIndex = allStats.findIndex(stat => stat.date === todayDate);
-      
+      const existingTodayIndex = allStats.findIndex(
+        (stat) => stat.date === todayDate
+      );
+
       if (existingTodayIndex >= 0) {
         // 既存の当日データを更新
         allStats[existingTodayIndex] = {
           date: todayDate,
           count: todayStats.completedCount,
-          displayDate: todayStats.displayDate
+          displayDate: todayStats.displayDate,
         };
       } else {
         // 新しい当日データを追加
         allStats.push({
           date: todayDate,
           count: todayStats.completedCount,
-          displayDate: todayStats.displayDate
+          displayDate: todayStats.displayDate,
         });
       }
     }
 
     // CSS変数から色を取得
     const computedStyle = getComputedStyle(this);
-    const primaryColor = computedStyle.getPropertyValue('--primary-color').trim();
-    const borderColor = computedStyle.getPropertyValue('--border-color').trim();
+    const primaryColor = computedStyle
+      .getPropertyValue("--primary-color")
+      .trim();
+    const borderColor = computedStyle.getPropertyValue("--border-color").trim();
 
     const config: ChartConfiguration = {
       type: "line",
@@ -150,7 +161,7 @@ export class TaskDailyCompletionPanel extends LitElement {
         labels: allStats.map((stat) => stat.displayDate),
         datasets: [
           {
-            label: "@taskタスク完了数",
+            label: "TaskTodo完了数",
             data: allStats.map((stat) => stat.count),
             borderColor: primaryColor,
             backgroundColor: primaryColor + "20", // 透明度を追加
@@ -276,6 +287,6 @@ export class TaskDailyCompletionPanel extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "task-daily-completion-panel": TaskDailyCompletionPanel;
+    "todo-daily-completion-panel": TodoDailyCompletionPanel;
   }
 }

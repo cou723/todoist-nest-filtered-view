@@ -1,15 +1,15 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
-import type { TaskNode } from "../types/task.js";
+import type { TodoNode } from "../types/task.js";
 import { layoutStyles } from "../styles/common.js";
-import { sortTasksByPriority } from "../utils/task-utils.js";
+import { sortTodosByPriority as sortTodosByPriority } from "../utils/task-utils.js";
 import "./task/index.js";
 
-@customElement("task-list")
-export class TaskList extends LitElement {
+@customElement("todo-list")
+export class TodoList extends LitElement {
   @property({ type: Array })
-  private tasks: TaskNode[] = [];
+  private todos: TodoNode[] = [];
 
   @property({ type: Boolean })
   private loading = false;
@@ -18,7 +18,7 @@ export class TaskList extends LitElement {
   private error = "";
 
   @property({ attribute: false })
-  private onCompleteTask?: (taskId: string) => void;
+  private onCompleteTodo?: (todoId: string) => void;
 
   public render() {
     if (this.loading) {
@@ -29,22 +29,22 @@ export class TaskList extends LitElement {
       return html`<p class="error">${this.error}</p>`;
     }
 
-    if (this.tasks.length === 0) {
-      return html`<p class="no-tasks">タスクがありません</p>`;
+    if (this.todos.length === 0) {
+      return html`<p class="no-todos">タスクがありません</p>`;
     }
 
-    const sortedTasks = sortTasksByPriority(this.tasks);
+    const sortedTodos = sortTodosByPriority(this.todos);
 
     return html`
-      <ul class="task-list">
+      <ul class="todo-list">
         ${repeat(
-          sortedTasks,
-          (task) => task.id,
-          (task) => html`
-            <task-item
-              .task=${task}
-              .onCompleteTask=${this.onCompleteTask}
-            ></task-item>
+          sortedTodos,
+          (t) => t.id,
+          (t) => html`
+            <todo-item
+              .todo=${t}
+              .onCompleteTodo=${this.onCompleteTodo}
+            ></todo-item>
           `
         )}
       </ul>
@@ -54,7 +54,7 @@ export class TaskList extends LitElement {
   public static styles = [
     layoutStyles,
     css`
-      .task-list {
+      .todo-list {
         text-align: left;
         margin: 0 auto;
         padding: 0;
@@ -62,7 +62,7 @@ export class TaskList extends LitElement {
       }
 
       .loading,
-      .no-tasks {
+      .no-todos {
         text-align: center;
         color: var(--text-secondary);
         font-style: italic;
@@ -79,6 +79,6 @@ export class TaskList extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "task-list": TaskList;
+    "todo-list": TodoList;
   }
 }

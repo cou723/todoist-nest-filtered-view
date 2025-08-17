@@ -1,10 +1,10 @@
 # Todoist タスクリスト
 
-ユーザーの特定の条件に沿ったTodoistのタスクを取得し、そのタスクの親タスクの名前を含めて表示するWebアプリケーションです。
+ユーザーの特定の条件に沿ったTodoistのTodoを取得し、そのTodoの親Todoの名前を含めて表示するWebアプリケーションです。
 
 ## プロジェクト構成
 
-このプロジェクトは、もともとフロントエンドのみのアプリケーションでしたが、OAuth認証とCORS問題を解決するためにプロキシサーバーを追加した結果、フロントエンドとバックエンドの両方を含むフルスタックアプリケーションになりました。
+このプロジェクトは、もともとフロントエンドのみのアプリケーションでしたが、OAuth認証とCORS問題を解決するためにプロキシサーバーを追加し、さらにTodoistの自動化機能を提供するCronサービスを追加した結果、3つのコンポーネントからなるフルスタックアプリケーションになりました。
 
 ```
 todoist_tasklist/
@@ -13,27 +13,41 @@ todoist_tasklist/
 │   ├── public/
 │   ├── package.json
 │   └── README.md      # フロントエンド詳細ドキュメント
-├── proxy/             # バックエンドプロキシサーバー（Deno）
+├── proxy/             # OAuth認証プロキシサーバー（Deno）
 │   ├── main.ts
 │   ├── deno.json
 │   └── README.md      # プロキシサーバー詳細ドキュメント
+├── cron/              # Todoist自動化Cronサービス（Deno）
+│   ├── main.ts
+│   ├── task-service.ts
+│   ├── deno.json
+│   ├── README.md      # Cronサービス詳細ドキュメント
+│   └── CLAUDE.md      # 開発ガイドライン
 └── README.md          # このファイル（プロジェクト全体の説明）
 ```
 
 ### フロントエンド (`frontend/`)
 
 - **技術スタック**: Lit、TypeScript、Vite
-- **機能**: Todoistタスクの表示、フィルタリング、OAuth認証UI
+- **機能**: TodoistTodoの表示、フィルタリング、OAuth認証UI
 - **ポート**: 5173（開発時）
 - **詳細**: [`frontend/README.md`](frontend/README.md) を参照
 
-### バックエンド (`proxy/`)
+### OAuth認証プロキシ (`proxy/`)
 
 - **技術スタック**: Deno、TypeScript
 - **機能**: OAuth認証プロキシ、CORS対応
 - **ポート**: 8000（ローカル開発時）
 - **デプロイ**: Deno Deploy
 - **詳細**: [`proxy/README.md`](proxy/README.md) を参照
+
+### Todoist自動化サービス (`cron/`)
+
+- **技術スタック**: Deno、TypeScript
+- **機能**: TodoistTodoの自動タグ管理（@goal、@non-milestoneラベルの自動付与・削除）
+- **実行間隔**: 1時間ごと（本番環境）
+- **デプロイ**: Deno Deploy（Cron機能使用）
+- **詳細**: [`cron/README.md`](cron/README.md) を参照
 
 ## なぜプロキシサーバーが必要なのか
 
@@ -45,9 +59,9 @@ todoist_tasklist/
 
 ### 1. 前提条件
 
-- Node.js (18以上)
-- pnpm
-- Deno
+- Node.js (18以上) - フロントエンド用
+- pnpm - フロントエンドのパッケージ管理
+- Deno - プロキシサーバーとCronサービス用
 
 ### 2. 環境設定
 
@@ -63,6 +77,13 @@ cp .env.example .env
 cd proxy
 cp .env.example .env
 # 必要に応じて.envファイルを編集
+```
+
+#### Cronサービス環境変数
+```bash
+cd cron
+cp .env.example .env
+# .envファイルを編集してTODOIST_TOKENを設定
 ```
 
 ### 3. 起動手順
@@ -98,9 +119,14 @@ cd frontend && pnpm run dev
 - Vercel、Netlify、GitHub Pagesなどの静的ホスティングサービス
 - 詳細は [`frontend/README.md`](frontend/README.md) を参照
 
-### プロキシサーバー
+### OAuth認証プロキシ
 - Deno Deploy（推奨）
 - 詳細は [`proxy/README.md`](proxy/README.md) を参照
+
+### Cronサービス
+- Deno Deploy（Cron機能を使用して1時間ごとに実行）
+- 環境変数 `TODOIST_TOKEN` の設定が必要
+- 詳細は [`cron/README.md`](cron/README.md) を参照
 
 ## 開発環境
 
@@ -133,8 +159,10 @@ cd frontend && pnpm run dev
 ### 開発ワークフロー
 
 1. **フロントエンド開発**: `frontend/` ディレクトリをFrontendプロファイルで開いて作業
-2. **バックエンド開発**: `proxy/` ディレクトリをBackendプロファイルで開いて作業
-3. **統合テスト**: 両方のサーバーを起動して動作確認
+2. **プロキシサーバー開発**: `proxy/` ディレクトリをBackendプロファイルで開いて作業
+3. **Cronサービス開発**: `cron/` ディレクトリをBackendプロファイルで開いて作業
+4. **統合テスト**: フロントエンドとプロキシサーバーを起動して動作確認
+5. **Cronサービステスト**: ローカルでCronスクリプトを手動実行してテスト
 
 ## トラブルシューティング
 

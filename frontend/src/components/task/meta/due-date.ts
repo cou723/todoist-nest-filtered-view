@@ -2,8 +2,8 @@ import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { formatDueDate, getDueDateUrgency } from "../../../utils/task-utils.js";
 
-@customElement("task-meta-due-date")
-export class TaskMetaDueDate extends LitElement {
+@customElement("todo-meta-due-date")
+export class TodoMetaDueDate extends LitElement {
   @property({ type: Object })
   public due!: { date: string; datetime?: string | null };
 
@@ -47,6 +47,6 @@ export class TaskMetaDueDate extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "task-meta-due-date": TaskMetaDueDate;
+    "todo-meta-due-date": TodoMetaDueDate;
   }
 }

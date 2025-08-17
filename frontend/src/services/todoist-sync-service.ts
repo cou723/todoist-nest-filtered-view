@@ -2,9 +2,9 @@ import * as v from "valibot";
 import { startOfDay, addDays, format, subDays } from "date-fns";
 
 /**
- * TodoistSyncService - Todoist Sync APIを使用した完了済みタスク取得
+ * TodoistSyncService - Todoist Sync APIを使用した完了済みTodo取得
  *
- * Sync APIを使用することで、完了済みタスクの履歴データを日付範囲で取得できます
+ * Sync APIを使用することで、完了済みTodoの履歴データを日付範囲で取得できます
  */
 export class TodoistSyncService {
   private token: string;
@@ -15,10 +15,10 @@ export class TodoistSyncService {
   }
 
   /**
-   * 完了済みタスクを日付範囲で取得
+   * 完了済みTodoを日付範囲で取得
    * @param since 開始日時 (ISO 8601形式)
    * @param until 終了日時 (ISO 8601形式)
-   * @returns 完了済みタスクの配列
+   * @returns 完了済みTodoの配列
    */
   public async getCompletedTasks(
     since?: string,
@@ -41,12 +41,12 @@ export class TodoistSyncService {
     });
 
     if (!response.ok) {
-      throw new Error(`完了済みタスクの取得に失敗しました: ${response.status}`);
+      throw new Error(`完了済みTodoの取得に失敗しました: ${response.status}`);
     }
 
     const data = await response.json();
 
-    // completed/get_allエンドポイントからは直接完了済みタスクが返される
+    // completed/get_allエンドポイントからは直接完了済みTodoが返される
     const completedItems = data.items || [];
 
     // APIレスポンスをバリデーション
@@ -68,14 +68,14 @@ export class TodoistSyncService {
   }
 
   /**
-   * @taskラベルが付いた完了済みタスクのみを取得
+   * TaskTodoとマイルストーンTodoを取得
    * @param since 開始日時 (ISO 8601形式)
    * @param until 終了日時 (ISO 8601形式)
-   * @returns @taskラベルが付いた完了済みタスクの配列
+   * @returns TaskTodoとマイルストーンTodoの配列
    */
   /**
-   * タスクコンテンツから@で始まるラベルを抽出
-   * @param content タスクのコンテンツ
+   * Todoコンテンツから@で始まるラベルを抽出
+   * @param content Todoのコンテンツ
    * @returns 抽出されたラベルの配列
    */
   private extractLabelsFromContent(content: string): string[] {
@@ -104,12 +104,12 @@ export class TodoistSyncService {
   }
 
   /**
-   * 当日の@taskタスク統計を取得
-   * @returns 当日の完了済み・未完了タスク数
+   * 当日のTaskTodo統計を取得
+   * @returns 当日の完了済み・Todo数
    */
-  public async getTodayTaskStats(): Promise<TodayTaskStat> {
+  public async getTodayTodoStats(): Promise<TodayTaskStat> {
     const today = new Date();
-    const todayKey = format(today, 'yyyy-MM-dd');
+    const todayKey = format(today, "yyyy-MM-dd");
 
     // ローカル時間での当日の開始時刻（00:00:00）
     const todayStart = startOfDay(today);
@@ -117,7 +117,7 @@ export class TodoistSyncService {
     // ローカル時間での明日の開始時刻（00:00:00）
     const tomorrowStart = startOfDay(addDays(today, 1));
 
-    // 当日の完了済みタスクを取得
+    // 当日の完了済みTodoを取得
     const completedTasks = await this.getCompletedTasksWithTaskLabel(
       todayStart.toISOString(),
       tomorrowStart.toISOString()
@@ -134,9 +134,9 @@ export class TodoistSyncService {
   }
 
   /**
-   * 日付別の@taskタスク完了統計を取得（当日も含む）
+   * 日付別のTaskTodo完了統計を取得（当日も含む）
    * @param days 過去何日分のデータを取得するか
-   * @returns 日付別の完了タスク数
+   * @returns 日付別の完了Todo数
    */
   public async getDailyCompletionStats(
     days: number = 30
@@ -156,7 +156,7 @@ export class TodoistSyncService {
 
     completedTasks.forEach((task) => {
       const completedDate = new Date(task.completed_at);
-      const dateKey = format(completedDate, 'yyyy-MM-dd');
+      const dateKey = format(completedDate, "yyyy-MM-dd");
 
       dailyStats.set(dateKey, (dailyStats.get(dateKey) || 0) + 1);
     });
@@ -164,7 +164,7 @@ export class TodoistSyncService {
     const result: DailyCompletionStat[] = [];
     for (let i = 0; i < days; i++) {
       const date = addDays(startDate, i);
-      const dateKey = format(date, 'yyyy-MM-dd');
+      const dateKey = format(date, "yyyy-MM-dd");
 
       const stat = {
         date: dateKey,

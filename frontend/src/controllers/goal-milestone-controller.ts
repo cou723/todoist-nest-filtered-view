@@ -1,5 +1,5 @@
 import type { ReactiveController, ReactiveControllerHost } from "lit";
-import type { Task } from "@doist/todoist-api-typescript";
+import type { Task as Todo } from "@doist/todoist-api-typescript";
 import { TodoistService } from "../services/todoist-service.js";
 
 export interface GoalMilestoneControllerHost extends ReactiveControllerHost {
@@ -11,7 +11,7 @@ export class GoalMilestoneController implements ReactiveController {
   private todoistService: TodoistService | null = null;
 
   // 状態
-  public goalTasks: Task[] = [];
+  public goalTodos: Todo[] = [];
   public loading = false;
   public error = "";
 
@@ -31,20 +31,20 @@ export class GoalMilestoneController implements ReactiveController {
   // サービスの初期化
   public initializeService(service: TodoistService) {
     this.todoistService = service;
-    this.fetchGoalTasks();
+    this.fetchGoalTodos();
   }
 
   // サービスのクリア
   public clearService() {
     this.todoistService = null;
-    this.goalTasks = [];
+    this.goalTodos = [];
     this.error = "";
     this.loading = false;
     this.host.requestUpdate();
   }
 
   // ゴールタスクの取得
-  public async fetchGoalTasks() {
+  public async fetchGoalTodos() {
     if (!this.todoistService) return;
 
     this.loading = true;
@@ -52,11 +52,11 @@ export class GoalMilestoneController implements ReactiveController {
     this.host.requestUpdate();
 
     try {
-      const tasks = await this.todoistService.fetchTasksByFilter("@goal");
-      this.goalTasks = tasks;
+      const todos = await this.todoistService.fetchTodosByFilter("@goal");
+      this.goalTodos = todos;
     } catch (err) {
       this.error = "ゴールタスクの取得に失敗しました";
-      console.error("Failed to fetch goal tasks:", err);
+      console.error("Failed to fetch goal todos:", err);
     } finally {
       this.loading = false;
       this.host.requestUpdate();
@@ -64,14 +64,19 @@ export class GoalMilestoneController implements ReactiveController {
   }
 
   // ゴールマイルストーン比率の計算
-  public calculateGoalMilestoneRatio(): { percentage: number; goalCount: number; nonMilestoneCount: number } {
-    const nonMilestoneTasks = this.goalTasks.filter(task =>
-      task.labels.includes("non-milestone")
+  public calculateGoalMilestoneRatio(): {
+    percentage: number;
+    goalCount: number;
+    nonMilestoneCount: number;
+  } {
+    const nonMilestoneTodos = this.goalTodos.filter((t) =>
+      t.labels.includes("non-milestone")
     );
 
-    const goalCount = this.goalTasks.length;
-    const nonMilestoneCount = nonMilestoneTasks.length;
-    const percentage = goalCount > 0 ? Math.round((nonMilestoneCount / goalCount) * 100) : 0;
+    const goalCount = this.goalTodos.length;
+    const nonMilestoneCount = nonMilestoneTodos.length;
+    const percentage =
+      goalCount > 0 ? Math.round((nonMilestoneCount / goalCount) * 100) : 0;
 
     return { percentage, goalCount, nonMilestoneCount };
   }

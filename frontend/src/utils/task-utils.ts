@@ -1,4 +1,4 @@
-import type { TaskNode } from "../types/task.js";
+import type { TodoNode } from "../types/task.js";
 import { isToday, isTomorrow, differenceInDays, isBefore } from "date-fns";
 
 export function getPriorityText(priority: number): string {
@@ -19,14 +19,14 @@ export function getPriorityText(priority: number): string {
  * タスクを優先順位順にソートする（階層式ソート）
  * 優先順位が同じ場合は、親タスクの階層における並び順でソートする
  */
-export function sortTasksByPriority(tasks: TaskNode[]): TaskNode[] {
-  return [...tasks].sort((a, b) => {
+export function sortTodosByPriority(todos: TodoNode[]): TodoNode[] {
+  return [...todos].sort((a, b) => {
     // 優先順位が異なる場合は優先順位順
     if (a.priority !== b.priority) {
       return b.priority - a.priority;
     }
     // 優先順位が同じ場合は、階層を考慮したソート
-    return compareTasksHierarchically(a, b);
+    return compareTodosHierarchically(a, b);
   });
 }
 
@@ -34,32 +34,32 @@ export function sortTasksByPriority(tasks: TaskNode[]): TaskNode[] {
  * 階層を考慮してタスクを比較する
  * 各階層レベルで親タスクの並び順を比較し、最終的に自身の並び順で比較する
  */
-function compareTasksHierarchically(a: TaskNode, b: TaskNode): number {
+function compareTodosHierarchically(a: TodoNode, b: TodoNode): number {
   // 両方のタスクの祖先チェーンを構築
   const ancestorsA = buildAncestorChain(a);
   const ancestorsB = buildAncestorChain(b);
-  
+
   // 共通の階層レベルまで比較
   const minLength = Math.min(ancestorsA.length, ancestorsB.length);
-  
+
   for (let i = 0; i < minLength; i++) {
     const ancestorA = ancestorsA[i];
     const ancestorB = ancestorsB[i];
-    
+
     // 同じ祖先の場合は次の階層へ
     if (ancestorA.id === ancestorB.id) {
       continue;
     }
-    
+
     // 異なる祖先の場合は、その祖先同士の並び順で比較
     return ancestorA.order - ancestorB.order;
   }
-  
+
   // 祖先が全て同じ場合、階層の深さが異なれば浅い方を先に
   if (ancestorsA.length !== ancestorsB.length) {
     return ancestorsA.length - ancestorsB.length;
   }
-  
+
   // 同じ階層レベルの場合は、自身の並び順で比較
   return a.order - b.order;
 }
@@ -67,18 +67,18 @@ function compareTasksHierarchically(a: TaskNode, b: TaskNode): number {
 /**
  * タスクの祖先チェーンを構築する（ルートから現在のタスクまで）
  */
-function buildAncestorChain(task: TaskNode): TaskNode[] {
-  const chain: TaskNode[] = [];
-  let current = task.parent;
-  
+function buildAncestorChain(todo: TodoNode): TodoNode[] {
+  const chain: TodoNode[] = [];
+  let current = todo.parent;
+
   while (current) {
     chain.unshift(current); // 先頭に追加（古い祖先が先頭）
     current = current.parent;
   }
-  
+
   // 自分自身も追加
-  chain.push(task);
-  
+  chain.push(todo);
+
   return chain;
 }
 
@@ -93,7 +93,7 @@ export function formatDueDate(due: {
     return "";
   }
 
-  const dueDate = new Date(due.date + 'T00:00:00');
+  const dueDate = new Date(due.date + "T00:00:00");
 
   // 今日の日付と比較
   if (isToday(dueDate)) {
@@ -135,7 +135,7 @@ export function getDueDateUrgency(due: {
     return "normal";
   }
 
-  const dueDate = new Date(due.date + 'T00:00:00');
+  const dueDate = new Date(due.date + "T00:00:00");
 
   if (isToday(dueDate)) {
     return "today";
@@ -156,4 +156,3 @@ export function getDueDateUrgency(due: {
 
   return "normal";
 }
-

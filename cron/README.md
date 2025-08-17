@@ -1,32 +1,24 @@
 # Todoist Automation Service
 
-Todoistタスクの自動タグ管理サービス
+TodoistTodoの自動タグ管理サービス
 
 ## 機能
 
 1時間おきに以下の自動処理を実行：
 
-### 1. @goalタスクの自動処理
+### 1. GoalTodoの自動処理
 
-- `@goal`ラベルがあり、`@non-milestone`ラベルがなく、**`@task`または`@goal`の子タスクがない**タスクを検出
-- 該当タスクに`@non-milestone`ラベルを追加
-- 「${タスク名}のマイルストーンを置く」という子タスクを作成（ラベルなし）
+- `@goal`ラベルがあり、`@non-milestone`ラベルがなく、**`@task`または`@goal`の子Todoがない**Todoを検出
+- 該当Todoに`@non-milestone`ラベルを追加
+- 「${Todo名}のマイルストーンを置く」という子Todoを作成（ラベルなし）
 
-**注意**: 子タスクに`@goal`ラベルがある場合、そのタスクは`@non-milestone`として扱われません
+**注意**: 子Todoに`@goal`ラベルがある場合、そのTodoは`@non-milestone`として扱われません
 
-### 2. @non-milestoneタスクの自動処理
+### 2. @non-milestoneTodoの自動処理
 
-- `@non-milestone`ラベルを持つタスクで、`@task`ラベルを持つ子タスクがあるものを検出
-- 該当タスクから`@non-milestone`ラベルを削除
+- `@non-milestone`ラベルを持つTodoで、`@task`ラベルを持つ子Todoがあるものを検出
+- 該当Todoから`@non-milestone`ラベルを削除
 
-### 3. @blocked-by-ラベルの管理（gcプロジェクト限定）
-
-- **gcプロジェクトの`@goal`ラベル付きタスクに対応する`@blocked-by-*`ラベルを自動生成**
-- ラベル形式:
-  - 親タスクがある場合: `blocked-by-親タスク名-タスク名`
-  - 親タスクがない場合: `blocked-by-タスク名`
-- gcプロジェクトに存在しない`@goal`タスクに対応する`@blocked-by-*`ラベルをアカウントから削除
-- 新しく作成されたラベルは赤色で追加
 
 ## セットアップ
 

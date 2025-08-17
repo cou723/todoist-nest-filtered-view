@@ -34,14 +34,14 @@ export class AppElement extends LitElement {
 
     if (token && this.authController.isAuthenticated) {
       // タスクパネルの初期化
-      const taskPanel = this.shadowRoot?.querySelector(
-        "filtered-nested-tasks-panel"
+      const todoPanel = this.shadowRoot?.querySelector(
+        "filtered-nested-todos-panel"
       ) as HTMLElement & {
         initializeService: (token: string) => void;
         reinitializeService: (token: string) => void;
       };
-      if (taskPanel) {
-        taskPanel.initializeService(token);
+      if (todoPanel) {
+        todoPanel.initializeService(token);
       }
 
       // ゴールマイルストーンパネルの初期化
@@ -51,7 +51,7 @@ export class AppElement extends LitElement {
         setTodoistService: (service: unknown) => void;
       };
       if (goalPanel) {
-        // FilteredTaskControllerから TodoistService を取得する必要があるが、
+        // FilteredTodoControllerから TodoistService を取得する必要があるが、
         // 今は直接 TodoistService のインスタンスを作成
         import("./services/todoist-service.js").then(({ TodoistService }) => {
           const service = new TodoistService(token);
@@ -74,7 +74,7 @@ export class AppElement extends LitElement {
 
       // タスク完了統計パネルの初期化
       const completionPanel = this.shadowRoot?.querySelector(
-        "task-daily-completion-panel"
+        "todo-daily-completion-panel"
       ) as HTMLElement & {
         setToken: (token: string) => void;
       };
@@ -94,18 +94,18 @@ export class AppElement extends LitElement {
     this.authController.logout();
 
     // パネルのクリア
-    const taskPanel = this.shadowRoot?.querySelector(
-      "filtered-nested-tasks-panel"
+    const todoPanel = this.shadowRoot?.querySelector(
+      "filtered-nested-todos-panel"
     ) as HTMLElement & {
       clearService: () => void;
     };
-    if (taskPanel) {
-      taskPanel.clearService();
+    if (todoPanel) {
+      todoPanel.clearService();
     }
 
     // 完了統計パネルのクリア
     const completionPanel = this.shadowRoot?.querySelector(
-      "task-daily-completion-panel"
+      "todo-daily-completion-panel"
     ) as HTMLElement & {
       clearToken: () => void;
     };
@@ -133,17 +133,15 @@ export class AppElement extends LitElement {
                 <goal-milestone-panel
                   class="goal-milestone-panel"
                 ></goal-milestone-panel>
-                <date-goal-panel
-                  class="date-goal-panel"
-                ></date-goal-panel>
+                <date-goal-panel class="date-goal-panel"></date-goal-panel>
               </div>
               <div class="right-panels">
-                <task-daily-completion-panel
+                <todo-daily-completion-panel
                   class="completion-panel"
-                ></task-daily-completion-panel>
-                <filtered-nested-tasks-panel
-                  class="task-panel"
-                ></filtered-nested-tasks-panel>
+                ></todo-daily-completion-panel>
+                <filtered-nested-todos-panel
+                  class="todo-panel"
+                ></filtered-nested-todos-panel>
               </div>
             </div>
           `
@@ -198,7 +196,7 @@ export class AppElement extends LitElement {
     }
 
     .completion-panel,
-    .task-panel {
+    .todo-panel {
       grid-column: 2;
       min-width: 0; /* 内容が親の幅を超えないように制限 */
       max-width: 100%;
