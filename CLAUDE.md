@@ -8,11 +8,7 @@
 
 **なぜ背景を記録するか**: コードそのものからは設計の背景や判断理由が読み取れないためです。コードは「何を」「どのように」実装しているかは示しますが、「なぜそうしたか」「他の選択肢を検討したか」「どんな制約があったか」は表現できません。
 
-これにより：
-- 将来の開発者が設計意図を理解できる
-- 同様の問題に直面した際の判断材料となる
-- 技術的負債や制約の背景を明確にする
-- リファクタリングや機能追加時に既存の設計思想を尊重できる
+これにより将来の開発での設計意図理解と一貫性の維持が可能となります。
 
 ## 用語定義
 
@@ -22,71 +18,26 @@
 - **TaskTodo**: `@task`ラベルが付いたTodo（実際の作業単位）
 - **GoalTodo**: `@goal`ラベルが付いたTodo（目標や大きな単位の作業）
 
-これらの用語は、ドキュメント、コメント、UI表示において統一して使用されます。
+これらの用語はコードベース全体で統一して使用されます。
 
 ## アーキテクチャ概要（Lit初心者向け）
 
-### アーキテクチャの全体像
+### アーキテクチャ概要
 
-```
-UI層:
-  app-element
-  ├── auth-button, theme-toggle
-  ├── filtered-nested-tasks-panel
-  ├── goal-milestone-panel
-  ├── date-goal-panel
-  └── task-daily-completion-panel
+#### 全体構造
+- **UI層**: app-element をルートとしたコンポーネントツリー
+- **コントローラー層**: 状態管理とリアクティブ制御
+- **サービス層**: API通信とデータ処理
 
-コントローラー層:
-  AuthController
-  FilteredTaskController
-  GoalMilestoneController
-  DateGoalController
-  TaskDailyCompletionController
+#### データフロー
+外部API → Services → Controllers → Components → UI
 
-サービス層:
-  OAuthService
-  TodoistService (REST API v2)
-  TodoistSyncService (Sync API v9)
-  ThemeService
-
-外部API:
-  Todoist API / OAuth
-```
-
-### データフローの流れ
-
-```
-External APIs → Services → Controllers → Components → UI
-     ↑                                      ↓
-   OAuth        Theme Service          Event Handlers
-```
-
-### ディレクトリ構造と役割分担
-
-詳細なアーキテクチャ説明については、[`docs/lit-architecture.md`](./docs/lit-architecture.md)を参照してください。
-
-#### 基本的な階層構造
-
-```
-7. アプリケーション層: app-element.ts
-6. 機能パネル層: 各種パネルコンポーネント
-5. UIコンポーネント層: components/ui/, components/task/
-4. コントローラー層: controllers/（状態管理とリアクティブ制御）
-3. サービス層: services/（API通信とビジネスロジック）
-2. ユーティリティ層: utils/task-utils.ts, services/theme-service.ts
-1. 基盤層: types/, config/, styles/, utils/template-utils.ts
-```
-
-#### 責務の概要
-
-- **Services層**: 外部システムとの通信とデータ変換
-- **Controllers層**: アプリケーションの状態管理とビジネスルール実装
-- **Components/UI層**: データの表示とユーザー操作の受付
+#### 詳細アーキテクチャ
+[`docs/lit-architecture.md`](./docs/lit-architecture.md)を参照してください。
 
 ## プロジェクト構成
 
-これは、2つの主要部分に分かれたフルスタックのTodoistタスクリストアプリケーションです：
+これはフロントエンドとプロキシサーバーで構成されたTodoistタスク管理アプリケーションです：
 
 ### フロントエンド（`frontend/`）
 
@@ -95,19 +46,17 @@ External APIs → Services → Controllers → Components → UI
 * **主要コントローラー**：
 
   * `AuthController`: OAuth認証状態とトークンの管理を行う
-  * `FilteredTaskController`: フィルタリングされたTodoistタスクの取得、キャッシュ、操作を処理
-  * `FilterController`: タスクのフィルタリングとクエリ状態を管理
+  * `FilteredTaskController`: フィルタリングされたTodoの取得、キャッシュ、操作処理
+  * `FilterController`: Todoのフィルタリングとクエリ状態管理
   * `GoalMilestoneController`: GoalTodoのマイルストーン統計を管理
   * `DateGoalController`: 日付付きGoalTodoの期限監視と残り日数表示を管理
   * `TaskDailyCompletionController`: TaskTodoの日別完了統計を管理
 * **サービス**：
 
-  * `TodoistService`: `@doist/todoist-api-typescript` をラップした主要API
-  * `TodoistSyncService`: Todoist Sync APIを使用して完了済みタスクの履歴を取得
-    - **背景**: `@doist/todoist-api-typescript`が完了済みタスクAPIをサポートしていないため独自実装
-    - **技術選択**: 直接Sync APIを呼び出し、独自の型定義とバリデーションを実装
-  * `OAuthService`: プロキシサーバーを用いたOAuthフローの処理
-  * `ThemeService`: ダーク／ライトテーマの管理
+  * `TodoistService`: Todoist REST APIのラッパー
+  * `TodoistSyncService`: 完了済みTodo履歴取得（独自実装）
+  * `OAuthService`: OAuthフローの処理
+  * `ThemeService`: テーマ管理
 
 ### プロキシサーバー（`proxy/`）
 
@@ -146,78 +95,44 @@ deno task check        # 型チェック
 
 ### 開発ワークフロー
 
-* ルートディレクトリの `./dev.sh` を使用して、フロントエンドとプロキシを同時起動可能
-* フロントエンドは [http://localhost:5173](http://localhost:5173) で稼働
-* プロキシは [http://localhost:8000](http://localhost:8000) で稼働
+* `./dev.sh` でフロントエンドとプロキシを同時起動
+* 開発サーバー: localhost:5173
+* プロキシサーバー: localhost:8000
 
 ## 主要な実装の詳細
 
-### タスクデータ構造
+### Todoデータ構造
 
-Todoは、親Todo情報を含む再帰的な `TaskNode` 型で拡張されており、ネストされたTodoの表示に対応。
+Todoは、親Todo情報を含む再帰的な `TodoNode` 型で拡張されており、ネストされたTodoの表示に対応。
 
-### 新機能：ゴールマイルストーン統計
+### 主要機能
 
-GoalTodoのうち@non-milestoneタグが付いているTodoの割合を統計表示する機能を追加：
-- `GoalMilestoneController`がGoalTodoを取得・分析
-- リアルタイムで割合を計算・表示
-- 専用パネル`goal-milestone-panel`で常時表示
+#### ゴールマイルストーン統計
+GoalTodoのマイルストーン達成率を可視化する統計機能。
 
-### 新機能：日付付きゴールタスク監視
+#### 日付付きゴール監視
+期限が設定されたGoalTodoの残り日数監視機能。色分けによる視覚的な期限管理。
 
-期限が設定されたGoalTodoの監視と残り日数表示機能を追加：
-- `DateGoalController`が日付付きのGoalTodoを取得・監視
-- 期限までの残り日数を色分けして表示（期限切れ：赤、今日：オレンジ、緊急：青、近日：緑、通常：グレー）
-- 専用パネル`date-goal-panel`で常時表示
-- ダークモード完全対応（統一されたテーマシステム使用）
-
-
-### 新機能：TaskTodo完了統計グラフ
-
-TaskTodoの日別完了統計をグラフ表示する機能を追加：
-- **使用方法**: 過去30日間（デフォルト）のTaskTodoの完了数をバーグラフで表示
-- **統計情報**: 合計完了数、平均完了数/日、最大完了数を表示
-- **実装アーキテクチャ**:
-  - `TodoistSyncService`: Todoist Sync APIを使用して完了済みタスクの履歴を取得
-  - `TaskDailyCompletionController`: 日別完了統計の状態管理とデータ処理
-  - `task-daily-completion-panel`: インタラクティブなグラフ表示UI
-- **技術的詳細**:
-  - REST API v2では完了履歴を取得できないため、Sync API v9を直接使用
-  - 日付範囲での完了Todoフィルタリングと@taskラベルによる絞り込み
-  - SVGベースの折れ線グラフ実装（グリッドライン、データポイント、ツールチップ付き）
-  - valibotによるAPIレスポンスの実行時型チェックとバリデーション
-- **バリデーション設計の進化**:
-  - **初期方針**: 柔軟なバリデーション（`v.looseObject`）でエラー時にデフォルト値を使用
-  - **問題の発見**: APIからlabelsフィールドが提供されないことが判明
-  - **最終設計**: 
-    - 実際のAPI構造に合わせた厳密なスキーマ（`v.object`）
-    - バリデーション失敗時はエラーを正しく投げる（デフォルト値による隠蔽を排除）
-    - ラベル機能は独自のコンテンツ抽出で実装
-  - **学習**: 現実逃避的なデフォルト値よりも、正確なスキーマと適切なエラーハンドリングが重要
-- **Sync API実装の試行錯誤**:
-  - **初期実装**: 汎用`/sync`エンドポイントを使用（完了タスク数: 0の問題発生）
-  - **問題の発見**: 間違ったエンドポイントとリクエスト形式の使用
-  - **最終解決**: 専用`/completed/get_all`エンドポイントをGETリクエストで使用
-  - **学習**: API調査の重要性と、ドキュメントの不完全さへの対応
-- **ラベル抽出の工夫**:
-  - **問題**: Sync APIの完了済みタスクにラベル情報が含まれていない
-  - **解決策**: Todoコンテンツから正規表現`/@(\w+)/g`で@taskのようなラベルを抽出
-  - **実装**: `extractLabelsFromContent()`メソッドで自動ラベル抽出
-  - **効果**: APIの制限を回避し、TaskTodoの正確な識別が可能
+#### Todo完了統計
+TaskTodoの日別完了統計をグラフ表示する機能。
+- 過去30日間の完了数をバーグラフで表示
+- 合計/平均/最大完了数の統計情報表示
+- Sync APIを使用した完了履歴取得
+- SVGベースのインタラクティブグラフ
 
 ### 認証フロー
 
-1. フロントエンドがTodoistとのOAuthフローを開始
-2. プロキシサーバーが保存済みクライアントシークレットを使用してトークンを交換
-3. トークンは `localStorage` に保存され、`AuthController` により管理される
+1. フロントエンドがOAuthフローを開始
+2. プロキシサーバーでセキュアなトークン交換
+3. トークンのローカル保存と`AuthController`による管理
 
-### タスクキャッシュ
+### Todoキャッシュ
 
-`TodoistService` はインテリジェントなキャッシュ処理を実装：
+`TodoistService` にはインテリジェントなキャッシュ機能を実装：
 
-* APIレスポンスは5分間キャッシュ
-* 親タスク取得による階層構造を再帰的に構築
-* タスク完了操作時にキャッシュをクリア
+* APIレスポンスの5分間キャッシュ
+* 階層構造の再帰的構築
+* 操作時の自動キャッシュクリア
 
 ### コンポーネントアーキテクチャ
 
@@ -226,57 +141,37 @@ TaskTodoの日別完了統計をグラフ表示する機能を追加：
 * すべてのコンポーネントはkebab-case命名のカスタム要素
 * UIコンポーネントは再利用のために `components/ui/` に配置
 
-#### 主要パネルコンポーネント階層
-```
-app-element
-├── auth-button
-├── theme-toggle
-├── goal-milestone-panel
-├── date-goal-panel
-├── task-daily-completion-panel
-└── filtered-nested-tasks-panel
-    ├── setting-button
-    ├── setting-modal
-    └── task-list
-        └── task-item (複数)
-            ├── task-checkbox
-            ├── task-content
-            ├── task-meta
-            └── parent-task-display
-```
+#### 主要コンポーネント構成
+- **app-element**: アプリケーションルート
+- **認証・設定系**: auth-button, theme-toggle
+- **機能パネル系**: 各種統計・一覧表示パネル
+- **Todo表示系**: task-list, task-item とその構成要素
 
 #### コンポーネント責任分担
-* **`app-element`**: 認証とパネル統合の統括（ルートコンテナ）
-* **`filtered-nested-tasks-panel`**: タスク一覧の表示と操作
-* **`goal-milestone-panel`**: GoalTodoの@non-milestoneタグ割合統計
-* **`date-goal-panel`**: 日付付きGoalTodoの期限監視と残り日数表示
-* **`task-daily-completion-panel`**: TaskTodoの日別完了統計をグラフ表示
-* **`task-list`**: タスクのソートと一覧表示
-* **`task-item`**: 個別タスクの詳細表示と操作
+* **app-element**: アプリケーション全体の統括管理
+* **パネルコンポーネント**: 各機能の独立表示ユニット
+* **UIコンポーネント**: 再利用可能な表示要素
+* **Todoコンポーネント**: Todoアイテムの表示と操作
 
-#### コンポーネント設計原則
-* **独立性**: 各パネルが独自のコントローラーを持ち、独立して動作
-* **責任分離**: ビジネスロジック（Controller）とUI（Component）の分離
-* **再利用性**: UIコンポーネントの汎用性を高める設計
-* **合成パターン**: 小さなコンポーネントの組み合わせによる柔軟性
-* **型安全性**: TypeScriptによる厳密な型チェック
+#### 設計原則
+* **コンポーネントの独立性と再利用性**
+* **ビジネスロジックとUIの分離**
+* **TypeScriptによる型安全性**
 
 ## アーキテクチャの変更履歴
 
 ### v2.0 - コンポーネント分離・リファクタリング（最新）
 
-* **TaskController** → **FilteredTaskController**にリネーム（役割を明確化）
-* **パネルコンポーネント化**：
-  * `filtered-nested-tasks-panel`: タスク一覧機能を独立コンポーネント化
-  * `goal-milestone-panel`: ゴール統計専用パネルを追加
-* **app-element簡素化**：認証とパネル統合のみに責任を限定
-* **コントローラーパターン統一**：各パネルが独自のコントローラーを持つ設計
+* **コントローラー名称変更**: `TaskController` → `FilteredTaskController`（役割明確化）
+* **パネル化**: 機能別の独立コンポーネントに分離
+* **app-element簡素化**: 認証とパネル統合に責任を限定
+* **統一アーキテクチャ**: 各パネルが独自のコントローラーを持つ設計
 
 ### パフォーマンス・制限事項
 
-* **タスク数制限**: 本アプリケーションは中規模のタスク数（〜500件程度）を想定して設計
-* **全ページ取得**: フィルタ機能では全ページのタスクを取得するため、大量のタスク（1000件超）では初回ロードが遅くなる可能性
-* **推奨対応**: 大量タスクがある場合は、UI仮想化（Virtual Scrolling）やページング表示の実装を検討
+* **想定規模**: 中規模のTodo数（〜500件程度）を前提とした設計
+* **パフォーマンス**: 大量Todo（1000件超）では初回ロード時間に影響する可能性
+* **対応案**: 仮想化やページング実装の検討
 
 ### 動作環境要件
 
