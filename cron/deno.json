@@ -2,7 +2,8 @@
   "compilerOptions": {
     "lib": [
       "deno.window",
-      "deno.ns"
+      "deno.ns",
+      "deno.unstable"
     ],
     "strict": true
   },
