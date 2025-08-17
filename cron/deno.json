@@ -5,7 +5,8 @@
       "deno.ns",
       "deno.unstable"
     ],
-    "strict": true
+    "strict": true,
+    "types": ["https://deno.land/x/deno@v1.36.1/cli/dts/lib.deno.d.ts"]
   },
   "lint": {
     "rules": {
@@ -25,6 +26,7 @@
   "tasks": {
     "start": "deno run --allow-net --allow-env --allow-read --env main.ts",
     "dev": "deno run --allow-net --allow-env --allow-read --watch --env main.ts",
+    "debug": "deno run --allow-net --allow-env --allow-read --env debug.ts",
     "fmt": "deno fmt",
     "lint": "deno lint",
     "check": "deno check main.ts"

@@ -119,7 +119,127 @@ async function cleanupNonMilestoneTodos(todoService: TodoService) {
   }
 }
 
-async function runAutomation() {
+async function generateDependencyLabels(
+  todoService: TodoService,
+): Promise<void> {
+  console.log("=== Generating Dependency Labels ===");
+
+  // @goalラベルが付いているTodoを取得
+  const goalTodos = await todoService.getTodosByLabel("goal");
+  const allTodos = await todoService.getAllTasks();
+  const existingLabels = await todoService.getLabels();
+  const existingLabelNames = new Set(existingLabels.map((label) => label.name));
+
+  console.log(
+    `Found ${goalTodos.length} goal todos for dependency label generation`,
+  );
+
+  let createdCount = 0;
+  for (const goalTodo of goalTodos) {
+    // 親Todoを探す
+    const parentTodo = goalTodo.parentId
+      ? allTodos.find((t) => t.id === goalTodo.parentId)
+      : undefined;
+
+    // dep系ラベル名を生成
+    const labelName = TodoService.generateDependencyLabelName(
+      goalTodo.content,
+      parentTodo?.content,
+    );
+
+    // ラベルが既に存在するかチェック
+    if (!existingLabelNames.has(labelName)) {
+      console.log(`Creating dependency label: ${labelName}`);
+      await todoService.createLabel(labelName);
+      existingLabelNames.add(labelName);
+      createdCount++;
+    }
+  }
+
+  if (createdCount > 0) {
+    console.log(`✓ Created ${createdCount} dependency labels`);
+  } else {
+    console.log("No new dependency labels needed");
+  }
+}
+
+async function cleanupDependencyLabels(
+  todoService: TodoService,
+): Promise<void> {
+  console.log("=== Cleaning up Dependency Labels ===");
+
+  // 既存のdep系ラベルを取得
+  const allLabels = await todoService.getLabels();
+  const dependencyLabels = allLabels.filter((label) =>
+    label.name.startsWith("dep-")
+  );
+
+  console.log(`Found ${dependencyLabels.length} dependency labels to check`);
+
+  // 完了済みタスクを取得
+  const completedTasks = await todoService.getCompletedTasks();
+  const allTodos = await todoService.getAllTasks();
+
+  // 完了済みの@goalTodoの内容を取得
+  const completedGoalContents = new Set(
+    completedTasks
+      .filter((task) => task.labels.includes("goal"))
+      .map((task) => task.content),
+  );
+
+  let deletedCount = 0;
+  for (const label of dependencyLabels) {
+    // ラベル名からTodo名を抽出
+    const labelName = label.name;
+    const match = labelName.match(/^dep-(?:(.+)_)?(.+)$/);
+
+    if (!match) {
+      console.log(`Invalid dependency label format: ${labelName}`);
+      continue;
+    }
+
+    const [, parentName, todoName] = match;
+
+    // 依存元Todo（@goalTodo）が完了済みかチェック
+    const isDependencyCompleted = completedGoalContents.has(todoName) ||
+      (parentName && completedGoalContents.has(parentName));
+
+    if (isDependencyCompleted) {
+      console.log(
+        `Deleting dependency label: ${labelName} (dependency completed)`,
+      );
+      await todoService.deleteLabel(label.id);
+      deletedCount++;
+    } else {
+      // 該当する@goalTodoが存在するかチェック
+      const correspondingGoalExists = allTodos.some((todo) =>
+        todo.labels.includes("goal") && (
+          todo.content === todoName ||
+          (parentName && todo.content === todoName &&
+            allTodos.some((parent) =>
+              parent.id === todo.parentId && parent.content === parentName
+            ))
+        )
+      );
+
+      if (!correspondingGoalExists) {
+        console.log(
+          `Deleting dependency label: ${labelName} (corresponding goal not found)`,
+        );
+        await todoService.deleteLabel(label.id);
+        deletedCount++;
+      }
+    }
+  }
+
+  if (deletedCount > 0) {
+    console.log(`✓ Deleted ${deletedCount} dependency labels`);
+  } else {
+    console.log("No dependency labels needed cleanup");
+  }
+}
+
+export async function runAutomation() {
   try {
     const token = Deno.env.get("TODOIST_TOKEN");
     if (!token) {
@@ -133,6 +253,8 @@ async function runAutomation() {
     await assignNonMilestoneToGoals(todoService);
     await createMilestoneTodosForGoals(todoService);
     await cleanupNonMilestoneTodos(todoService);
+    await generateDependencyLabels(todoService);
+    await cleanupDependencyLabels(todoService);
 
     console.log(
       `[${new Date().toISOString()}] Automation completed successfully`,
@@ -142,7 +264,12 @@ async function runAutomation() {
   }
 }
 
-// Deno.cronを使って1時間おきに実行
-Deno.cron("todoist-automation", "0 * * * *", runAutomation);
+// メインモジュールとして実行された場合のみCronを設定
+if (import.meta.main) {
+  // Deno.cronを使って1時間おきに実行
+  Deno.cron("todoist-automation", "0 * * * *", runAutomation);
 
-console.log("Todoist automation service started - running every hour with Deno.cron");
+  console.log(
+    "Todoist automation service started - running every hour with Deno.cron",
+  );
+}

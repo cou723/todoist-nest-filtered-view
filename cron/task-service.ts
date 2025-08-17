@@ -38,8 +38,8 @@ export interface TodoAnalysis {
  */
 export class TodoService {
   private api: TodoistApi;
-  private taskCache = new Map<string, Task[]>();
-  private cacheExpiry = new Map<string, number>();
+  private allTasksCache: Task[] | null = null;
+  private allTasksCacheTime: number = 0;
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5分
 
   constructor(api: TodoistApi) {
@@ -47,25 +47,11 @@ export class TodoService {
   }
 
   /**
-   * 指定されたラベルのタスクを取得（キャッシュ対応）
+   * 指定されたラベルのタスクを取得
    */
-  private async getTodosByLabel(label: string): Promise<Task[]> {
-    const now = Date.now();
-    const cacheKey = `@${label}`;
-
-    // キャッシュチェック
-    if (this.taskCache.has(cacheKey) && this.cacheExpiry.get(cacheKey)! > now) {
-      console.log(`Using cached ${label} tasks`);
-      return this.taskCache.get(cacheKey)!;
-    }
-
+  async getTodosByLabel(label: string): Promise<Task[]> {
     console.log(`Fetching ${label} tasks from API`);
     const tasks = await this.api.getTasks({ filter: `@${label}` });
-
-    // キャッシュに保存
-    this.taskCache.set(cacheKey, tasks);
-    this.cacheExpiry.set(cacheKey, now + this.CACHE_DURATION);
-
     console.log(`Retrieved ${tasks.length} @${label} tasks from API`);
     return tasks;
   }
@@ -210,24 +196,25 @@ export class TodoService {
   }
 
   /**
-   * 全てのタスクを取得
+   * 全てのタスクを取得（キャッシュ対応）
    */
   async getAllTasks(): Promise<Task[]> {
     const now = Date.now();
-    const cacheKey = "all_tasks";
 
     // キャッシュチェック
-    if (this.taskCache.has(cacheKey) && this.cacheExpiry.get(cacheKey)! > now) {
+    if (
+      this.allTasksCache && this.allTasksCacheTime + this.CACHE_DURATION > now
+    ) {
       console.log("Using cached all todos");
-      return this.taskCache.get(cacheKey)!;
+      return this.allTasksCache;
     }
 
     console.log("Fetching all todos from API");
     const tasks = await this.api.getTasks();
 
     // キャッシュに保存
-    this.taskCache.set(cacheKey, tasks);
-    this.cacheExpiry.set(cacheKey, now + this.CACHE_DURATION);
+    this.allTasksCache = tasks;
+    this.allTasksCacheTime = now;
 
     console.log(`Retrieved ${tasks.length} todos from API`);
     return tasks;
@@ -257,8 +244,8 @@ export class TodoService {
    * キャッシュをクリア
    */
   private clearCache(): void {
-    this.taskCache.clear();
-    this.cacheExpiry.clear();
+    this.allTasksCache = null;
+    this.allTasksCacheTime = 0;
   }
 
   /**
@@ -266,5 +253,74 @@ export class TodoService {
    */
   public invalidateCache(): void {
     this.clearCache();
+  }
+
+  /**
+   * アカウント内のラベル一覧を取得
+   */
+  async getLabels(): Promise<Array<{ id: string; name: string }>> {
+    console.log("Fetching labels from API");
+    const labels = await this.api.getLabels();
+    console.log(`Retrieved ${labels.length} labels from API`);
+    return labels;
+  }
+
+  /**
+   * 新規ラベルを作成
+   */
+  async createLabel(name: string): Promise<void> {
+    await this.api.addLabel({ name });
+  }
+
+  /**
+   * ラベルを削除
+   */
+  async deleteLabel(labelId: string): Promise<void> {
+    await this.api.deleteLabel(labelId);
+  }
+
+  /**
+   * 完了済みタスクを取得
+   */
+  async getCompletedTasks(): Promise<Task[]> {
+    console.log("Fetching completed tasks from API");
+    try {
+      // 完了済みタスクを取得（最近30日間）
+      const since = new Date();
+      since.setDate(since.getDate() - 30);
+      const tasks = await this.api.getTasks({
+        filter: `completed after: ${since.toISOString().split("T")[0]}`,
+      });
+      console.log(`Retrieved ${tasks.length} completed tasks from API`);
+      return tasks;
+    } catch (error) {
+      console.log("Warning: Could not fetch completed tasks, returning empty array");
+      console.log("Error:", error.message);
+      return [];
+    }
+  }
+
+  /**
+   * ラベル名をサニタイズ（特殊文字を除去）
+   */
+  static sanitizeLabelName(name: string): string {
+    return name
+      .replace(/[^\w\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g, "_")
+      .substring(0, 50); // Todoist ラベル名の制限に合わせて50文字に制限
+  }
+
+  /**
+   * dep系ラベル名を生成
+   */
+  static generateDependencyLabelName(
+    todoName: string,
+    parentName?: string,
+  ): string {
+    const sanitizedTodoName = TodoService.sanitizeLabelName(todoName);
+    if (parentName) {
+      const sanitizedParentName = TodoService.sanitizeLabelName(parentName);
+      return `dep-${sanitizedParentName}_${sanitizedTodoName}`;
+    }
+    return `dep-${sanitizedTodoName}`;
   }
 }
