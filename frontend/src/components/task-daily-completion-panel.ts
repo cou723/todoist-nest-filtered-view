@@ -71,10 +71,6 @@ export class TodoDailyCompletionPanel extends LitElement {
     const totalCount30Days =
       this.completionController.getTotalCompletionCount();
     const totalCount7Days = this.completionController.getLast7DaysTotalCount();
-    const avgCount30Days =
-      this.completionController.getAverageCompletionCount();
-    const avgCount7Days = this.completionController.getLast7DaysAverageCount();
-    const totalDays = this.completionController.getTotalDays();
     const maxCount = this.completionController.getMaxCompletionCount();
 
     return html`
@@ -87,14 +83,6 @@ export class TodoDailyCompletionPanel extends LitElement {
           <div class="stat-item">
             <div class="stat-label">過去30日間合計</div>
             <div class="stat-value">${totalCount30Days}件</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">過去7日間平均</div>
-            <div class="stat-value">${avgCount7Days.toFixed(1)}件/日</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">過去${totalDays}日間平均</div>
-            <div class="stat-value">${avgCount30Days.toFixed(1)}件/日</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">最大</div>
@@ -161,12 +149,18 @@ export class TodoDailyCompletionPanel extends LitElement {
       }
     }
 
+    // 過去7日間平均データを取得
+    const sevenDayAverageData = this.completionController.getSevenDayAverageDataForChart();
+
     // CSS変数から色を取得
     const computedStyle = getComputedStyle(this);
     const primaryColor = computedStyle
       .getPropertyValue("--primary-color")
       .trim();
     const borderColor = computedStyle.getPropertyValue("--border-color").trim();
+    const secondaryColor = computedStyle
+      .getPropertyValue("--secondary-color")
+      .trim() || "#ff6b35"; // セカンダリカラーがない場合はオレンジをデフォルト
 
     const config: ChartConfiguration = {
       type: "line",
@@ -185,6 +179,20 @@ export class TodoDailyCompletionPanel extends LitElement {
             pointRadius: 4,
             pointHoverRadius: 6,
           },
+          {
+            label: "過去7日間平均",
+            data: sevenDayAverageData,
+            borderColor: secondaryColor,
+            backgroundColor: secondaryColor + "20",
+            tension: 0.1,
+            fill: false,
+            pointBackgroundColor: secondaryColor,
+            pointBorderColor: secondaryColor,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            borderDash: [5, 5], // 破線スタイル
+            spanGaps: false, // nullがある部分は線を引かない
+          },
         ],
       },
       options: {
@@ -192,7 +200,12 @@ export class TodoDailyCompletionPanel extends LitElement {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: false,
+            display: true,
+            position: "top",
+            labels: {
+              usePointStyle: true,
+              padding: 20,
+            },
           },
         },
         scales: {

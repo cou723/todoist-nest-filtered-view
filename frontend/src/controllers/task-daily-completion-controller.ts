@@ -159,4 +159,46 @@ export class TodoDailyCompletionController implements ReactiveController {
   public getTodayCompletionCount(): number {
     return this.todayTodoStat?.completedCount || 0;
   }
+
+  // グラフ用の過去7日間平均データを取得（各日付における過去7日間平均）
+  public getSevenDayAverageDataForChart(): (number | null)[] {
+    // 全データセット（履歴データ + 当日データ）を構築
+    const allStats = [...this.dailyCompletionStats];
+    
+    // 当日データがある場合は追加
+    if (this.todayTodoStat) {
+      const todayDate = this.todayTodoStat.date;
+      const existingTodayIndex = allStats.findIndex(
+        (stat) => stat.date === todayDate
+      );
+
+      if (existingTodayIndex >= 0) {
+        // 既存の当日データを更新
+        allStats[existingTodayIndex] = {
+          date: todayDate,
+          count: this.todayTodoStat.completedCount,
+          displayDate: this.todayTodoStat.displayDate,
+        };
+      } else {
+        // 新しい当日データを追加
+        allStats.push({
+          date: todayDate,
+          count: this.todayTodoStat.completedCount,
+          displayDate: this.todayTodoStat.displayDate,
+        });
+      }
+    }
+
+    // 各日付における過去7日間平均を計算
+    return allStats.map((_, index) => {
+      // 最初の6日間はデータ不足のためnullを返す
+      if (index < 6) return null;
+      
+      // 該当日を含む過去7日間のデータを取得
+      const sevenDaysData = allStats.slice(index - 6, index + 1);
+      const totalCount = sevenDaysData.reduce((sum, stat) => sum + stat.count, 0);
+      
+      return totalCount / 7;
+    });
+  }
 }
