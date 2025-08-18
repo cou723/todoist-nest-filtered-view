@@ -9,16 +9,16 @@ import "./task/index.js";
 @customElement("todo-list")
 export class TodoList extends LitElement {
   @property({ type: Array })
-  private todos: TodoNode[] = [];
+  public todos: TodoNode[] = [];
 
   @property({ type: Boolean })
-  private loading = false;
+  public loading = false;
 
   @property({ type: String })
-  private error = "";
+  public error = "";
 
   @property({ attribute: false })
-  private onCompleteTodo?: (todoId: string) => void;
+  public onCompleteTodo?: (todoId: string) => void;
 
   public render() {
     if (this.loading) {

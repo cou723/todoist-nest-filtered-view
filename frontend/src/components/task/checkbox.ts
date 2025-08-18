@@ -4,13 +4,13 @@ import { customElement, property } from "lit/decorators.js";
 @customElement("todo-checkbox")
 export class TodoCheckBox extends LitElement {
   @property({ type: String })
-  private todoId!: string;
+  public todoId!: string;
 
   @property({ attribute: false })
-  private onComplete?: (todoId: string) => void;
+  public onComplete?: (todoId: string) => void;
 
   @property({ type: String })
-  private checkboxTitle?: string;
+  public checkboxTitle?: string;
 
   private handleChange() {
     console.log("[TodoCheckBox] タスク完了処理開始:", {

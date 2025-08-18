@@ -3,11 +3,12 @@ import { customElement, property } from "lit/decorators.js";
 import { layoutStyles } from "../styles/common.js";
 import { AuthController } from "../controllers/auth-controller.js";
 import "./ui/button.js";
+import "./ui/modal.js";
 
 @customElement("auth-button")
 export class AuthButton extends LitElement {
   @property({ type: Boolean })
-  private isAuthenticated = false;
+  public isAuthenticated = false;
 
   private authController: AuthController;
 
