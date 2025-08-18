@@ -60,7 +60,10 @@ export class FilteredTodoController implements ReactiveController {
   }
 
   // フィルタによるタスク取得
-  public async fetchTodosByFilter(query?: string, hideDepTodos?: boolean): Promise<void> {
+  public async fetchTodosByFilter(
+    query?: string,
+    hideDepTodos?: boolean
+  ): Promise<void> {
     if (!this.todoistService) return;
 
     this.cancelCurrentRequest();
@@ -72,12 +75,12 @@ export class FilteredTodoController implements ReactiveController {
 
     try {
       let todos = await this.todoistService.getTodosTree(query);
-      
+
       // dep-系タグフィルタリングを適用
       if (hideDepTodos) {
         todos = this.filterDepTodos(todos);
       }
-      
+
       this.todos = todos;
     } catch (e: unknown) {
       if (e instanceof Error) {
@@ -95,52 +98,33 @@ export class FilteredTodoController implements ReactiveController {
 
   // タスクを完了にする
   public async completeTodo(taskId: string): Promise<void> {
-    console.log("[FilteredTodoController] completeTodo呼び出し:", {
-      taskId,
-      taskIdType: typeof taskId,
-      todoistServiceExists: !!this.todoistService,
-      tasksCount: this.todos.length
-    });
-
     if (!this.todoistService) {
-      console.error("[FilteredTodoController] エラー: TodoistServiceが初期化されていません");
       this.error = "タスクの完了に失敗しました: サービスが初期化されていません";
       this.host.requestUpdate();
       return;
     }
 
     if (!taskId) {
-      console.error("[FilteredTodoController] エラー: taskIdがundefinedまたは空です");
       this.error = "タスクの完了に失敗しました: タスクIDが無効です";
       this.host.requestUpdate();
       return;
     }
 
     // 対象タスクが存在するか確認
-    const targetTask = this.todos.find(task => task.id === taskId);
+    const targetTask = this.todos.find((task) => task.id === taskId);
     if (!targetTask) {
-      console.error("[FilteredTodoController] エラー: 指定されたタスクが見つかりません:", taskId);
       this.error = "タスクの完了に失敗しました: タスクが見つかりません";
       this.host.requestUpdate();
       return;
     }
 
-    console.log("[FilteredTodoController] 完了対象タスク:", {
-      id: targetTask.id,
-      content: targetTask.content,
-      projectId: targetTask.projectId
-    });
-
     try {
-      console.log("[FilteredTodoController] TodoistService.completeTodo呼び出し開始");
       await this.todoistService.completeTodo(taskId);
-      console.log("[FilteredTodoController] TodoistService.completeTodo完了");
-      
+
       // ローカルのタスクリストからも削除
       this.todos = this.todos.filter((task) => task.id !== taskId);
       this.host.requestUpdate();
     } catch (e: unknown) {
-      console.error("[FilteredTodoController] completeTodoエラー:", e);
       if (e instanceof Error)
         this.error = "タスクの完了に失敗しました: " + (e.message || e);
       else this.error = "タスクの完了に失敗しました: " + String(e);
@@ -150,7 +134,7 @@ export class FilteredTodoController implements ReactiveController {
 
   // dep-系タグを持つTodoをフィルタリングする
   private filterDepTodos(todos: TodoNode[]): TodoNode[] {
-    return todos.filter(todo => !hasDepLabelInAncestors(todo));
+    return todos.filter((todo) => !hasDepLabelInAncestors(todo));
   }
 
   // サービスの再初期化（キャッシュクリア付き）

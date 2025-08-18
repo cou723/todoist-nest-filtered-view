@@ -55,8 +55,7 @@ export class GoalMilestoneController implements ReactiveController {
       const todos = await this.todoistService.fetchTodosByFilter("@goal");
       this.goalTodos = todos;
     } catch (err) {
-      this.error = "ゴールタスクの取得に失敗しました";
-      console.error("Failed to fetch goal todos:", err);
+      this.error = `ゴールタスクの取得に失敗しました: ${err}`;
     } finally {
       this.loading = false;
       this.host.requestUpdate();

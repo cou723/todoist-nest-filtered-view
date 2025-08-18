@@ -79,12 +79,11 @@ export class TodoistService {
 
   private async performFetch(id: string): Promise<Todo | undefined> {
     try {
-      // console.log(`APIからタスクを取得: ${id}`);
       const todo = await this.api.getTask(id);
       this.allTodosCache.set(id, todo);
       return todo;
-    } catch (error) {
-      console.error(`タスクの取得に失敗しました: ${error}`);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_) {
       return undefined;
     }
   }
@@ -103,14 +102,6 @@ export class TodoistService {
 
   // タスクを完了にする
   public async completeTodo(id: string): Promise<void> {
-    console.log("[TodoistService] completeTodo呼び出し:", {
-      id,
-      idType: typeof id,
-      idLength: id?.length || 0,
-      apiExists: !!this.api,
-      apiConstructor: this.api?.constructor?.name || "unknown"
-    });
-
     if (!id) {
       throw new Error("タスクIDが無効です");
     }
@@ -120,44 +111,49 @@ export class TodoistService {
     }
 
     try {
-      console.log("[TodoistService] api.closeTask呼び出し開始");
-      
-      // closeTaskメソッドの存在確認
       if (typeof this.api.closeTask !== "function") {
         throw new Error("api.closeTaskメソッドが存在しません");
       }
 
-      const result = await this.api.closeTask(id);
-      console.log("[TodoistService] api.closeTask完了:", {
-        result,
-        resultType: typeof result
-      });
-      
+      await this.api.closeTask(id);
+
       // キャッシュからタスクを削除
       this.allTodosCache.delete(id);
     } catch (error) {
-      console.error("[TodoistService] api.closeTaskエラー詳細:", {
-        error,
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorStack: error instanceof Error ? error.stack : undefined,
-        errorName: error instanceof Error ? error.name : typeof error
-      });
-      
       // より詳細なエラーメッセージを提供
       if (error instanceof Error) {
-        if (error.message.includes("401") || error.message.includes("Unauthorized")) {
+        if (
+          error.message.includes("401") ||
+          error.message.includes("Unauthorized")
+        ) {
           throw new Error("認証エラー: トークンが無効または期限切れです");
-        } else if (error.message.includes("403") || error.message.includes("Forbidden")) {
+        } else if (
+          error.message.includes("403") ||
+          error.message.includes("Forbidden")
+        ) {
           throw new Error("権限エラー: このタスクを完了する権限がありません");
-        } else if (error.message.includes("404") || error.message.includes("Not Found")) {
-          throw new Error("タスクが見つかりません: タスクが既に削除されている可能性があります");
-        } else if (error.message.includes("400") || error.message.includes("Bad Request")) {
+        } else if (
+          error.message.includes("404") ||
+          error.message.includes("Not Found")
+        ) {
+          throw new Error(
+            "タスクが見つかりません: タスクが既に削除されている可能性があります"
+          );
+        } else if (
+          error.message.includes("400") ||
+          error.message.includes("Bad Request")
+        ) {
           throw new Error("リクエストエラー: 無効なタスクIDです");
-        } else if (error.message.includes("undefined") || error.message.includes("Required")) {
-          throw new Error("バリデーションエラー: 必須パラメータが不足しています");
+        } else if (
+          error.message.includes("undefined") ||
+          error.message.includes("Required")
+        ) {
+          throw new Error(
+            "バリデーションエラー: 必須パラメータが不足しています"
+          );
         }
       }
-      
+
       throw error;
     }
   }
