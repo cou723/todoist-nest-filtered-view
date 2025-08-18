@@ -50,7 +50,7 @@ export class TodoItem extends LitElement {
 
         <div class="todo-actions">
           <todo-checkbox
-            .taskId=${this.todo.id}
+            .todoId=${this.todo.id}
             .onComplete=${this.onCompleteTodo}
             checkboxTitle="タスクを完了にする"
           ></todo-checkbox>

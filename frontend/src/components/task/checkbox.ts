@@ -13,6 +13,17 @@ export class TodoCheckBox extends LitElement {
   private checkboxTitle?: string;
 
   private handleChange() {
+    console.log("[TodoCheckBox] タスク完了処理開始:", {
+      todoId: this.todoId,
+      todoIdType: typeof this.todoId,
+      onComplete: !!this.onComplete
+    });
+
+    if (!this.todoId) {
+      console.error("[TodoCheckBox] エラー: todoIdがundefinedまたは空です");
+      return;
+    }
+
     if (this.onComplete) {
       this.onComplete(this.todoId);
     }

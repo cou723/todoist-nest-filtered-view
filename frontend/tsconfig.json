@@ -20,7 +20,22 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Lit Template Type Checking */
+    "plugins": [
+      {
+        "name": "ts-lit-plugin",
+        "strict": true,
+        "rules": {
+          "no-unknown-tag-name": "error",
+          "no-unknown-attribute": "error",
+          "no-unknown-property": "error",
+          "no-invalid-attribute-name": "error",
+          "no-invalid-tag-name": "error"
+        }
+      }
+    ]
   },
   "include": ["src"]
 }

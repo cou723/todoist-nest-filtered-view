@@ -95,14 +95,52 @@ export class FilteredTodoController implements ReactiveController {
 
   // タスクを完了にする
   public async completeTodo(taskId: string): Promise<void> {
-    if (!this.todoistService) return;
+    console.log("[FilteredTodoController] completeTodo呼び出し:", {
+      taskId,
+      taskIdType: typeof taskId,
+      todoistServiceExists: !!this.todoistService,
+      tasksCount: this.todos.length
+    });
+
+    if (!this.todoistService) {
+      console.error("[FilteredTodoController] エラー: TodoistServiceが初期化されていません");
+      this.error = "タスクの完了に失敗しました: サービスが初期化されていません";
+      this.host.requestUpdate();
+      return;
+    }
+
+    if (!taskId) {
+      console.error("[FilteredTodoController] エラー: taskIdがundefinedまたは空です");
+      this.error = "タスクの完了に失敗しました: タスクIDが無効です";
+      this.host.requestUpdate();
+      return;
+    }
+
+    // 対象タスクが存在するか確認
+    const targetTask = this.todos.find(task => task.id === taskId);
+    if (!targetTask) {
+      console.error("[FilteredTodoController] エラー: 指定されたタスクが見つかりません:", taskId);
+      this.error = "タスクの完了に失敗しました: タスクが見つかりません";
+      this.host.requestUpdate();
+      return;
+    }
+
+    console.log("[FilteredTodoController] 完了対象タスク:", {
+      id: targetTask.id,
+      content: targetTask.content,
+      projectId: targetTask.projectId
+    });
 
     try {
+      console.log("[FilteredTodoController] TodoistService.completeTodo呼び出し開始");
       await this.todoistService.completeTodo(taskId);
+      console.log("[FilteredTodoController] TodoistService.completeTodo完了");
+      
       // ローカルのタスクリストからも削除
       this.todos = this.todos.filter((task) => task.id !== taskId);
       this.host.requestUpdate();
     } catch (e: unknown) {
+      console.error("[FilteredTodoController] completeTodoエラー:", e);
       if (e instanceof Error)
         this.error = "タスクの完了に失敗しました: " + (e.message || e);
       else this.error = "タスクの完了に失敗しました: " + String(e);

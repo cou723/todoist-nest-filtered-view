@@ -32,14 +32,52 @@ export class AuthController implements ReactiveController {
   // 認証状態の確認
   private checkAuthenticationStatus(): void {
     const token = this.oauthService.getStoredToken();
-    if (token && this.oauthService.isTokenValid()) {
+    const isTokenValid = this.oauthService.isTokenValid();
+    
+    console.log("[AuthController] 認証状態確認:", {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      isTokenValid,
+      isAuthenticated: this.isAuthenticated
+    });
+
+    if (token && isTokenValid) {
       this.isAuthenticated = true;
     } else {
       // 無効なトークンがある場合はクリア
+      console.warn("[AuthController] 無効なトークンを検出、クリアします");
       this.oauthService.clearAuth();
       this.isAuthenticated = false;
     }
     this.host.requestUpdate();
+  }
+
+  // トークンの詳細状態を確認するメソッド（デバッグ用）
+  public validateTokenStatus(): { hasToken: boolean; isValid: boolean; error?: string } {
+    try {
+      const token = this.oauthService.getStoredToken();
+      const isValid = this.oauthService.isTokenValid();
+      
+      console.log("[AuthController] トークン状態詳細:", {
+        hasToken: !!token,
+        tokenPreview: token ? `${token.substring(0, 10)}...` : null,
+        isValid,
+        localStorage: localStorage.getItem("todoist_token") ? "存在" : "なし"
+      });
+
+      return {
+        hasToken: !!token,
+        isValid,
+        error: !token ? "トークンがありません" : !isValid ? "トークンが無効です" : undefined
+      };
+    } catch (error) {
+      console.error("[AuthController] トークン状態確認エラー:", error);
+      return {
+        hasToken: false,
+        isValid: false,
+        error: `トークン確認エラー: ${error}`
+      };
+    }
   }
 
   public login(token: string): void {
