@@ -13,9 +13,11 @@ export class TodoDailyCompletionPanel extends LitElement {
   private completionController = new TodoDailyCompletionController(this);
   private chartInstance: Chart | null = null;
   private canvasRef: Ref<HTMLCanvasElement> = createRef();
+  private remainingTaskCount = 0;
 
   public setToken(token: string) {
     this.completionController.initializeService(token);
+    this.fetchRemainingTaskCount();
   }
 
   public clearToken() {
@@ -24,6 +26,7 @@ export class TodoDailyCompletionPanel extends LitElement {
       this.chartInstance.destroy();
       this.chartInstance = null;
     }
+    this.remainingTaskCount = 0;
     this.completionController.clearService();
   }
 
@@ -70,23 +73,17 @@ export class TodoDailyCompletionPanel extends LitElement {
   private renderStats() {
     const totalCount30Days =
       this.completionController.getTotalCompletionCount();
-    const totalCount7Days = this.completionController.getLast7DaysTotalCount();
-    const maxCount = this.completionController.getMaxCompletionCount();
 
     return html`
       <div class="stats-container">
         <div class="summary-stats">
           <div class="stat-item">
-            <div class="stat-label">過去7日間合計</div>
-            <div class="stat-value">${totalCount7Days}件</div>
-          </div>
-          <div class="stat-item">
             <div class="stat-label">過去30日間合計</div>
             <div class="stat-value">${totalCount30Days}件</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">最大</div>
-            <div class="stat-value">${maxCount}件</div>
+            <div class="stat-label">残り@task数</div>
+            <div class="stat-value">${this.remainingTaskCount}件</div>
           </div>
         </div>
 
@@ -95,6 +92,17 @@ export class TodoDailyCompletionPanel extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  private async fetchRemainingTaskCount() {
+    try {
+      this.remainingTaskCount = await this.completionController.getRemainingTaskCount();
+      this.requestUpdate();
+    } catch (error) {
+      console.error("残り@task数の取得に失敗:", error);
+      this.remainingTaskCount = 0;
+      this.requestUpdate();
+    }
   }
 
   private updateChart(

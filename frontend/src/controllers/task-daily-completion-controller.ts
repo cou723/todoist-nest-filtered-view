@@ -4,6 +4,7 @@ import {
   type DailyCompletionStat,
   type TodayTaskStat as TodayTodoStat,
 } from "../services/todoist-sync-service.js";
+import { TodoistService } from "../services/todoist-service.js";
 
 export interface TodoDailyCompletionControllerHost
   extends ReactiveControllerHost {
@@ -13,6 +14,7 @@ export interface TodoDailyCompletionControllerHost
 export class TodoDailyCompletionController implements ReactiveController {
   private host: TodoDailyCompletionControllerHost;
   private todoistSyncService: TodoistSyncService | null = null;
+  private todoistService: TodoistService | null = null;
 
   // 状態
   public dailyCompletionStats: DailyCompletionStat[] = [];
@@ -36,6 +38,7 @@ export class TodoDailyCompletionController implements ReactiveController {
   // サービスの初期化
   public initializeService(token: string) {
     this.todoistSyncService = new TodoistSyncService(token);
+    this.todoistService = new TodoistService(token);
     this.fetchDailyCompletionStats();
     this.fetchTodayTodoStats();
   }
@@ -43,6 +46,7 @@ export class TodoDailyCompletionController implements ReactiveController {
   // サービスのクリア
   public clearService() {
     this.todoistSyncService = null;
+    this.todoistService = null;
     this.dailyCompletionStats = [];
     this.todayTodoStat = null;
     this.error = "";
@@ -158,6 +162,20 @@ export class TodoDailyCompletionController implements ReactiveController {
   // 当日の完了数を取得
   public getTodayCompletionCount(): number {
     return this.todayTodoStat?.completedCount || 0;
+  }
+
+  // 残り@task数を取得
+  public async getRemainingTaskCount(): Promise<number> {
+    if (!this.todoistService) return 0;
+
+    try {
+      const tasks = await this.todoistService.fetchTodosByFilter("@task");
+      // 未完了のもののみカウント
+      return tasks.filter(task => !task.isCompleted).length;
+    } catch (error) {
+      console.error("残り@task数の取得に失敗:", error);
+      return 0;
+    }
   }
 
   // グラフ用の過去7日間平均データを取得（各日付における過去7日間平均）
