@@ -162,31 +162,15 @@ export class TodoDailyCompletionPanel extends LitElement {
 
     // CSS変数から色を取得
     const computedStyle = getComputedStyle(this);
-    const primaryColor = computedStyle
-      .getPropertyValue("--primary-color")
-      .trim();
     const borderColor = computedStyle.getPropertyValue("--border-color").trim();
-    const secondaryColor = computedStyle
-      .getPropertyValue("--secondary-color")
-      .trim() || "#ff6b35"; // セカンダリカラーがない場合はオレンジをデフォルト
+    const secondaryColor =
+      computedStyle.getPropertyValue("--secondary-color").trim() || "#ff6b35"; // セカンダリカラーがない場合はオレンジをデフォルト
 
     const config: ChartConfiguration = {
       type: "line",
       data: {
         labels: allStats.map((stat) => stat.displayDate),
         datasets: [
-          {
-            label: "作業完了数",
-            data: allStats.map((stat) => stat.count),
-            borderColor: primaryColor,
-            backgroundColor: primaryColor + "20", // 透明度を追加
-            tension: 0.1,
-            fill: false,
-            pointBackgroundColor: primaryColor,
-            pointBorderColor: primaryColor,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-          },
           {
             label: "過去7日間平均",
             data: sevenDayAverageData,

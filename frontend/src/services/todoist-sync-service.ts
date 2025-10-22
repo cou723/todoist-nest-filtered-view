@@ -79,7 +79,9 @@ export class TodoistSyncService {
    * @returns 抽出されたラベルの配列
    */
   private extractLabelsFromContent(content: string): string[] {
-    const labelRegex = /@(\w+)/g;
+    // 日本語ラベルを含むあらゆる非空白連続文字をラベルとして抽出
+    // 例: "@task", "@毎日のタスク"
+    const labelRegex = /@([^\s@]+)/gu;
     const labels: string[] = [];
     let match;
 
@@ -105,7 +107,13 @@ export class TodoistSyncService {
   ): Promise<CompletedTask[]> {
     const allCompletedTasks = await this.getCompletedTasks(since, until);
 
+    // ハードコード除外: 「@毎日のタスク」ラベルを持つものは計測対象から除外
+    const EXCLUDED_LABEL = "毎日のタスク";
+
     const filteredTasks = allCompletedTasks.filter((task) => {
+      // まず除外対象なら落とす（マイルストーンでも除外）
+      if (task.labels.includes(EXCLUDED_LABEL)) return false;
+      // 計測対象: @task または マイルストーン
       return task.labels.includes("task") || this.isMilestoneTodo(task.content);
     });
 
