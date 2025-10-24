@@ -4,6 +4,7 @@ import { ref, createRef, type Ref } from "lit/directives/ref.js";
 import { Chart, type ChartConfiguration, registerables } from "chart.js";
 import { TodoDailyCompletionController as TodoDailyCompletionController } from "../controllers/task-daily-completion-controller.js";
 import "./ui/panel.js";
+import "./ui/button.js";
 
 // Chart.jsのコンポーネントを登録
 Chart.register(...registerables);
@@ -34,7 +35,18 @@ export class TodoDailyCompletionPanel extends LitElement {
     return html`
       <ui-panel>
         <div class="completion-content">
-          <h2>作業完了統計</h2>
+          <div class="header">
+            <h2>作業完了統計</h2>
+            <ui-button
+              class="refresh-button"
+              variant="secondary"
+              ?disabled=${this.completionController.loading}
+              @click=${this.onRefreshClick}
+              title="Todoistから最新の統計データを再取得"
+            >
+              データを取得しなおす
+            </ui-button>
+          </div>
           ${this.renderContent()}
         </div>
       </ui-panel>
@@ -71,15 +83,15 @@ export class TodoDailyCompletionPanel extends LitElement {
   }
 
   private renderStats() {
-    const totalCount30Days =
-      this.completionController.getTotalCompletionCount();
+    const visibleDays = this.completionController.getVisibleDays();
+    const totalCount = this.completionController.getTotalCompletionCount();
 
     return html`
       <div class="stats-container">
         <div class="summary-stats">
           <div class="stat-item">
-            <div class="stat-label">過去30日間合計</div>
-            <div class="stat-value">${totalCount30Days}件</div>
+            <div class="stat-label">過去${visibleDays}日間合計</div>
+            <div class="stat-value">${totalCount}件</div>
           </div>
           <div class="stat-item">
             <div class="stat-label">残り@task数</div>
@@ -92,6 +104,12 @@ export class TodoDailyCompletionPanel extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  private async onRefreshClick() {
+    // 統計データを再取得。完了後に残り@task数も更新
+    await this.completionController.refreshStats();
+    await this.fetchRemainingTaskCount();
   }
 
   private async fetchRemainingTaskCount() {
@@ -236,10 +254,21 @@ export class TodoDailyCompletionPanel extends LitElement {
       gap: 1rem;
     }
 
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
     .completion-content h2 {
       margin: 0;
       font-size: 1.1rem;
       color: var(--text-color);
+    }
+
+    .refresh-button {
+      margin-left: auto;
     }
 
     .loading,

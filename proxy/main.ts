@@ -32,8 +32,11 @@ if (!TODOIST_CLIENT_SECRET) {
 function setCorsHeaders(headers: Headers): void {
   headers.set("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
   headers.set("Access-Control-Allow-Credentials", "true");
-  headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  headers.set("Access-Control-Allow-Headers", "Content-Type");
+  headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
 }
 
 async function handleOAuthToken(request: Request): Promise<Response> {
@@ -168,6 +171,61 @@ async function handleOAuthRevoke(request: Request): Promise<Response> {
   }
 }
 
+// v1 Completed by completion date 中継
+async function handleCompletedByDate(request: Request): Promise<Response> {
+  const headers = new Headers();
+  setCorsHeaders(headers);
+
+  // プリフライト
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers });
+  }
+
+  if (request.method !== "GET") {
+    headers.set("Content-Type", "application/json");
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers,
+    });
+  }
+
+  try {
+    const url = new URL(request.url);
+    const auth = request.headers.get("Authorization");
+    if (!auth) {
+      headers.set("Content-Type", "application/json");
+      return new Response(JSON.stringify({ error: "Missing Authorization" }), {
+        status: 401,
+        headers,
+      });
+    }
+
+    // そのままクエリを転送
+    const upstream = new URL(
+      "https://api.todoist.com/api/v1/tasks/completed/by_completion_date"
+    );
+    url.searchParams.forEach((v, k) => upstream.searchParams.set(k, v));
+
+    const resp = await fetch(upstream, {
+      method: "GET",
+      headers: {
+        Authorization: auth,
+      },
+    });
+
+    const body = await resp.text();
+    headers.set("Content-Type", "application/json");
+    return new Response(body, { status: resp.status, headers });
+  } catch (error) {
+    console.error("❌ [Proxy] CompletedByDate エラー:", error);
+    headers.set("Content-Type", "application/json");
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+      headers,
+    });
+  }
+}
+
 async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
 
@@ -179,6 +237,11 @@ async function handler(request: Request): Promise<Response> {
   // OAuth トークン無効化エンドポイント
   if (url.pathname === "/oauth/revoke") {
     return handleOAuthRevoke(request);
+  }
+
+  // v1 Completed by completion date 中継
+  if (url.pathname === "/v1/tasks/completed/by_completion_date") {
+    return handleCompletedByDate(request);
   }
 
   // 404 Not Found

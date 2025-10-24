@@ -8,7 +8,8 @@ import { startOfDay, addDays, format, subDays } from "date-fns";
  */
 export class TodoistSyncService {
   private token: string;
-  private baseUrl = "https://api.todoist.com/sync/v9";
+  // REST API v1（Completed by completion date）をプロキシ経由で呼ぶ
+  private proxyUrl = (import.meta as any).env?.VITE_PROXY_URL || "http://localhost:8000";
 
   constructor(token: string) {
     this.token = token;
@@ -24,43 +25,60 @@ export class TodoistSyncService {
     since?: string,
     until?: string
   ): Promise<CompletedTask[]> {
-    // Sync API v9の完了済みタスク専用エンドポイントを使用
-    const url = new URL(`${this.baseUrl}/completed/get_all`);
+    // API v1: /tasks/completed/by_completion_date を使用
+    const endpoint = new URL(
+      `${this.proxyUrl}/v1/tasks/completed/by_completion_date`
+    );
 
-    // クエリパラメータを追加
-    if (since) url.searchParams.append("since", since);
-    if (until) url.searchParams.append("until", until);
-    url.searchParams.append("limit", "200"); // 最大200件取得
+    if (since) endpoint.searchParams.set("since", since);
+    if (until) endpoint.searchParams.set("until", until);
 
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    // 1ページ最大50件（ドキュメント既定）。カーソルで全件取得
+    const pageLimit = 50;
+    endpoint.searchParams.set("limit", String(pageLimit));
 
-    if (!response.ok) {
-      throw new Error(`完了済みTodoの取得に失敗しました: ${response.status}`);
-    }
+    const allItems: unknown[] = [];
+    let cursor: string | undefined = undefined;
 
-    const data = await response.json();
+    do {
+      const url = new URL(endpoint.toString());
+      if (cursor) url.searchParams.set("cursor", cursor);
 
-    // completed/get_allエンドポイントからは直接完了済みTodoが返される
-    const completedItems = data.items || [];
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `完了済みTodoの取得に失敗しました: ${response.status}`
+        );
+      }
+
+      const data = (await response.json()) as {
+        items?: unknown[];
+        next_cursor?: string | null;
+      };
+
+      const items = data.items ?? [];
+      allItems.push(...items);
+      cursor = data.next_cursor ?? undefined;
+    } while (cursor);
 
     // APIレスポンスをバリデーション
     const validatedData = v.parse(CompletedTasksResponseSchema, {
-      items: completedItems,
+      items: allItems,
     });
 
-    // バリデーション成功後に、各アイテムにコンテンツから抽出したラベルを追加
+    // コンテンツから@ラベルを抽出
     const enrichedItems: CompletedTask[] = validatedData.items.map((item) => {
       const extractedLabels = this.extractLabelsFromContent(item.content);
-
       return {
         ...item,
-        labels: extractedLabels, // コンテンツから抽出したラベルのみを使用
+        labels: extractedLabels,
       };
     });
 
@@ -161,13 +179,27 @@ export class TodoistSyncService {
     const endDate = new Date();
     const startDate = subDays(endDate, days);
 
-    const since = startOfDay(startDate).toISOString();
-    const until = startOfDay(addDays(endDate, 1)).toISOString();
+    // v1 API制約: 期間は最大3か月（≒90日）
+    const MAX_WINDOW_DAYS = 90;
+    const untilExclusiveAll = startOfDay(addDays(endDate, 1));
+    let remaining = days;
+    let untilExclusive = untilExclusiveAll;
+    const completedTasks: CompletedTask[] = [];
 
-    const completedTasks = await this.getCompletedTasksWithTaskLabel(
-      since,
-      until
-    );
+    // 期間を後ろから最大90日ずつに分割して取得
+    while (remaining > 0) {
+      const chunkDays = Math.min(MAX_WINDOW_DAYS, remaining);
+      const sinceInclusive = subDays(untilExclusive, chunkDays);
+
+      const chunk = await this.getCompletedTasksWithTaskLabel(
+        sinceInclusive.toISOString(),
+        untilExclusive.toISOString()
+      );
+      completedTasks.push(...chunk);
+
+      untilExclusive = sinceInclusive;
+      remaining -= chunkDays;
+    }
 
     const dailyStats = new Map<string, number>();
 

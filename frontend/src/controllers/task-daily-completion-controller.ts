@@ -15,6 +15,10 @@ export class TodoDailyCompletionController implements ReactiveController {
   private host: TodoDailyCompletionControllerHost;
   private todoistSyncService: TodoistSyncService | null = null;
   private todoistService: TodoistService | null = null;
+  // 7日移動平均を先頭日から算出するための先読み分（6日）を含む内部データ
+  private statsForAverage: DailyCompletionStat[] = [];
+  // 表示対象日数（UI要件に応じて 30 または 90）
+  private visibleDays = 90;
 
   // 状態
   public dailyCompletionStats: DailyCompletionStat[] = [];
@@ -39,7 +43,8 @@ export class TodoDailyCompletionController implements ReactiveController {
   public initializeService(token: string) {
     this.todoistSyncService = new TodoistSyncService(token);
     this.todoistService = new TodoistService(token);
-    this.fetchDailyCompletionStats();
+    // 最終要件: UIは3か月分表示（90日）
+    this.fetchDailyCompletionStats(90);
     this.fetchTodayTodoStats();
   }
 
@@ -48,6 +53,7 @@ export class TodoDailyCompletionController implements ReactiveController {
     this.todoistSyncService = null;
     this.todoistService = null;
     this.dailyCompletionStats = [];
+    this.statsForAverage = [];
     this.todayTodoStat = null;
     this.error = "";
     this.loading = false;
@@ -55,7 +61,7 @@ export class TodoDailyCompletionController implements ReactiveController {
   }
 
   // 日別完了統計の取得
-  public async fetchDailyCompletionStats(days: number = 30) {
+  public async fetchDailyCompletionStats(days: number = 90) {
     if (!this.todoistSyncService) return;
 
     this.loading = true;
@@ -63,8 +69,13 @@ export class TodoDailyCompletionController implements ReactiveController {
     this.host.requestUpdate();
 
     try {
-      this.dailyCompletionStats =
-        await this.todoistSyncService.getDailyCompletionStats(days);
+      // 先頭日から7日平均を表示するため、6日分前倒しで取得
+      const fetchDays = Math.max(0, days + 6);
+      const full = await this.todoistSyncService.getDailyCompletionStats(fetchDays);
+      this.visibleDays = days;
+      this.statsForAverage = full; // 先頭6日 + 表示対象日数
+      // 表示分は直近days日に制限（今日分は別APIで補完）
+      this.dailyCompletionStats = full.slice(-days);
     } catch {
       this.error = "作業完了統計の取得に失敗しました";
     } finally {
@@ -93,7 +104,7 @@ export class TodoDailyCompletionController implements ReactiveController {
 
   // 統計データの再取得
   public async refreshStats() {
-    await this.fetchDailyCompletionStats();
+    await this.fetchDailyCompletionStats(this.visibleDays);
     await this.fetchTodayTodoStats();
   }
 
@@ -164,6 +175,11 @@ export class TodoDailyCompletionController implements ReactiveController {
     return this.todayTodoStat?.completedCount || 0;
   }
 
+  // 現在の表示対象日数を取得
+  public getVisibleDays(): number {
+    return this.visibleDays;
+  }
+
   // 残り@task数を取得
   public async getRemainingTaskCount(): Promise<number> {
     if (!this.todoistService) return 0;
@@ -179,44 +195,41 @@ export class TodoDailyCompletionController implements ReactiveController {
   }
 
   // グラフ用の過去7日間平均データを取得（各日付における過去7日間平均）
-  public getSevenDayAverageDataForChart(): (number | null)[] {
-    // 全データセット（履歴データ + 当日データ）を構築
-    const allStats = [...this.dailyCompletionStats];
-    
-    // 当日データがある場合は追加
-    if (this.todayTodoStat) {
-      const todayDate = this.todayTodoStat.date;
-      const existingTodayIndex = allStats.findIndex(
-        (stat) => stat.date === todayDate
-      );
-
-      if (existingTodayIndex >= 0) {
-        // 既存の当日データを更新
-        allStats[existingTodayIndex] = {
-          date: todayDate,
-          count: this.todayTodoStat.completedCount,
-          displayDate: this.todayTodoStat.displayDate,
-        };
-      } else {
-        // 新しい当日データを追加
-        allStats.push({
-          date: todayDate,
-          count: this.todayTodoStat.completedCount,
-          displayDate: this.todayTodoStat.displayDate,
-        });
-      }
+  public getSevenDayAverageDataForChart(): number[] {
+    // 表示用（直近visibleDays分 + 当日）
+    const visible = [...this.dailyCompletionStats];
+    const hasToday = Boolean(this.todayTodoStat);
+    if (hasToday && this.todayTodoStat) {
+      visible.push({
+        date: this.todayTodoStat.date,
+        count: this.todayTodoStat.completedCount,
+        displayDate: this.todayTodoStat.displayDate,
+      });
     }
 
-    // 各日付における過去7日間平均を計算
-    return allStats.map((_, index) => {
-      // 最初の6日間はデータ不足のためnullを返す
-      if (index < 6) return null;
-      
-      // 該当日を含む過去7日間のデータを取得
-      const sevenDaysData = allStats.slice(index - 6, index + 1);
-      const totalCount = sevenDaysData.reduce((sum, stat) => sum + stat.count, 0);
-      
-      return totalCount / 7;
-    });
+    // 先読み分（先頭6日）を含むバックデータ
+    const base = [...this.statsForAverage]; // 長さ: visibleDays + 6（きょう除く）
+
+    const averages: number[] = [];
+    const visibleDaysCount = this.dailyCompletionStats.length; // きょう除く
+
+    // 可視領域（きょうを除く）: i = 0 .. visibleDaysCount-1
+    for (let i = 0; i < visibleDaysCount; i++) {
+      const window = base.slice(i, i + 7); // 先頭6日を含む7件を想定
+      const sum = window.reduce((s, st) => s + (st?.count ?? 0), 0);
+      const denom = window.length || 1; // データ不足時の安全策
+      averages.push(sum / denom);
+    }
+
+    // 当日分
+    if (hasToday && this.todayTodoStat) {
+      const last6 = base.slice(-6);
+      const sum6 = last6.reduce((s, st) => s + (st?.count ?? 0), 0);
+      const sum7 = sum6 + this.todayTodoStat.completedCount;
+      const denom = last6.length + 1; // 6 + 当日
+      averages.push(sum7 / denom);
+    }
+
+    return averages;
   }
 }
