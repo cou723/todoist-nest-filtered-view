@@ -14,13 +14,9 @@ import type { HttpBodyError } from "@effect/platform/HttpBody";
 import type * as HttpClientError from "@effect/platform/HttpClientError";
 import { Context, Effect, Layer, pipe } from "effect";
 import {
-	AuthError,
 	BadRequestError,
-	ForbiddenError,
+	mapHttpError,
 	NetworkError,
-	NotFoundError,
-	RateLimitError,
-	ServerError,
 	type TodoistErrorType,
 } from "../errors/types";
 
@@ -69,54 +65,11 @@ const mapHttpClientError = (
 		});
 	}
 
-	// ResponseError の場合、ステータスコードを確認
+	// ResponseError の場合、ステータスコードを確認して mapHttpError を使用
 	if (error._tag === "ResponseError") {
 		const status = error.response.status;
 		const message = error.reason;
-
-		switch (status) {
-			case 400:
-				return new BadRequestError({ message, cause: error });
-			case 401:
-				return new AuthError({
-					message: "認証エラー: トークンが無効または期限切れです",
-					statusCode: status,
-					cause: error,
-				});
-			case 403:
-				return new ForbiddenError({
-					message: "権限エラー: この操作を実行する権限がありません",
-					statusCode: status,
-					cause: error,
-				});
-			case 404:
-				return new NotFoundError({
-					message: "リソースが見つかりません",
-					cause: error,
-				});
-			case 429:
-				return new RateLimitError({
-					message: "レート制限エラー: しばらく待ってから再試行してください",
-					cause: error,
-				});
-			case 500:
-			case 502:
-			case 503:
-			case 504:
-				return new ServerError({
-					message: "サーバーエラー: しばらく待ってから再試行してください",
-					statusCode: status,
-					cause: error,
-				});
-			default:
-				if (status >= 400 && status < 500) {
-					return new BadRequestError({ message, cause: error });
-				}
-				if (status >= 500) {
-					return new ServerError({ message, statusCode: status, cause: error });
-				}
-				return new NetworkError({ message, statusCode: status, cause: error });
-		}
+		return mapHttpError(status, message, error);
 	}
 
 	// RequestError の場合
