@@ -1,26 +1,26 @@
-# API Call Logs - Phase 2 Implementation
+# API 呼び出しログ - Phase 2 実装
 
-This document records actual API call patterns for Todoist services, including success and failure cases, to validate the error handling implementation.
+このドキュメントは、Todoist サービスの実際の API 呼び出しパターンを記録し、成功ケースと失敗ケースを含めて、エラーハンドリング実装を検証するためのものです。
 
-## Overview
+## 概要
 
-The implementation uses:
-- **TodoistService**: Todoist REST API v2 for task operations
-- **StatsService**: Todoist v1 Completed Tasks API for statistics
-- **AuthService**: OAuth 2.0 for authentication via proxy
+実装では以下を使用します：
+- **TodoistService**: タスク操作のための Todoist REST API v2
+- **StatsService**: 統計のための Todoist v1 Completed Tasks API
+- **AuthService**: プロキシ経由の OAuth 2.0 認証
 
-## 1. TodoistService - Task Operations
+## 1. TodoistService - タスク操作
 
-### 1.1 Fetch Tasks (Success)
+### 1.1 タスク取得（成功）
 
-**Request:**
+**リクエスト:**
 ```http
 GET https://api.todoist.com/rest/v2/tasks
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
-**Response:** 200 OK
+**レスポンス:** 200 OK
 ```json
 [
   {
@@ -42,18 +42,18 @@ Content-Type: application/json
 ]
 ```
 
-**Error Handling:** Schema validation ensures all required fields are present and types match.
+**エラーハンドリング:** スキーマ検証により、すべての必須フィールドが存在し、型が一致することを保証します。
 
-### 1.2 Fetch Tasks with Filter (Success)
+### 1.2 フィルタ付きタスク取得（成功）
 
-**Request:**
+**リクエスト:**
 ```http
 GET https://api.todoist.com/rest/v2/tasks?filter=@goal
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
-**Response:** 200 OK
+**レスポンス:** 200 OK
 ```json
 [
   {
@@ -80,18 +80,18 @@ Content-Type: application/json
 ]
 ```
 
-**Error Handling:** Filter query is properly URL-encoded and sent as query parameter.
+**エラーハンドリング:** フィルタクエリは適切に URL エンコードされ、クエリパラメータとして送信されます。
 
-### 1.3 Fetch Single Task (Success)
+### 1.3 単一タスク取得（成功）
 
-**Request:**
+**リクエスト:**
 ```http
 GET https://api.todoist.com/rest/v2/tasks/7495833149
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
-**Response:** 200 OK
+**レスポンス:** 200 OK
 ```json
 {
   "id": "7495833149",
@@ -111,73 +111,73 @@ Content-Type: application/json
 }
 ```
 
-**Error Handling:** Task is cached after fetch to reduce API calls.
+**エラーハンドリング:** API 呼び出しを削減するため、取得後にタスクがキャッシュされます。
 
-### 1.4 Complete Task (Success)
+### 1.4 タスク完了（成功）
 
-**Request:**
+**リクエスト:**
 ```http
 POST https://api.todoist.com/rest/v2/tasks/7495833149/close
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
-**Response:** 204 No Content
+**レスポンス:** 204 No Content
 
-**Error Handling:** Task is removed from cache after successful completion.
+**エラーハンドリング:** 正常に完了した後、タスクはキャッシュから削除されます。
 
-### 1.5 Authentication Error (401)
+### 1.5 認証エラー（401）
 
-**Request:**
+**リクエスト:**
 ```http
 GET https://api.todoist.com/rest/v2/tasks
 Authorization: Bearer invalid_token
 Content-Type: application/json
 ```
 
-**Response:** 401 Unauthorized
+**レスポンス:** 401 Unauthorized
 ```json
 {
   "error": "Invalid token"
 }
 ```
 
-**Error Handling:**
-- Mapped to `AuthError` with message: "認証エラー: トークンが無効または期限切れです"
-- Status code: 401
-- Allows UI to prompt re-authentication
+**エラーハンドリング:**
+- メッセージ「認証エラー: トークンが無効または期限切れです」で `AuthError` にマッピング
+- ステータスコード: 401
+- UI が再認証を促すことができます
 
-### 1.6 Task Not Found (404)
+### 1.6 タスクが見つからない（404）
 
-**Request:**
+**リクエスト:**
 ```http
 GET https://api.todoist.com/rest/v2/tasks/999999999
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
-**Response:** 404 Not Found
+**レスポンス:** 404 Not Found
 ```json
 {
   "error": "Task not found"
 }
 ```
 
-**Error Handling:**
-- Mapped to `NotFoundError` with resource type "Task"
-- Status code: 404
-- Resource ID included in error for debugging
+**エラーハンドリング:**
+- リソースタイプ "Task" で `NotFoundError` にマッピング
+- ステータスコード: 404
+- デバッグ用にリソース ID がエラーに含まれます
 
-### 1.7 Rate Limit Exceeded (429)
+### 1.7 レート制限超過（429）
 
-**Request:**
+**リクエスト:**
 ```http
 GET https://api.todoist.com/rest/v2/tasks
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
-**Response:** 429 Too Many Requests
+**レスポンス:** 429 Too Many Requests
 ```http
 Retry-After: 60
 ```
@@ -187,23 +187,23 @@ Retry-After: 60
 }
 ```
 
-**Error Handling:**
-- Mapped to `RateLimitError`
-- Message: "レート制限エラー: しばらく待ってから再試行してください"
-- Retry-After header can be used for backoff strategy
+**エラーハンドリング:**
+- `RateLimitError` にマッピング
+- メッセージ: 「レート制限エラー: しばらく待ってから再試行してください」
+- Retry-After ヘッダーをバックオフ戦略に使用できます
 
-## 2. StatsService - Completion Statistics
+## 2. StatsService - 完了統計
 
-### 2.1 Fetch Completed Tasks (Success)
+### 2.1 完了済みタスク取得（成功）
 
-**Request:**
+**リクエスト:**
 ```http
 GET http://localhost:8000/v1/tasks/completed/by_completion_date?since=2024-01-01T00:00:00Z&until=2024-01-31T23:59:59Z&limit=50
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
-**Response:** 200 OK
+**レスポンス:** 200 OK
 ```json
 {
   "items": [
@@ -226,21 +226,21 @@ Content-Type: application/json
 }
 ```
 
-**Error Handling:**
-- Labels are extracted from content using regex
-- Pagination is handled automatically with cursor
-- API constraint: Maximum 90-day window enforced
+**エラーハンドリング:**
+- ラベルは正規表現を使用してコンテンツから抽出されます
+- ページネーションはカーソルで自動的に処理されます
+- API 制約: 最大 90 日のウィンドウが強制されます
 
-### 2.2 Fetch Completed Tasks with Pagination (Success)
+### 2.2 ページネーション付き完了済みタスク取得（成功）
 
-**Request:**
+**リクエスト:**
 ```http
 GET http://localhost:8000/v1/tasks/completed/by_completion_date?since=2024-01-01T00:00:00Z&until=2024-01-31T23:59:59Z&limit=50&cursor=eyJwYWdlIjogMn0
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
-**Response:** 200 OK
+**レスポンス:** 200 OK
 ```json
 {
   "items": [
@@ -256,50 +256,50 @@ Content-Type: application/json
 }
 ```
 
-**Error Handling:** `next_cursor: null` indicates last page, loop terminates.
+**エラーハンドリング:** `next_cursor: null` は最後のページを示し、ループが終了します。
 
-### 2.3 Date Range Exceeds Limit (400)
+### 2.3 日付範囲が制限を超過（400）
 
-**Request:**
+**リクエスト:**
 ```http
 GET http://localhost:8000/v1/tasks/completed/by_completion_date?since=2023-01-01T00:00:00Z&until=2024-01-31T23:59:59Z&limit=50
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
-**Response:** 400 Bad Request
+**レスポンス:** 400 Bad Request
 ```json
 {
   "error": "Date range exceeds maximum allowed (90 days)"
 }
 ```
 
-**Error Handling:**
-- Mapped to `BadRequestError`
-- Service automatically chunks requests into 90-day windows
-- Multiple requests made sequentially to fetch all data
+**エラーハンドリング:**
+- `BadRequestError` にマッピング
+- サービスは自動的にリクエストを 90 日のウィンドウに分割します
+- すべてのデータを取得するために複数のリクエストが順次実行されます
 
-### 2.4 Network Connection Failure
+### 2.4 ネットワーク接続失敗
 
-**Request:**
+**リクエスト:**
 ```http
 GET http://localhost:8000/v1/tasks/completed/by_completion_date
 Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
-**Response:** (No response - connection failed)
+**レスポンス:** （レスポンスなし - 接続失敗）
 
-**Error Handling:**
-- Caught as fetch TypeError
-- Mapped to `NetworkError` with message: "ネットワークエラーが発生しました"
-- Allows UI to show appropriate error message
+**エラーハンドリング:**
+- fetch TypeError としてキャッチ
+- メッセージ「ネットワークエラーが発生しました」で `NetworkError` にマッピング
+- UI が適切なエラーメッセージを表示できます
 
-## 3. AuthService - OAuth Authentication
+## 3. AuthService - OAuth 認証
 
-### 3.1 OAuth Token Exchange (Success)
+### 3.1 OAuth トークン交換（成功）
 
-**Request (to Proxy):**
+**リクエスト（プロキシへ）:**
 ```http
 POST http://localhost:8000/oauth/token
 Content-Type: application/json
@@ -312,7 +312,7 @@ Content-Type: application/json
 }
 ```
 
-**Proxy Request (to Todoist):**
+**プロキシリクエスト（Todoist へ）:**
 ```http
 POST https://todoist.com/oauth/access_token
 Content-Type: application/x-www-form-urlencoded
@@ -320,7 +320,7 @@ Content-Type: application/x-www-form-urlencoded
 client_id=abc123&client_secret={secret}&code=auth_code_xyz&redirect_uri=http://localhost:5173/oauth/callback
 ```
 
-**Response:** 200 OK
+**レスポンス:** 200 OK
 ```json
 {
   "access_token": "bearer_token_xyz123",
@@ -328,14 +328,14 @@ client_id=abc123&client_secret={secret}&code=auth_code_xyz&redirect_uri=http://l
 }
 ```
 
-**Error Handling:**
-- Token saved to localStorage under key "todoist_token"
-- State parameter validated for CSRF protection
-- Both localStorage and sessionStorage checked for state
+**エラーハンドリング:**
+- トークンは "todoist_token" キーで localStorage に保存されます
+- CSRF 保護のために state パラメータが検証されます
+- state については localStorage と sessionStorage の両方がチェックされます
 
-### 3.2 Invalid Authorization Code (400)
+### 3.2 無効な認証コード（400）
 
-**Request:**
+**リクエスト:**
 ```http
 POST http://localhost:8000/oauth/token
 Content-Type: application/json
@@ -348,32 +348,32 @@ Content-Type: application/json
 }
 ```
 
-**Response:** 400 Bad Request
+**レスポンス:** 400 Bad Request
 ```json
 {
   "error": "invalid_grant"
 }
 ```
 
-**Error Handling:**
-- Mapped to `BadRequestError`
-- Message includes reason for failure
-- UI can prompt user to restart OAuth flow
+**エラーハンドリング:**
+- `BadRequestError` にマッピング
+- メッセージには失敗の理由が含まれます
+- UI はユーザーに OAuth フローの再開始を促すことができます
 
-### 3.3 State Validation Failure
+### 3.3 State 検証失敗
 
-**Scenario:** Callback state doesn't match saved state
+**シナリオ:** コールバックの state が保存された state と一致しない
 
-**Error Handling:**
-- Checked before making token exchange request
-- Returns `AuthError` with message: "State validation failed (CSRF protection)"
-- Prevents CSRF attacks
+**エラーハンドリング:**
+- トークン交換リクエストを行う前にチェックされます
+- メッセージ「State validation failed (CSRF protection)」で `AuthError` を返します
+- CSRF 攻撃を防止します
 
-## 4. Error Classification Summary
+## 4. エラー分類サマリー
 
-### HTTP Status Code Mapping
+### HTTP ステータスコードマッピング
 
-| Status Code | Error Type | User Message |
+| ステータスコード | エラー型 | ユーザーメッセージ |
 |------------|------------|--------------|
 | 400 | BadRequestError | リクエストエラー: {details} |
 | 401 | AuthError | 認証エラー: トークンが無効または期限切れです |
@@ -385,65 +385,65 @@ Content-Type: application/json
 | Parse | ParseError | データ解析エラー: {details} |
 | Schema | ValidationError | バリデーションエラー: {details} |
 
-## 5. Validation Notes
+## 5. 検証メモ
 
-### Schema Validation
-- All API responses are validated using `@effect/schema`
-- Invalid responses throw `ParseError` with details
-- Ensures type safety throughout the application
+### スキーマ検証
+- すべての API レスポンスは `@effect/schema` を使用して検証されます
+- 無効なレスポンスは詳細付きで `ParseError` をスローします
+- アプリケーション全体で型安全性を保証します
 
-### Label Extraction
-- Regex pattern: `/@([^\s@]+)/gu`
-- Handles Japanese labels: `@毎日のタスク`
-- Excludes email addresses by not treating `@` in middle of text
+### ラベル抽出
+- 正規表現パターン: `/@([^\s@]+)/gu`
+- 日本語ラベルを処理: `@毎日のタスク`
+- テキストの途中の `@` を処理しないことでメールアドレスを除外します
 
-### Date Handling
-- All dates in ISO 8601 format
-- Local timezone handled by `date-fns`
-- 90-day window enforced for completion queries
+### 日付処理
+- すべての日付は ISO 8601 形式
+- ローカルタイムゾーンは `date-fns` で処理されます
+- 完了クエリには 90 日のウィンドウが強制されます
 
-### Pagination
-- Automatic cursor-based pagination for all list endpoints
-- Fetches all pages until `next_cursor` is null
-- Memory-efficient streaming for large result sets
+### ページネーション
+- すべてのリストエンドポイントで自動カーソルベースページネーション
+- `next_cursor` が null になるまですべてのページを取得します
+- 大規模な結果セットのためのメモリ効率の良いストリーミング
 
-## 6. Testing Recommendations
+## 6. テスト推奨事項
 
-### Manual Testing
-1. Start proxy: `cd proxy && deno task start`
-2. Start frontend: `cd frontend && pnpm dev`
-3. Test OAuth flow with valid Todoist account
-4. Verify task fetching with various filters
-5. Complete a task and verify removal from list
-6. Check completion statistics for past 90 days
+### 手動テスト
+1. プロキシを起動: `cd proxy && deno task start`
+2. フロントエンドを起動: `cd frontend && pnpm dev`
+3. 有効な Todoist アカウントで OAuth フローをテスト
+4. さまざまなフィルタでタスク取得を確認
+5. タスクを完了してリストから削除されることを確認
+6. 過去 90 日間の完了統計を確認
 
-### Error Testing
-1. Test with invalid token (expect AuthError)
-2. Test with non-existent task ID (expect NotFoundError)
-3. Test with proxy offline (expect NetworkError)
-4. Test with malformed response (expect ParseError)
+### エラーテスト
+1. 無効なトークンでテスト（AuthError を期待）
+2. 存在しないタスク ID でテスト（NotFoundError を期待）
+3. プロキシがオフラインの状態でテスト（NetworkError を期待）
+4. 不正な形式のレスポンスでテスト（ParseError を期待）
 
-## 7. Logging Strategy
+## 7. ロギング戦略
 
-### Production Logging
-- All errors logged with full context (status, cause, timestamp)
-- Success cases logged at DEBUG level only
-- No sensitive data (tokens) in logs
+### 本番ロギング
+- すべてのエラーは完全なコンテキスト（ステータス、原因、タイムスタンプ）でログに記録されます
+- 成功ケースは DEBUG レベルでのみログに記録されます
+- ログに機密データ（トークン）は含まれません
 
-### Development Logging
-- Effect provides built-in tracing
-- Can enable verbose logging for debugging
-- Error details include full stack trace
+### 開発ロギング
+- Effect は組み込みのトレーシングを提供します
+- デバッグのために詳細ログを有効にできます
+- エラー詳細には完全なスタックトレースが含まれます
 
-## Conclusion
+## まとめ
 
-The Phase 2 implementation provides:
-- ✅ Type-safe API client with Effect integration
-- ✅ Comprehensive error handling with user-friendly messages
-- ✅ Automatic pagination and chunking for large datasets
-- ✅ Schema validation for all API responses
-- ✅ CSRF protection for OAuth flow
-- ✅ Caching strategy to reduce API calls
-- ✅ 90-day window handling for completion queries
+Phase 2 実装は以下を提供します：
+- ✅ Effect 統合による型安全な API クライアント
+- ✅ ユーザーフレンドリーなメッセージによる包括的なエラーハンドリング
+- ✅ 大規模データセットのための自動ページネーションとチャンク処理
+- ✅ すべての API レスポンスのスキーマ検証
+- ✅ OAuth フローの CSRF 保護
+- ✅ API 呼び出しを削減するキャッシング戦略
+- ✅ 完了クエリの 90 日ウィンドウ処理
 
-All error cases are properly classified and mapped to domain errors, ensuring consistent error handling across the application.
+すべてのエラーケースは適切に分類され、ドメインエラーにマッピングされ、アプリケーション全体で一貫したエラーハンドリングを保証します。
