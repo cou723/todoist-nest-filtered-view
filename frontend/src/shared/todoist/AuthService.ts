@@ -1,7 +1,7 @@
 /**
- * AuthService - Service for OAuth authentication
+ * AuthService - OAuth 認証のサービス
  *
- * This service handles OAuth token exchange, storage, and validation.
+ * このサービスは、OAuth トークンの交換、保存、検証を処理します。
  */
 
 import { Schema as S } from "@effect/schema";
@@ -12,7 +12,7 @@ import { TodoistHttpClient } from "../http/client";
 import { OAuthTokenResponse } from "./schema";
 
 /**
- * OAuth configuration
+ * OAuth 設定
  */
 export interface OAuthConfig {
 	readonly clientId: string;
@@ -21,12 +21,12 @@ export interface OAuthConfig {
 }
 
 /**
- * AuthService interface
+ * AuthService インターフェース
  */
 export interface IAuthService {
 	/**
-	 * Generate OAuth authorization URL
-	 * @returns Authorization URL and state for CSRF protection
+	 * OAuth 認可 URL を生成
+	 * @returns 認可 URL と CSRF 保護のための state
 	 */
 	readonly generateAuthUrl: () => Effect.Effect<
 		{ url: string; state: string },
@@ -34,10 +34,10 @@ export interface IAuthService {
 	>;
 
 	/**
-	 * Exchange authorization code for access token
-	 * @param code Authorization code from OAuth callback
-	 * @param state State parameter for CSRF validation
-	 * @returns Access token
+	 * 認可コードをアクセストークンと交換
+	 * @param code OAuth コールバックからの認可コード
+	 * @param state CSRF 検証のための state パラメータ
+	 * @returns アクセストークン
 	 */
 	readonly exchangeCode: (
 		code: string,
@@ -45,32 +45,32 @@ export interface IAuthService {
 	) => Effect.Effect<string, TodoistErrorType>;
 
 	/**
-	 * Save token to localStorage
-	 * @param token Access token
+	 * localStorage にトークンを保存
+	 * @param token アクセストークン
 	 */
 	readonly saveToken: (token: string) => Effect.Effect<void, never>;
 
 	/**
-	 * Get token from localStorage
-	 * @returns Token or undefined if not found
+	 * localStorage からトークンを取得
+	 * @returns トークンまたは見つからない場合は undefined
 	 */
 	readonly getToken: () => Effect.Effect<string | undefined, never>;
 
 	/**
-	 * Remove token from localStorage
+	 * localStorage からトークンを削除
 	 */
 	readonly removeToken: () => Effect.Effect<void, never>;
 
 	/**
-	 * Check if user is authenticated
-	 * @returns true if token exists in localStorage
+	 * ユーザーが認証されているかチェック
+	 * @returns localStorage にトークンが存在する場合 true
 	 */
 	readonly isAuthenticated: () => Effect.Effect<boolean, never>;
 
 	/**
-	 * Validate saved state matches callback state (CSRF protection)
-	 * @param callbackState State from OAuth callback
-	 * @returns true if state is valid
+	 * 保存された state がコールバックの state と一致するか検証（CSRF 保護）
+	 * @param callbackState OAuth コールバックからの state
+	 * @returns state が有効な場合 true
 	 */
 	readonly validateState: (
 		callbackState: string,
@@ -78,7 +78,7 @@ export interface IAuthService {
 }
 
 /**
- * AuthService Tag
+ * AuthService タグ
  */
 export class AuthService extends Context.Tag("AuthService")<
 	AuthService,
@@ -86,13 +86,13 @@ export class AuthService extends Context.Tag("AuthService")<
 >() {}
 
 /**
- * Storage keys
+ * ストレージキー
  */
 const TOKEN_KEY = "todoist_token";
 const STATE_KEY = "oauth_state";
 
 /**
- * Create AuthService layer
+ * AuthService レイヤーを作成
  */
 export const AuthServiceLive = (config: OAuthConfig) =>
 	Layer.effect(
@@ -101,21 +101,21 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 			const httpClient = yield* TodoistHttpClient;
 
 			/**
-			 * Generate OAuth authorization URL
+			 * OAuth 認可 URL を生成
 			 */
 			const generateAuthUrl = (): Effect.Effect<
 				{ url: string; state: string },
 				never
 			> =>
 				Effect.sync(() => {
-					// Generate random state for CSRF protection
+					// CSRF 保護のためのランダムな state を生成
 					const state = crypto.randomUUID();
 
-					// Save state to localStorage and sessionStorage
+					// localStorage と sessionStorage に state を保存
 					localStorage.setItem(STATE_KEY, state);
 					sessionStorage.setItem(STATE_KEY, state);
 
-					// Build authorization URL
+					// 認可 URL を構築
 					const params = new URLSearchParams({
 						client_id: config.clientId,
 						scope: config.scope || "data:read_write,data:delete",
@@ -128,14 +128,14 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 				});
 
 			/**
-			 * Exchange authorization code for access token
+			 * 認可コードをアクセストークンと交換
 			 */
 			const exchangeCode = (
 				code: string,
 				state: string,
 			): Effect.Effect<string, TodoistErrorType> =>
 				Effect.gen(function* () {
-					// Validate state
+					// state を検証
 					const isValidState = yield* validateState(state);
 					if (!isValidState) {
 						return yield* Effect.fail(
@@ -145,14 +145,14 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 						);
 					}
 
-					// Exchange code for token via proxy
+					// プロキシ経由でコードをトークンと交換
 					const response = yield* httpClient.post("/oauth/token", {
 						client_id: config.clientId,
 						code,
 						redirect_uri: config.redirectUri,
 					});
 
-					// Parse and validate response
+					// レスポンスを解析して検証
 					const tokenResponse = yield* S.decodeUnknown(OAuthTokenResponse)(
 						response,
 					).pipe(
@@ -165,10 +165,10 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 						),
 					);
 
-					// Save token
+					// トークンを保存
 					yield* saveToken(tokenResponse.accessToken);
 
-					// Clear state
+					// state をクリア
 					localStorage.removeItem(STATE_KEY);
 					sessionStorage.removeItem(STATE_KEY);
 
@@ -176,7 +176,7 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 				});
 
 			/**
-			 * Save token to localStorage
+			 * localStorage にトークンを保存
 			 */
 			const saveToken = (token: string): Effect.Effect<void, never> =>
 				Effect.sync(() => {
@@ -184,7 +184,7 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 				});
 
 			/**
-			 * Get token from localStorage
+			 * localStorage からトークンを取得
 			 */
 			const getToken = (): Effect.Effect<string | undefined, never> =>
 				Effect.sync(() => {
@@ -192,7 +192,7 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 				});
 
 			/**
-			 * Remove token from localStorage
+			 * localStorage からトークンを削除
 			 */
 			const removeToken = (): Effect.Effect<void, never> =>
 				Effect.sync(() => {
@@ -202,7 +202,7 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 				});
 
 			/**
-			 * Check if user is authenticated
+			 * ユーザーが認証されているかチェック
 			 */
 			const isAuthenticated = (): Effect.Effect<boolean, never> =>
 				Effect.gen(function* () {
@@ -211,17 +211,17 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 				});
 
 			/**
-			 * Validate state parameter
+			 * state を検証 parameter
 			 */
 			const validateState = (
 				callbackState: string,
 			): Effect.Effect<boolean, never> =>
 				Effect.sync(() => {
-					// Check both localStorage and sessionStorage
+					// localStorage と sessionStorage の両方をチェック
 					const localState = localStorage.getItem(STATE_KEY);
 					const sessionState = sessionStorage.getItem(STATE_KEY);
 
-					// State must exist and match
+					// state は存在して一致する必要がある
 					return (
 						(localState === callbackState || sessionState === callbackState) &&
 						callbackState.length > 0

@@ -1,7 +1,7 @@
 /**
- * TodoistService - Main service for Todoist task operations
+ * TodoistService - Todoist タスク操作のメインサービス
  *
- * This service provides type-safe operations for fetching, completing, and managing tasks.
+ * このサービスは、タスクの取得、完了、管理のための型安全な操作を提供します。
  */
 
 import { Schema as S } from "@effect/schema";
@@ -17,60 +17,60 @@ import {
 } from "./schema";
 
 /**
- * TodoistService interface
+ * TodoistService インターフェース
  */
 export interface ITodoistService {
 	/**
-	 * Fetch tasks by filter query
-	 * @param query Optional Todoist filter query (empty string for all tasks)
-	 * @returns Array of tasks matching the filter
+	 * フィルタクエリでタスクを取得
+	 * @param query オプションの Todoist フィルタクエリ（すべてのタスクには空文字列）
+	 * @returns フィルタに一致するタスクの配列
 	 */
 	readonly fetchTasksByFilter: (
 		query?: string,
 	) => Effect.Effect<Task[], TodoistErrorType>;
 
 	/**
-	 * Fetch a single task by ID
-	 * @param id Task ID
-	 * @returns Task or NotFoundError
+	 * ID でタスクを 1 つ取得
+	 * @param id タスク ID
+	 * @returns タスクまたは NotFoundError
 	 */
 	readonly fetchTask: (id: string) => Effect.Effect<Task, TodoistErrorType>;
 
 	/**
-	 * Fetch task with full parent hierarchy
-	 * @param id Task ID
-	 * @returns TaskNode with recursive parent information
+	 * 完全な親階層を持つタスクを取得
+	 * @param id タスク ID
+	 * @returns 再帰的な親情報を持つ TaskNode
 	 */
 	readonly fetchTaskNode: (
 		id: string,
 	) => Effect.Effect<TaskNode, TodoistErrorType>;
 
 	/**
-	 * Fetch multiple tasks as tree with parent hierarchy
-	 * @param query Optional filter query
-	 * @returns Array of TaskNodes with parent information
+	 * 親階層を持つツリーとして複数のタスクを取得
+	 * @param query オプションのフィルタクエリ
+	 * @returns 親情報を持つ TaskNode の配列
 	 */
 	readonly fetchTasksTree: (
 		query?: string,
 	) => Effect.Effect<TaskNode[], TodoistErrorType>;
 
 	/**
-	 * Complete a task
-	 * @param id Task ID
-	 * @returns Effect that completes successfully or fails with error
+	 * タスクを完了する
+	 * @param id タスク ID
+	 * @returns 成功または失敗するエフェクト
 	 */
 	readonly completeTask: (id: string) => Effect.Effect<void, TodoistErrorType>;
 
 	/**
-	 * Check if a task or its ancestors have dependency labels
-	 * @param taskNode TaskNode to check
-	 * @returns true if task or any ancestor has dep-* label
+	 * タスクまたはその祖先が依存関係ラベルを持つかチェック
+	 * @param taskNode チェックする TaskNode
+	 * @returns タスクまたは祖先が dep-* ラベルを持つ場合 true
 	 */
 	readonly hasDepLabelInAncestors: (taskNode: TaskNode) => boolean;
 }
 
 /**
- * TodoistService Tag
+ * TodoistService タグ
  */
 export class TodoistService extends Context.Tag("TodoistService")<
 	TodoistService,
@@ -78,19 +78,19 @@ export class TodoistService extends Context.Tag("TodoistService")<
 >() {}
 
 /**
- * Create TodoistService layer
+ * TodoistService レイヤーを作成
  */
 export const TodoistServiceLive = Layer.effect(
 	TodoistService,
 	Effect.gen(function* () {
 		const httpClient = yield* TodoistHttpClient;
 
-		// In-memory cache for tasks
+		// タスクのインメモリキャッシュ
 		const taskCache = new Map<string, Task>();
 		const pendingFetches = new Map<string, Promise<Task>>();
 
 		/**
-		 * Fetch all tasks matching a filter with pagination
+		 * ページネーション付きでフィルタに一致するすべてのタスクを取得
 		 */
 		const fetchTasksByFilter = (
 			query?: string,
@@ -128,7 +128,7 @@ export const TodoistServiceLive = Layer.effect(
 							}),
 					});
 
-					// Decode tasks using schema
+					// タスクをデコードs using schema
 					const tasksResponse = yield* S.decodeUnknown(TasksResponse)(
 						parsed,
 					).pipe(
@@ -143,7 +143,7 @@ export const TodoistServiceLive = Layer.effect(
 
 					allTasks.push(...tasksResponse.results);
 
-					// Update cache
+					// キャッシュを更新
 					for (const task of tasksResponse.results) {
 						taskCache.set(task.id, task);
 					}
@@ -155,26 +155,26 @@ export const TodoistServiceLive = Layer.effect(
 			});
 
 		/**
-		 * Fetch a single task by ID
+		 * ID でタスクを 1 つ取得
 		 */
 		const fetchTask = (id: string): Effect.Effect<Task, TodoistErrorType> =>
 			Effect.gen(function* () {
-				// Check cache first
+				// まずキャッシュを確認
 				const cached = taskCache.get(id);
 				if (cached) {
 					return cached;
 				}
 
-				// Check if already fetching
+				// すでに取得中か確認
 				const pending = pendingFetches.get(id);
 				if (pending) {
 					return yield* Effect.promise(() => pending);
 				}
 
-				// Fetch task from API
+				// API からタスクを取得
 				const response = yield* httpClient.get(`/tasks/${id}`);
 
-				// Decode task
+				// タスクをデコード
 				const task = yield* S.decodeUnknown(Task)(response).pipe(
 					Effect.mapError(
 						(error) =>
@@ -185,14 +185,14 @@ export const TodoistServiceLive = Layer.effect(
 					),
 				);
 
-				// Update cache
+				// キャッシュを更新
 				taskCache.set(id, task);
 
 				return task;
 			});
 
 		/**
-		 * Fetch task with parent hierarchy
+		 * 親階層を持つタスクを取得
 		 */
 		const fetchTaskNode = (
 			id: string,
@@ -200,12 +200,12 @@ export const TodoistServiceLive = Layer.effect(
 			Effect.gen(function* () {
 				const task = yield* fetchTask(id);
 
-				// If no parent, return task as TaskNode
+				// 親がない場合、TaskNode としてタスクを返す
 				if (!task.parentId) {
 					return { ...task, parent: undefined };
 				}
 
-				// Recursively fetch parent
+				// 再帰的に親を取得
 				const parent = yield* fetchTaskNode(task.parentId);
 
 				return {
@@ -215,7 +215,7 @@ export const TodoistServiceLive = Layer.effect(
 			});
 
 		/**
-		 * Fetch tasks tree with parent hierarchy
+		 * 親階層を持つタスクツリーを取得
 		 */
 		const fetchTasksTree = (
 			query?: string,
@@ -223,14 +223,14 @@ export const TodoistServiceLive = Layer.effect(
 			Effect.gen(function* () {
 				const tasks = yield* fetchTasksByFilter(query);
 
-				// Fetch TaskNode for each task with parent hierarchy
+				// 各タスクの親階層を持つ TaskNode を取得
 				const taskNodesEffects = tasks.map((task) => fetchTaskNode(task.id));
 
 				return yield* Effect.all(taskNodesEffects, { concurrency: 10 });
 			});
 
 		/**
-		 * Complete a task
+		 * タスクを完了する
 		 */
 		const completeTask = (id: string): Effect.Effect<void, TodoistErrorType> =>
 			Effect.gen(function* () {
@@ -246,7 +246,7 @@ export const TodoistServiceLive = Layer.effect(
 
 				yield* httpClient.post(`/tasks/${id}/close`);
 
-				// Remove from cache
+				// キャッシュから削除
 				taskCache.delete(id);
 			});
 
@@ -254,14 +254,14 @@ export const TodoistServiceLive = Layer.effect(
 		 * Check if task or ancestors have dependency label
 		 */
 		const hasDepLabelInAncestors = (taskNode: TaskNode): boolean => {
-			// Check current task
-			// Convert readonly array to regular array for compatibility
+			// 現在のタスクをチェック
+			// 互換性のために readonly 配列を通常の配列に変換
 			const labels = [...taskNode.labels];
 			if (hasDependencyLabel(labels)) {
 				return true;
 			}
 
-			// Check parent recursively
+			// 親を再帰的にチェック
 			if (taskNode.parent) {
 				return hasDepLabelInAncestors(taskNode.parent);
 			}

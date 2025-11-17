@@ -1,13 +1,13 @@
 /**
- * Common Error Types for Todoist Operations
+ * Todoist 操作の共通エラー型
  *
- * This file defines error types using Effect's Data module for structured error handling.
+ * Effect の Data モジュールを使用した構造化エラーハンドリングのためのエラー型を定義します。
  */
 
 import { Data } from "effect";
 
 /**
- * Base error for all Todoist-related errors
+ * すべての Todoist 関連エラーの基底エラー
  */
 export class TodoistError extends Data.TaggedError("TodoistError")<{
 	readonly message: string;
@@ -15,7 +15,7 @@ export class TodoistError extends Data.TaggedError("TodoistError")<{
 }> {}
 
 /**
- * Network-related errors (connection failures, timeouts, etc.)
+ * ネットワーク関連のエラー（接続失敗、タイムアウトなど）
  */
 export class NetworkError extends Data.TaggedError("NetworkError")<{
 	readonly message: string;
@@ -24,7 +24,7 @@ export class NetworkError extends Data.TaggedError("NetworkError")<{
 }> {}
 
 /**
- * Authentication errors (invalid token, expired token, etc.)
+ * 認証エラー（無効なトークン、期限切れトークンなど）
  */
 export class AuthError extends Data.TaggedError("AuthError")<{
 	readonly message: string;
@@ -33,7 +33,7 @@ export class AuthError extends Data.TaggedError("AuthError")<{
 }> {}
 
 /**
- * Authorization errors (insufficient permissions)
+ * 認可エラー（権限不足）
  */
 export class ForbiddenError extends Data.TaggedError("ForbiddenError")<{
 	readonly message: string;
@@ -42,7 +42,7 @@ export class ForbiddenError extends Data.TaggedError("ForbiddenError")<{
 }> {}
 
 /**
- * Resource not found errors
+ * リソース未検出エラー
  */
 export class NotFoundError extends Data.TaggedError("NotFoundError")<{
 	readonly message: string;
@@ -52,7 +52,7 @@ export class NotFoundError extends Data.TaggedError("NotFoundError")<{
 }> {}
 
 /**
- * Bad request errors (invalid parameters, malformed data, etc.)
+ * 不正なリクエストエラー（無効なパラメータ、不正なデータなど）
  */
 export class BadRequestError extends Data.TaggedError("BadRequestError")<{
 	readonly message: string;
@@ -61,7 +61,7 @@ export class BadRequestError extends Data.TaggedError("BadRequestError")<{
 }> {}
 
 /**
- * Rate limit exceeded errors
+ * レート制限超過エラー
  */
 export class RateLimitError extends Data.TaggedError("RateLimitError")<{
 	readonly message: string;
@@ -70,7 +70,7 @@ export class RateLimitError extends Data.TaggedError("RateLimitError")<{
 }> {}
 
 /**
- * Schema validation errors
+ * スキーマ検証エラー
  */
 export class ValidationError extends Data.TaggedError("ValidationError")<{
 	readonly message: string;
@@ -79,7 +79,7 @@ export class ValidationError extends Data.TaggedError("ValidationError")<{
 }> {}
 
 /**
- * Server errors (5xx responses)
+ * サーバーエラー（5xx レスポンス）
  */
 export class ServerError extends Data.TaggedError("ServerError")<{
 	readonly message: string;
@@ -88,7 +88,7 @@ export class ServerError extends Data.TaggedError("ServerError")<{
 }> {}
 
 /**
- * Parse errors (JSON parsing, schema decoding, etc.)
+ * パースエラー（JSON パース、スキーマデコードなど）
  */
 export class ParseError extends Data.TaggedError("ParseError")<{
 	readonly message: string;
@@ -96,7 +96,7 @@ export class ParseError extends Data.TaggedError("ParseError")<{
 }> {}
 
 /**
- * Union type of all possible Todoist errors
+ * すべての Todoist エラーの Union 型
  */
 export type TodoistErrorType =
 	| TodoistError
@@ -111,7 +111,7 @@ export type TodoistErrorType =
 	| ParseError;
 
 /**
- * Helper function to map HTTP status codes to appropriate error types
+ * HTTP ステータスコードを適切なエラー型にマッピングするヘルパー関数
  */
 export const mapHttpError = (
 	statusCode: number,
@@ -146,7 +146,7 @@ export const mapHttpError = (
 };
 
 /**
- * Helper function to create a user-friendly error message
+ * ユーザーフレンドリーなエラーメッセージを作成するヘルパー関数
  */
 export const formatErrorMessage = (error: TodoistErrorType): string => {
 	switch (error._tag) {

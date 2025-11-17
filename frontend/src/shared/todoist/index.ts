@@ -1,12 +1,12 @@
 /**
- * Todoist Module Exports
+ * Todoist モジュールエクスポート
  *
- * Central export point for all Todoist-related services and schemas.
+ * すべての Todoist 関連サービスとスキーマの中央エクスポートポイント。
  */
 
 export * from "./AuthService";
 export * from "./StatsService";
-// Schemas and types
+// スキーマと型
 export * from "./schema";
-// Services
+// サービス
 export * from "./TodoistService";

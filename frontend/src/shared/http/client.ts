@@ -1,7 +1,7 @@
 /**
- * HTTP Client with Effect Integration
+ * Effect 統合 HTTP クライアント
  *
- * This module provides a simple HTTP client using native fetch wrapped in Effect.
+ * ネイティブ fetch を Effect でラップしたシンプルな HTTP クライアントを提供します。
  */
 
 import { Context, Effect, Layer } from "effect";
@@ -13,7 +13,7 @@ import {
 } from "../errors/types";
 
 /**
- * HTTP Client Service Tag
+ * HTTP クライアントサービスタグ
  */
 export class TodoistHttpClient extends Context.Tag("TodoistHttpClient")<
 	TodoistHttpClient,
@@ -35,7 +35,7 @@ export class TodoistHttpClient extends Context.Tag("TodoistHttpClient")<
 >() {}
 
 /**
- * Configuration for the HTTP client
+ * HTTP クライアントの設定
  */
 export interface HttpClientConfig {
 	readonly baseUrl?: string;
@@ -44,7 +44,7 @@ export interface HttpClientConfig {
 }
 
 /**
- * Create HTTP client layer with optional configuration
+ * オプション設定を使用して HTTP クライアントレイヤーを作成
  */
 export const TodoistHttpClientLive = (
 	config?: HttpClientConfig,
@@ -145,10 +145,10 @@ export const TodoistHttpClientLive = (
 	);
 
 /**
- * Handle errors from fetch operations
+ * fetch 操作からのエラーを処理
  */
 const handleError = (error: unknown): TodoistErrorType => {
-	// If already a TodoistErrorType, return as-is
+	// すでに TodoistErrorType の場合はそのまま返す
 	if (
 		error &&
 		typeof error === "object" &&
@@ -158,7 +158,7 @@ const handleError = (error: unknown): TodoistErrorType => {
 		return error as TodoistErrorType;
 	}
 
-	// Handle fetch/network errors
+	// fetch/ネットワークエラーを処理
 	if (error instanceof Error) {
 		if (error.name === "TypeError" || error.message.includes("fetch")) {
 			return new NetworkError({
@@ -168,7 +168,7 @@ const handleError = (error: unknown): TodoistErrorType => {
 		}
 	}
 
-	// Handle JSON parse errors
+	// JSON パースエラーを処理
 	if (error instanceof SyntaxError) {
 		return new ParseError({
 			message: "レスポンスの解析に失敗しました",
@@ -176,7 +176,7 @@ const handleError = (error: unknown): TodoistErrorType => {
 		});
 	}
 
-	// Default to network error
+	// デフォルトはネットワークエラー
 	return new NetworkError({
 		message: "予期しないエラーが発生しました",
 		cause: error,
@@ -184,7 +184,7 @@ const handleError = (error: unknown): TodoistErrorType => {
 };
 
 /**
- * Helper to create a configured HTTP client for Todoist API
+ * Todoist API 用の設定済み HTTP クライアントを作成するヘルパー
  */
 export const createTodoistClient = (token: string) =>
 	TodoistHttpClientLive({
@@ -193,7 +193,7 @@ export const createTodoistClient = (token: string) =>
 	});
 
 /**
- * Helper to create a configured HTTP client for the proxy
+ * プロキシ用の設定済み HTTP クライアントを作成するヘルパー
  */
 export const createProxyClient = (proxyUrl?: string) =>
 	TodoistHttpClientLive({

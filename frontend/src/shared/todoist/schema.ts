@@ -1,26 +1,26 @@
 /**
- * Todoist Domain Schemas
+ * Todoist ドメインスキーマ
  *
- * This file defines all Todoist domain types using @effect/schema for type-safe validation.
- * These schemas align with the Todoist REST API v2 response structure.
+ * @effect/schema を使用した型安全なバリデーションのための Todoist ドメイン型を定義します。
+ * これらのスキーマは Todoist REST API v2 のレスポンス構造に対応しています。
  */
 
 import { Schema as S } from "@effect/schema";
 
 /**
- * Due date information for a task
+ * タスクの期限日情報
  */
 export class DueDate extends S.Class<DueDate>("DueDate")({
-	date: S.String, // Date in YYYY-MM-DD format
-	string: S.String, // Human-readable date string
-	lang: S.String, // Language code (e.g., "ja")
+	date: S.String, // YYYY-MM-DD 形式の日付
+	string: S.String, // 人間が読める日付文字列
+	lang: S.String, // 言語コード（例: "ja"）
 	isRecurring: S.Boolean,
-	datetime: S.optional(S.NullOr(S.String)), // Full datetime if task has time component
-	timezone: S.optional(S.NullOr(S.String)), // Timezone string
+	datetime: S.optional(S.NullOr(S.String)), // タスクに時刻がある場合の完全な日時
+	timezone: S.optional(S.NullOr(S.String)), // タイムゾーン文字列
 }) {}
 
 /**
- * Duration information for a task
+ * タスクの所要時間情報
  */
 export class Duration extends S.Class<Duration>("Duration")({
 	amount: S.Number,
@@ -28,8 +28,8 @@ export class Duration extends S.Class<Duration>("Duration")({
 }) {}
 
 /**
- * Todoist Task (Todo)
- * Represents a task from the Todoist REST API
+ * Todoist タスク（Todo）
+ * Todoist REST API から取得されるタスクを表します
  */
 export class Task extends S.Class<Task>("Task")({
 	id: S.String,
@@ -41,11 +41,11 @@ export class Task extends S.Class<Task>("Task")({
 	labels: S.Array(S.String),
 	parentId: S.optional(S.NullOr(S.String)),
 	order: S.Number,
-	priority: S.Number, // 1-4 (1=normal, 4=urgent)
+	priority: S.Number, // 1-4 (1=通常, 4=緊急)
 	due: S.optional(S.NullOr(DueDate)),
 	url: S.String,
 	commentCount: S.Number,
-	createdAt: S.String, // ISO 8601 datetime
+	createdAt: S.String, // ISO 8601 日時
 	creatorId: S.String,
 	assigneeId: S.optional(S.NullOr(S.String)),
 	assignerId: S.optional(S.NullOr(S.String)),
@@ -53,15 +53,15 @@ export class Task extends S.Class<Task>("Task")({
 }) {}
 
 /**
- * Task with parent hierarchy
- * Extended task type that includes recursive parent information
+ * 親階層を含むタスク
+ * 再帰的な親情報を含む拡張タスク型
  */
 export interface TaskNode extends Task {
 	parent?: TaskNode;
 }
 
 /**
- * Paginated response for tasks
+ * タスクのページネーションレスポンス
  */
 export class TasksResponse extends S.Class<TasksResponse>("TasksResponse")({
 	results: S.Array(Task),
@@ -69,20 +69,20 @@ export class TasksResponse extends S.Class<TasksResponse>("TasksResponse")({
 }) {}
 
 /**
- * Completed task from the v1 Completed API
+ * v1 Completed API からの完了済みタスク
  */
 export class CompletedTask extends S.Class<CompletedTask>("CompletedTask")({
 	id: S.String,
-	completedAt: S.String, // ISO 8601 datetime
+	completedAt: S.String, // ISO 8601 日時
 	content: S.String,
 	projectId: S.String,
 	userId: S.String,
-	// Note: labels are not provided by the API, we extract them from content
+	// 注: labels は API から提供されないため、content から抽出します
 	labels: S.Array(S.String),
 }) {}
 
 /**
- * Paginated response for completed tasks
+ * 完了済みタスクのページネーションレスポンス
  */
 export class CompletedTasksResponse extends S.Class<CompletedTasksResponse>(
 	"CompletedTasksResponse",
@@ -100,27 +100,27 @@ export class CompletedTasksResponse extends S.Class<CompletedTasksResponse>(
 }) {}
 
 /**
- * Daily completion statistics
+ * 日次完了統計
  */
 export class DailyCompletionStat extends S.Class<DailyCompletionStat>(
 	"DailyCompletionStat",
 )({
-	date: S.String, // YYYY-MM-DD format
+	date: S.String, // YYYY-MM-DD 形式
 	count: S.Number.pipe(S.nonNegative()),
-	displayDate: S.String, // Localized display string (e.g., "11/17")
+	displayDate: S.String, // ローカライズされた表示文字列（例: "11/17"）
 }) {}
 
 /**
- * Today's task statistics
+ * 当日のタスク統計
  */
 export class TodayTaskStat extends S.Class<TodayTaskStat>("TodayTaskStat")({
-	date: S.String, // YYYY-MM-DD format
+	date: S.String, // YYYY-MM-DD 形式
 	completedCount: S.Number.pipe(S.nonNegative()),
-	displayDate: S.String, // Localized display string
+	displayDate: S.String, // ローカライズされた表示文字列
 }) {}
 
 /**
- * Todoist Project
+ * Todoist プロジェクト
  */
 export class Project extends S.Class<Project>("Project")({
 	id: S.String,
@@ -138,7 +138,7 @@ export class Project extends S.Class<Project>("Project")({
 }) {}
 
 /**
- * OAuth token response
+ * OAuth トークンレスポンス
  */
 export class OAuthTokenResponse extends S.Class<OAuthTokenResponse>(
 	"OAuthTokenResponse",
@@ -148,54 +148,54 @@ export class OAuthTokenResponse extends S.Class<OAuthTokenResponse>(
 }) {}
 
 /**
- * Goal-related types
+ * ゴール関連の型
  */
 
 /**
- * Check if a task is a goal (has @goal label)
+ * タスクがゴールかどうかを確認（@goal ラベルを持つ）
  */
 export const isGoalTask = (task: Task): boolean => {
 	return task.labels.includes("goal");
 };
 
 /**
- * Check if a task is a non-milestone goal (has both @goal and @non-milestone labels)
+ * タスクがマイルストーン未設定のゴールかどうかを確認（@goal と @non-milestone の両方のラベルを持つ）
  */
 export const isNonMilestoneGoal = (task: Task): boolean => {
 	return task.labels.includes("goal") && task.labels.includes("non-milestone");
 };
 
 /**
- * Check if a task is a work task (has @task label)
+ * タスクが作業タスクかどうかを確認（@task ラベルを持つ）
  */
 export const isWorkTask = (task: Task | CompletedTask): boolean => {
 	return task.labels.includes("task");
 };
 
 /**
- * Check if a task is a daily task (has @毎日のタスク label)
+ * タスクが毎日のタスクかどうかを確認（@毎日のタスク ラベルを持つ）
  */
 export const isDailyTask = (task: Task | CompletedTask): boolean => {
 	return task.labels.includes("毎日のタスク");
 };
 
 /**
- * Check if a task is a milestone task (content ends with "のマイルストーンを置く")
+ * タスクがマイルストーンタスクかどうかを確認（コンテンツが「のマイルストーンを置く」で終わる）
  */
 export const isMilestoneTask = (content: string): boolean => {
 	return /のマイルストーンを置く$/.test(content);
 };
 
 /**
- * Check if a task or its ancestors have a dependency label (starts with "dep-")
+ * タスクまたはその祖先が依存関係ラベルを持つかどうかを確認（"dep-" で始まる）
  */
 export const hasDependencyLabel = (labels: string[]): boolean => {
 	return labels.some((label) => label.startsWith("dep-"));
 };
 
 /**
- * Extract @-prefixed labels from task content
- * Example: "@task @goal" -> ["task", "goal"]
+ * タスクコンテンツから @ プレフィックス付きラベルを抽出
+ * 例: "@task @goal" -> ["task", "goal"]
  */
 export const extractLabelsFromContent = (content: string): string[] => {
 	const labelRegex = /@([^\s@]+)/gu;

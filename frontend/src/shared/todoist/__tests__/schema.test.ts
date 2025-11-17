@@ -1,7 +1,7 @@
 /**
- * Schema Tests
+ * スキーマテスト
  *
- * Tests for Todoist domain schemas and utility functions.
+ * Todoist ドメインスキーマとユーティリティ関数のテスト。
  */
 
 import { Schema as S } from "@effect/schema";
@@ -23,9 +23,9 @@ import {
 	TodayTaskStat,
 } from "../schema";
 
-describe("Schema Validation", () => {
-	describe("Task Schema", () => {
-		it("should validate a valid task", async () => {
+describe("スキーマ検証", () => {
+	describe("Task スキーマ", () => {
+		it("有効なタスクを検証する", async () => {
 			const validTask = {
 				id: "123",
 				projectId: "456",
@@ -48,9 +48,9 @@ describe("Schema Validation", () => {
 			expect(decoded.labels).toEqual(["task"]);
 		});
 
-		it("should fail validation for invalid task", async () => {
+		it("無効なタスクの検証を失敗させる", async () => {
 			const invalidTask = {
-				id: 123, // Should be string
+				id: 123, // 文字列である必要がある
 				content: "Test",
 			};
 
@@ -59,7 +59,7 @@ describe("Schema Validation", () => {
 			).rejects.toThrow();
 		});
 
-		it("should validate task with optional fields", async () => {
+		it("オプションフィールドを持つタスクを検証する", async () => {
 			const taskWithDue = {
 				id: "123",
 				projectId: "456",
@@ -89,8 +89,8 @@ describe("Schema Validation", () => {
 		});
 	});
 
-	describe("DueDate Schema", () => {
-		it("should validate a valid due date", async () => {
+	describe("DueDate スキーマ", () => {
+		it("有効な期限日を検証する", async () => {
 			const validDueDate = {
 				date: "2024-12-31",
 				string: "Dec 31",
@@ -107,8 +107,8 @@ describe("Schema Validation", () => {
 		});
 	});
 
-	describe("TaskNode Type", () => {
-		it("should support task node with parent", () => {
+	describe("TaskNode 型", () => {
+		it("親を持つタスクノードをサポートする", () => {
 			const taskWithParent: TaskNode = {
 				id: "child",
 				projectId: "456",
@@ -144,8 +144,8 @@ describe("Schema Validation", () => {
 		});
 	});
 
-	describe("CompletedTask Schema", () => {
-		it("should validate a valid completed task", async () => {
+	describe("CompletedTask スキーマ", () => {
+		it("有効な完了済みタスクを検証する", async () => {
 			const validCompletedTask = {
 				id: "123",
 				completedAt: "2024-01-01T12:00:00Z",
@@ -164,8 +164,8 @@ describe("Schema Validation", () => {
 		});
 	});
 
-	describe("DailyCompletionStat Schema", () => {
-		it("should validate valid daily stats", async () => {
+	describe("DailyCompletionStat スキーマ", () => {
+		it("有効な日次統計を検証する", async () => {
 			const validStat = {
 				date: "2024-01-01",
 				count: 5,
@@ -179,7 +179,7 @@ describe("Schema Validation", () => {
 			expect(decoded.count).toBe(5);
 		});
 
-		it("should fail for negative count", async () => {
+		it("負のカウントで失敗する", async () => {
 			const invalidStat = {
 				date: "2024-01-01",
 				count: -1,
@@ -192,8 +192,8 @@ describe("Schema Validation", () => {
 		});
 	});
 
-	describe("TodayTaskStat Schema", () => {
-		it("should validate valid today stats", async () => {
+	describe("TodayTaskStat スキーマ", () => {
+		it("有効な今日の統計を検証する", async () => {
 			const validStat = {
 				date: "2024-01-01",
 				completedCount: 3,
@@ -209,36 +209,36 @@ describe("Schema Validation", () => {
 	});
 });
 
-describe("Utility Functions", () => {
+describe("ユーティリティ関数", () => {
 	describe("extractLabelsFromContent", () => {
-		it("should extract single label", () => {
+		it("単一のラベルを抽出する", () => {
 			const labels = extractLabelsFromContent("This is a @task");
 			expect(labels).toEqual(["task"]);
 		});
 
-		it("should extract multiple labels", () => {
+		it("複数のラベルを抽出する", () => {
 			const labels = extractLabelsFromContent("@task @goal @important");
 			expect(labels).toEqual(["task", "goal", "important"]);
 		});
 
-		it("should extract Japanese labels", () => {
+		it("日本語のラベルを抽出する", () => {
 			const labels = extractLabelsFromContent("@毎日のタスク @task");
 			expect(labels).toEqual(["毎日のタスク", "task"]);
 		});
 
-		it("should return empty array for no labels", () => {
+		it("ラベルがない場合は空配列を返す", () => {
 			const labels = extractLabelsFromContent("No labels here");
 			expect(labels).toEqual([]);
 		});
 
-		it("should not extract labels within words", () => {
+		it("単語内のラベルは抽出しない", () => {
 			const labels = extractLabelsFromContent("email@example.com @task");
 			expect(labels).toEqual(["example.com", "task"]);
 		});
 	});
 
 	describe("isGoalTask", () => {
-		it("should return true for task with goal label", () => {
+		it("goal ラベルを持つタスクの場合 true を返す", () => {
 			const task = new Task({
 				id: "1",
 				projectId: "2",
@@ -257,7 +257,7 @@ describe("Utility Functions", () => {
 			expect(isGoalTask(task)).toBe(true);
 		});
 
-		it("should return false for task without goal label", () => {
+		it("goal ラベルを持たないタスクの場合 false を返す", () => {
 			const task = new Task({
 				id: "1",
 				projectId: "2",
@@ -278,7 +278,7 @@ describe("Utility Functions", () => {
 	});
 
 	describe("isNonMilestoneGoal", () => {
-		it("should return true for goal with non-milestone label", () => {
+		it("non-milestone ラベルを持つゴールの場合 true を返す", () => {
 			const task = new Task({
 				id: "1",
 				projectId: "2",
@@ -297,7 +297,7 @@ describe("Utility Functions", () => {
 			expect(isNonMilestoneGoal(task)).toBe(true);
 		});
 
-		it("should return false for goal without non-milestone label", () => {
+		it("non-milestone ラベルを持たないゴールの場合 false を返す", () => {
 			const task = new Task({
 				id: "1",
 				projectId: "2",
@@ -318,7 +318,7 @@ describe("Utility Functions", () => {
 	});
 
 	describe("isWorkTask", () => {
-		it("should return true for task with task label", () => {
+		it("task ラベルを持つタスクの場合 true を返す", () => {
 			const task = new CompletedTask({
 				id: "1",
 				completedAt: "2024-01-01T12:00:00Z",
@@ -331,7 +331,7 @@ describe("Utility Functions", () => {
 			expect(isWorkTask(task)).toBe(true);
 		});
 
-		it("should return false for task without task label", () => {
+		it("task ラベルを持たないタスクの場合 false を返す", () => {
 			const task = new CompletedTask({
 				id: "1",
 				completedAt: "2024-01-01T12:00:00Z",
@@ -346,7 +346,7 @@ describe("Utility Functions", () => {
 	});
 
 	describe("isDailyTask", () => {
-		it("should return true for task with daily label", () => {
+		it("毎日のタスクラベルを持つタスクの場合 true を返す", () => {
 			const task = new CompletedTask({
 				id: "1",
 				completedAt: "2024-01-01T12:00:00Z",
@@ -359,7 +359,7 @@ describe("Utility Functions", () => {
 			expect(isDailyTask(task)).toBe(true);
 		});
 
-		it("should return false for task without daily label", () => {
+		it("毎日のタスクラベルを持たないタスクの場合 false を返す", () => {
 			const task = new CompletedTask({
 				id: "1",
 				completedAt: "2024-01-01T12:00:00Z",
@@ -374,25 +374,25 @@ describe("Utility Functions", () => {
 	});
 
 	describe("isMilestoneTask", () => {
-		it("should return true for milestone content", () => {
+		it("マイルストーンのコンテンツの場合 true を返す", () => {
 			expect(isMilestoneTask("プロジェクトAのマイルストーンを置く")).toBe(true);
 		});
 
-		it("should return false for non-milestone content", () => {
+		it("マイルストーンでないコンテンツの場合 false を返す", () => {
 			expect(isMilestoneTask("プロジェクトA")).toBe(false);
 		});
 	});
 
 	describe("hasDependencyLabel", () => {
-		it("should return true for labels with dep- prefix", () => {
+		it("dep- プレフィックスを持つラベルの場合 true を返す", () => {
 			expect(hasDependencyLabel(["dep-project-a", "task"])).toBe(true);
 		});
 
-		it("should return false for labels without dep- prefix", () => {
+		it("dep- プレフィックスを持たないラベルの場合 false を返す", () => {
 			expect(hasDependencyLabel(["task", "goal"])).toBe(false);
 		});
 
-		it("should return false for empty labels", () => {
+		it("空のラベルの場合 false を返す", () => {
 			expect(hasDependencyLabel([])).toBe(false);
 		});
 	});

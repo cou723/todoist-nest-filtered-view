@@ -1,13 +1,13 @@
 /**
- * Shared Module Exports
+ * 共有モジュールエクスポート
  *
- * Central export point for all shared utilities, services, and types.
+ * すべての共有ユーティリティ、サービス、型の中央エクスポートポイント。
  */
 
-// Error types
+// エラー型
 export * from "./errors/types";
 
-// HTTP client
+// HTTP クライアント
 export * from "./http/client";
-// Todoist domain and services
+// Todoist ドメインとサービス
 export * from "./todoist";

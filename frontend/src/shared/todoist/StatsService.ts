@@ -1,7 +1,7 @@
 /**
- * StatsService - Service for fetching completion statistics
+ * StatsService - 完了統計を取得するサービス
  *
- * This service handles fetching completed tasks and calculating statistics.
+ * このサービスは、完了済みタスクの取得と統計の計算を処理します。
  */
 
 import { Schema as S } from "@effect/schema";
@@ -22,14 +22,14 @@ import {
 } from "./schema";
 
 /**
- * StatsService interface
+ * StatsService インターフェース
  */
 export interface IStatsService {
 	/**
-	 * Fetch completed tasks by date range
-	 * @param since Start date (ISO 8601)
-	 * @param until End date (ISO 8601)
-	 * @returns Array of completed tasks
+	 * 日付範囲で完了済みタスクを取得
+	 * @param since 開始日 (ISO 8601)
+	 * @param until 終了日 (ISO 8601)
+	 * @returns 完了済みタスクの配列
 	 */
 	readonly getCompletedTasks: (
 		since?: string,
@@ -37,10 +37,10 @@ export interface IStatsService {
 	) => Effect.Effect<CompletedTask[], TodoistErrorType>;
 
 	/**
-	 * Fetch completed work tasks (excludes daily tasks)
-	 * @param since Start date (ISO 8601)
-	 * @param until End date (ISO 8601)
-	 * @returns Array of completed work tasks
+	 * 完了済み作業タスクを取得（毎日のタスクを除外）
+	 * @param since 開始日 (ISO 8601)
+	 * @param until 終了日 (ISO 8601)
+	 * @returns 完了済み作業タスクの配列
 	 */
 	readonly getCompletedWorkTasks: (
 		since?: string,
@@ -48,15 +48,15 @@ export interface IStatsService {
 	) => Effect.Effect<CompletedTask[], TodoistErrorType>;
 
 	/**
-	 * Get today's task statistics
-	 * @returns Today's completion stats
+	 * 今日のタスク統計を取得
+	 * @returns 今日の完了統計
 	 */
 	readonly getTodayStats: () => Effect.Effect<TodayTaskStat, TodoistErrorType>;
 
 	/**
-	 * Get daily completion statistics for a date range
-	 * @param days Number of days to fetch (default 90)
-	 * @returns Array of daily stats
+	 * 日付範囲の日次完了統計を取得
+	 * @param days 取得する日数（デフォルト 90）
+	 * @returns 日次統計の配列
 	 */
 	readonly getDailyStats: (
 		days?: number,
@@ -64,7 +64,7 @@ export interface IStatsService {
 }
 
 /**
- * StatsService Tag
+ * StatsService タグ
  */
 export class StatsService extends Context.Tag("StatsService")<
 	StatsService,
@@ -72,12 +72,12 @@ export class StatsService extends Context.Tag("StatsService")<
 >() {}
 
 /**
- * Maximum date range for v1 API (90 days)
+ * v1 API の最大日付範囲（90 日）
  */
 const MAX_WINDOW_DAYS = 90;
 
 /**
- * Create StatsService layer
+ * StatsService レイヤーを作成
  */
 export const StatsServiceLive = Layer.effect(
 	StatsService,
@@ -85,7 +85,7 @@ export const StatsServiceLive = Layer.effect(
 		const httpClient = yield* TodoistHttpClient;
 
 		/**
-		 * Fetch completed tasks with pagination
+		 * ページネーション付きで完了済みタスクを取得
 		 */
 		const getCompletedTasks = (
 			since?: string,
@@ -106,7 +106,7 @@ export const StatsServiceLive = Layer.effect(
 
 					const response = yield* httpClient.get(url);
 
-					// Parse response structure
+					// レスポンス構造を解析
 					const parsed = yield* Effect.try({
 						try: () => {
 							const data = response as {
@@ -125,7 +125,7 @@ export const StatsServiceLive = Layer.effect(
 							}),
 					});
 
-					// Decode using schema
+					// スキーマを使用してデコード
 					const validated = yield* S.decodeUnknown(CompletedTasksResponse)(
 						parsed,
 					).pipe(
@@ -138,7 +138,7 @@ export const StatsServiceLive = Layer.effect(
 						),
 					);
 
-					// Convert API format to domain format and extract labels
+					// API 形式をドメイン形式に変換してラベルを抽出
 					const enrichedItems = validated.items.map((item) => {
 						const labels = extractLabelsFromContent(item.content);
 						return new CompletedTask({
@@ -168,7 +168,7 @@ export const StatsServiceLive = Layer.effect(
 			Effect.gen(function* () {
 				const allTasks = yield* getCompletedTasks(since, until);
 
-				// Filter: exclude daily tasks, include work tasks or milestone tasks
+				// フィルタ: 毎日のタスクを除外、作業タスクまたはマイルストーンタスクを含む
 				return allTasks.filter((task) => {
 					if (isDailyTask(task)) return false;
 					return isWorkTask(task) || isMilestoneTask(task.content);
@@ -176,14 +176,14 @@ export const StatsServiceLive = Layer.effect(
 			});
 
 		/**
-		 * Get today's task statistics
+		 * 今日のタスク統計を取得
 		 */
 		const getTodayStats = (): Effect.Effect<TodayTaskStat, TodoistErrorType> =>
 			Effect.gen(function* () {
 				const today = new Date();
 				const todayKey = format(today, "yyyy-MM-dd");
 
-				// Local time range for today
+				// 今日のローカル時間範囲
 				const todayStart = startOfDay(today);
 				const tomorrowStart = startOfDay(addDays(today, 1));
 
@@ -212,7 +212,7 @@ export const StatsServiceLive = Layer.effect(
 				const endDate = new Date();
 				const startDate = subDays(endDate, days);
 
-				// Split into chunks of max 90 days
+				// 最大 90 日のチャンクに分割
 				const untilExclusiveAll = startOfDay(addDays(endDate, 1));
 				let remaining = days;
 				let untilExclusive = untilExclusiveAll;
@@ -233,7 +233,7 @@ export const StatsServiceLive = Layer.effect(
 					remaining -= chunkDays;
 				}
 
-				// Aggregate by date
+				// 日付ごとに集計
 				const dailyMap = new Map<string, number>();
 
 				for (const task of allCompletedTasks) {
@@ -242,7 +242,7 @@ export const StatsServiceLive = Layer.effect(
 					dailyMap.set(dateKey, (dailyMap.get(dateKey) || 0) + 1);
 				}
 
-				// Create stats for each day in range
+				// 範囲内の各日の統計を作成
 				const result: DailyCompletionStat[] = [];
 				for (let i = 0; i < days; i++) {
 					const date = addDays(startDate, i);
