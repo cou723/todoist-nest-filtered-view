@@ -1,0 +1,245 @@
+/**
+ * HTTP Client with Effect Integration
+ *
+ * This module provides an HTTP client built on @effect/platform with proper error handling.
+ */
+
+import {
+	HttpClient,
+	HttpClientRequest,
+	HttpClientResponse,
+} from "@effect/platform";
+import type { HttpClientError } from "@effect/platform/HttpClientError";
+import { Context, Effect, Layer } from "effect";
+import {
+	mapHttpError,
+	NetworkError,
+	ParseError,
+	type TodoistErrorType,
+} from "../errors/types";
+
+/**
+ * HTTP Client Service Tag
+ */
+export class TodoistHttpClient extends Context.Tag("TodoistHttpClient")<
+	TodoistHttpClient,
+	{
+		readonly get: (
+			url: string,
+			options?: { headers?: Record<string, string> },
+		) => Effect.Effect<unknown, TodoistErrorType>;
+		readonly post: (
+			url: string,
+			body?: unknown,
+			options?: { headers?: Record<string, string> },
+		) => Effect.Effect<unknown, TodoistErrorType>;
+		readonly delete: (
+			url: string,
+			options?: { headers?: Record<string, string> },
+		) => Effect.Effect<void, TodoistErrorType>;
+	}
+>() {}
+
+/**
+ * Configuration for the HTTP client
+ */
+export interface HttpClientConfig {
+	readonly baseUrl?: string;
+	readonly defaultHeaders?: Record<string, string>;
+	readonly token?: string;
+}
+
+/**
+ * Create HTTP client layer with optional configuration
+ */
+export const TodoistHttpClientLive = (
+	config?: HttpClientConfig,
+): Layer.Layer<TodoistHttpClient> =>
+	Layer.succeed(
+		TodoistHttpClient,
+		TodoistHttpClient.of({
+			get: (url: string, options?: { headers?: Record<string, string> }) =>
+				Effect.gen(function* () {
+					const client = yield* HttpClient.HttpClient;
+
+					const headers = {
+						"Content-Type": "application/json",
+						...(config?.token
+							? { Authorization: `Bearer ${config.token}` }
+							: {}),
+						...config?.defaultHeaders,
+						...options?.headers,
+					};
+
+					const fullUrl = config?.baseUrl ? `${config.baseUrl}${url}` : url;
+
+					return yield* Effect.tryPromise({
+						try: () =>
+							HttpClientRequest.get(fullUrl).pipe(
+								HttpClientRequest.setHeaders(headers),
+								client.execute,
+								Effect.flatMap(HttpClientResponse.json),
+								Effect.runPromise,
+							),
+						catch: (error) => handleHttpError(error),
+					});
+				}),
+
+			post: (
+				url: string,
+				body?: unknown,
+				options?: { headers?: Record<string, string> },
+			) =>
+				Effect.gen(function* () {
+					const client = yield* HttpClient.HttpClient;
+
+					const headers = {
+						"Content-Type": "application/json",
+						...(config?.token
+							? { Authorization: `Bearer ${config.token}` }
+							: {}),
+						...config?.defaultHeaders,
+						...options?.headers,
+					};
+
+					const fullUrl = config?.baseUrl ? `${config.baseUrl}${url}` : url;
+
+					return yield* Effect.tryPromise({
+						try: () => {
+							let request = HttpClientRequest.post(fullUrl).pipe(
+								HttpClientRequest.setHeaders(headers),
+							);
+
+							if (body) {
+								request = HttpClientRequest.jsonBody(request, body);
+							}
+
+							return client
+								.execute(request)
+								.pipe(
+									Effect.flatMap(HttpClientResponse.json),
+									Effect.runPromise,
+								);
+						},
+						catch: (error) => handleHttpError(error),
+					});
+				}),
+
+			delete: (url: string, options?: { headers?: Record<string, string> }) =>
+				Effect.gen(function* () {
+					const client = yield* HttpClient.HttpClient;
+
+					const headers = {
+						"Content-Type": "application/json",
+						...(config?.token
+							? { Authorization: `Bearer ${config.token}` }
+							: {}),
+						...config?.defaultHeaders,
+						...options?.headers,
+					};
+
+					const fullUrl = config?.baseUrl ? `${config.baseUrl}${url}` : url;
+
+					return yield* Effect.tryPromise({
+						try: () =>
+							HttpClientRequest.del(fullUrl).pipe(
+								HttpClientRequest.setHeaders(headers),
+								client.execute,
+								Effect.asVoid,
+								Effect.runPromise,
+							),
+						catch: (error) => handleHttpError(error),
+					});
+				}),
+		}),
+	);
+
+/**
+ * Handle HTTP errors and map them to domain errors
+ */
+const handleHttpError = (error: unknown): TodoistErrorType => {
+	// Check if it's an HttpClientError from @effect/platform
+	if (isHttpClientError(error)) {
+		const statusCode = getStatusCode(error);
+		const message = getErrorMessage(error);
+		return mapHttpError(statusCode, message, error);
+	}
+
+	// Handle fetch errors (network issues)
+	if (error instanceof Error) {
+		if (error.name === "TypeError" || error.message.includes("fetch")) {
+			return new NetworkError({
+				message: "ネットワークエラーが発生しました",
+				cause: error,
+			});
+		}
+	}
+
+	// Handle JSON parse errors
+	if (error instanceof SyntaxError) {
+		return new ParseError({
+			message: "レスポンスの解析に失敗しました",
+			cause: error,
+		});
+	}
+
+	// Default to generic network error
+	return new NetworkError({
+		message: "予期しないエラーが発生しました",
+		cause: error,
+	});
+};
+
+/**
+ * Type guard for HttpClientError
+ */
+const isHttpClientError = (error: unknown): error is HttpClientError => {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"_tag" in error &&
+		(error as { _tag: string })._tag.includes("HttpClientError")
+	);
+};
+
+/**
+ * Extract status code from HttpClientError
+ */
+const getStatusCode = (error: HttpClientError): number => {
+	if ("response" in error && error.response) {
+		return (error.response as { status: number }).status;
+	}
+	return 500;
+};
+
+/**
+ * Extract error message from HttpClientError
+ */
+const getErrorMessage = (error: HttpClientError): string => {
+	if ("response" in error && error.response) {
+		const response = error.response as { statusText?: string };
+		return response.statusText || "Unknown error";
+	}
+	if ("message" in error) {
+		return (error as { message: string }).message;
+	}
+	return "Unknown error";
+};
+
+/**
+ * Helper to create a configured HTTP client for Todoist API
+ */
+export const createTodoistClient = (token: string) =>
+	TodoistHttpClientLive({
+		baseUrl: "https://api.todoist.com/rest/v2",
+		token,
+	});
+
+/**
+ * Helper to create a configured HTTP client for the proxy
+ */
+export const createProxyClient = (proxyUrl?: string) =>
+	TodoistHttpClientLive({
+		baseUrl:
+			proxyUrl || import.meta.env.VITE_PROXY_URL || "http://localhost:8000",
+	});
