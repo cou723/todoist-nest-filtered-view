@@ -17,8 +17,11 @@
   },
   "dependencies": {
     "@doist/todoist-api-typescript": "^4.0.4",
+    "@effect/platform": "^0.93.2",
+    "@effect/schema": "^0.75.5",
     "chart.js": "^4.5.0",
     "date-fns": "^4.1.0",
+    "effect": "^3.19.4",
     "lit": "^3.3.0",
     "valibot": "^1.1.0"
   },
