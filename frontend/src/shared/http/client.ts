@@ -28,16 +28,16 @@ export class TodoistHttpClient extends Context.Tag("TodoistHttpClient")<
 	{
 		readonly get: (
 			url: string,
-			options?: { headers?: Record<string, string> },
+			options?: { readonly headers?: Record<string, string> },
 		) => Effect.Effect<unknown, TodoistErrorType>;
 		readonly post: (
 			url: string,
 			body?: unknown,
-			options?: { headers?: Record<string, string> },
+			options?: { readonly headers?: Record<string, string> },
 		) => Effect.Effect<unknown, TodoistErrorType>;
 		readonly delete: (
 			url: string,
-			options?: { headers?: Record<string, string> },
+			options?: { readonly headers?: Record<string, string> },
 		) => Effect.Effect<void, TodoistErrorType>;
 	}
 >() {}
@@ -86,7 +86,7 @@ export const TodoistHttpClientLive = (
 			const httpClient = yield* HttpClient.HttpClient;
 
 			const buildHeaders = (options?: {
-				headers?: Record<string, string>;
+				readonly headers?: Record<string, string>;
 			}): Record<string, string> => ({
 				"Content-Type": "application/json",
 				...(config?.token ? { Authorization: `Bearer ${config.token}` } : {}),
@@ -98,7 +98,10 @@ export const TodoistHttpClientLive = (
 				config?.baseUrl ? `${config.baseUrl}${url}` : url;
 
 			return TodoistHttpClient.of({
-				get: (url: string, options?: { headers?: Record<string, string> }) =>
+				get: (
+					url: string,
+					options?: { readonly headers?: Record<string, string> },
+				) =>
 					pipe(
 						httpClient.get(buildUrl(url), {
 							headers: buildHeaders(options),
@@ -111,7 +114,7 @@ export const TodoistHttpClientLive = (
 				post: (
 					url: string,
 					body?: unknown,
-					options?: { headers?: Record<string, string> },
+					options?: { readonly headers?: Record<string, string> },
 				) =>
 					pipe(
 						Effect.succeed(HttpClientRequest.post(buildUrl(url))),
@@ -130,7 +133,10 @@ export const TodoistHttpClientLive = (
 						Effect.mapError(mapHttpClientError),
 					),
 
-				delete: (url: string, options?: { headers?: Record<string, string> }) =>
+				delete: (
+					url: string,
+					options?: { readonly headers?: Record<string, string> },
+				) =>
 					pipe(
 						httpClient.del(buildUrl(url), {
 							headers: buildHeaders(options),

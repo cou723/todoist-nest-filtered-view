@@ -189,7 +189,7 @@ export const isMilestoneTask = (content: string): boolean => {
 /**
  * タスクまたはその祖先が依存関係ラベルを持つかどうかを確認（"dep-" で始まる）
  */
-export const hasDependencyLabel = (labels: string[]): boolean => {
+export const hasDependencyLabel = (labels: readonly string[]): boolean => {
 	return labels.some((label) => label.startsWith("dep-"));
 };
 
