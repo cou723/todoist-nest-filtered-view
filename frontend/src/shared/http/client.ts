@@ -42,22 +42,15 @@ export class TodoistHttpClient extends Context.Tag("TodoistHttpClient")<
 	}
 >() {}
 
-/**
- * HTTP クライアントの設定
- */
 export interface HttpClientConfig {
 	readonly baseUrl?: string;
 	readonly defaultHeaders?: Record<string, string>;
 	readonly token?: string;
 }
 
-/**
- * HttpClientError を TodoistErrorType にマッピング
- */
 const mapHttpClientError = (
 	error: HttpClientError.HttpClientError | HttpBodyError,
 ): TodoistErrorType => {
-	// HttpBodyError の場合
 	if ("_tag" in error && error._tag === "HttpBodyError") {
 		return new BadRequestError({
 			message: "リクエストボディのエンコードに失敗しました",
@@ -65,14 +58,12 @@ const mapHttpClientError = (
 		});
 	}
 
-	// ResponseError の場合、ステータスコードを確認して mapHttpError を使用
 	if (error._tag === "ResponseError") {
 		const status = error.response.status;
 		const message = error.reason;
 		return mapHttpError(status, message, error);
 	}
 
-	// RequestError の場合
 	if (error._tag === "RequestError") {
 		return new NetworkError({
 			message: "リクエストエラーが発生しました",
@@ -80,16 +71,12 @@ const mapHttpClientError = (
 		});
 	}
 
-	// その他のエラー
 	return new NetworkError({
 		message: "予期しないエラーが発生しました",
 		cause: error,
 	});
 };
 
-/**
- * オプション設定を使用して HTTP クライアントレイヤーを作成
- */
 export const TodoistHttpClientLive = (
 	config?: HttpClientConfig,
 ): Layer.Layer<TodoistHttpClient, never, HttpClient.HttpClient> =>
@@ -98,7 +85,6 @@ export const TodoistHttpClientLive = (
 		Effect.gen(function* () {
 			const httpClient = yield* HttpClient.HttpClient;
 
-			// ヘッダーを設定するヘルパー
 			const buildHeaders = (options?: {
 				headers?: Record<string, string>;
 			}): Record<string, string> => ({
@@ -108,7 +94,6 @@ export const TodoistHttpClientLive = (
 				...options?.headers,
 			});
 
-			// フル URL を構築するヘルパー
 			const buildUrl = (url: string): string =>
 				config?.baseUrl ? `${config.baseUrl}${url}` : url;
 

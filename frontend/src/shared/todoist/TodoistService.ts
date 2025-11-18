@@ -69,29 +69,19 @@ export interface ITodoistService {
 	readonly hasDepLabelInAncestors: (taskNode: TaskNode) => boolean;
 }
 
-/**
- * TodoistService タグ
- */
 export class TodoistService extends Context.Tag("TodoistService")<
 	TodoistService,
 	ITodoistService
 >() {}
 
-/**
- * TodoistService レイヤーを作成
- */
 export const TodoistServiceLive = Layer.effect(
 	TodoistService,
 	Effect.gen(function* () {
 		const httpClient = yield* TodoistHttpClient;
 
-		// タスクのインメモリキャッシュ
 		const taskCache = new Map<string, Task>();
 		const pendingFetches = new Map<string, Promise<Task>>();
 
-		/**
-		 * ページネーション付きでフィルタに一致するすべてのタスクを取得
-		 */
 		const fetchTasksByFilter = (
 			query?: string,
 		): Effect.Effect<Task[], TodoistErrorType> =>
@@ -109,7 +99,6 @@ export const TodoistServiceLive = Layer.effect(
 
 					const response = yield* httpClient.get(url);
 
-					// Parse and validate response
 					const parsed = yield* Effect.try({
 						try: () => {
 							// Todoist API returns either direct array or paginated response
@@ -128,7 +117,6 @@ export const TodoistServiceLive = Layer.effect(
 							}),
 					});
 
-					// タスクをデコードs using schema
 					const tasksResponse = yield* S.decodeUnknown(TasksResponse)(
 						parsed,
 					).pipe(
@@ -143,7 +131,6 @@ export const TodoistServiceLive = Layer.effect(
 
 					allTasks.push(...tasksResponse.results);
 
-					// キャッシュを更新
 					for (const task of tasksResponse.results) {
 						taskCache.set(task.id, task);
 					}
@@ -154,27 +141,20 @@ export const TodoistServiceLive = Layer.effect(
 				return allTasks;
 			});
 
-		/**
-		 * ID でタスクを 1 つ取得
-		 */
 		const fetchTask = (id: string): Effect.Effect<Task, TodoistErrorType> =>
 			Effect.gen(function* () {
-				// まずキャッシュを確認
 				const cached = taskCache.get(id);
 				if (cached) {
 					return cached;
 				}
 
-				// すでに取得中か確認
 				const pending = pendingFetches.get(id);
 				if (pending) {
 					return yield* Effect.promise(() => pending);
 				}
 
-				// API からタスクを取得
 				const response = yield* httpClient.get(`/tasks/${id}`);
 
-				// タスクをデコード
 				const task = yield* S.decodeUnknown(Task)(response).pipe(
 					Effect.mapError(
 						(error) =>
@@ -185,27 +165,21 @@ export const TodoistServiceLive = Layer.effect(
 					),
 				);
 
-				// キャッシュを更新
 				taskCache.set(id, task);
 
 				return task;
 			});
 
-		/**
-		 * 親階層を持つタスクを取得
-		 */
 		const fetchTaskNode = (
 			id: string,
 		): Effect.Effect<TaskNode, TodoistErrorType> =>
 			Effect.gen(function* () {
 				const task = yield* fetchTask(id);
 
-				// 親がない場合、TaskNode としてタスクを返す
 				if (!task.parentId) {
 					return { ...task, parent: undefined };
 				}
 
-				// 再帰的に親を取得
 				const parent = yield* fetchTaskNode(task.parentId);
 
 				return {
@@ -214,24 +188,17 @@ export const TodoistServiceLive = Layer.effect(
 				};
 			});
 
-		/**
-		 * 親階層を持つタスクツリーを取得
-		 */
 		const fetchTasksTree = (
 			query?: string,
 		): Effect.Effect<TaskNode[], TodoistErrorType> =>
 			Effect.gen(function* () {
 				const tasks = yield* fetchTasksByFilter(query);
 
-				// 各タスクの親階層を持つ TaskNode を取得
 				const taskNodesEffects = tasks.map((task) => fetchTaskNode(task.id));
 
 				return yield* Effect.all(taskNodesEffects, { concurrency: 10 });
 			});
 
-		/**
-		 * タスクを完了する
-		 */
 		const completeTask = (id: string): Effect.Effect<void, TodoistErrorType> =>
 			Effect.gen(function* () {
 				if (!id || typeof id !== "string" || id.trim() === "") {
@@ -246,22 +213,15 @@ export const TodoistServiceLive = Layer.effect(
 
 				yield* httpClient.post(`/tasks/${id}/close`);
 
-				// キャッシュから削除
 				taskCache.delete(id);
 			});
 
-		/**
-		 * Check if task or ancestors have dependency label
-		 */
 		const hasDepLabelInAncestors = (taskNode: TaskNode): boolean => {
-			// 現在のタスクをチェック
-			// 互換性のために readonly 配列を通常の配列に変換
 			const labels = [...taskNode.labels];
 			if (hasDependencyLabel(labels)) {
 				return true;
 			}
 
-			// 親を再帰的にチェック
 			if (taskNode.parent) {
 				return hasDepLabelInAncestors(taskNode.parent);
 			}
