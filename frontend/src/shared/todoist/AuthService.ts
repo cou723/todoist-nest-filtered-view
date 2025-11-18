@@ -5,7 +5,7 @@
  */
 
 import { Schema as S } from "@effect/schema";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer, Option } from "effect";
 import type { TodoistErrorType } from "../errors/types";
 import { AuthError, ParseError } from "../errors/types";
 import { TodoistHttpClient } from "../http/client";
@@ -52,9 +52,9 @@ export interface IAuthService {
 
 	/**
 	 * localStorage からトークンを取得
-	 * @returns トークンまたは見つからない場合は undefined
+	 * @returns トークンまたは見つからない場合は Option.none
 	 */
-	readonly getToken: () => Effect.Effect<string | undefined, never>;
+	readonly getToken: () => Effect.Effect<Option.Option<string>, never>;
 
 	/**
 	 * localStorage からトークンを削除
@@ -157,9 +157,10 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 					localStorage.setItem(TOKEN_KEY, token);
 				});
 
-			const getToken = (): Effect.Effect<string | undefined, never> =>
+			const getToken = (): Effect.Effect<Option.Option<string>, never> =>
 				Effect.sync(() => {
-					return localStorage.getItem(TOKEN_KEY) ?? undefined;
+					const token = localStorage.getItem(TOKEN_KEY);
+					return token !== null ? Option.some(token) : Option.none();
 				});
 
 			const removeToken = (): Effect.Effect<void, never> =>
@@ -172,7 +173,7 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 			const isAuthenticated = (): Effect.Effect<boolean, never> =>
 				Effect.gen(function* () {
 					const token = yield* getToken();
-					return token !== undefined;
+					return Option.isSome(token);
 				});
 
 			const validateState = (

@@ -69,6 +69,11 @@ export class TasksResponse extends S.Class<TasksResponse>("TasksResponse")({
 }) {}
 
 /**
+ * API からのタスクレスポンス（配列または���グネーション）
+ */
+export const TasksApiResponse = S.Union(S.Array(Task), TasksResponse);
+
+/**
  * v1 Completed API からの完了済みタスク
  */
 export class CompletedTask extends S.Class<CompletedTask>("CompletedTask")({

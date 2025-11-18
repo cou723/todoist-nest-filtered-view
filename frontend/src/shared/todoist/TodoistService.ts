@@ -13,7 +13,8 @@ import {
 	hasDependencyLabel,
 	Task,
 	type TaskNode,
-	TasksResponse,
+	TasksApiResponse,
+	type TasksResponse,
 } from "./schema";
 
 /**
@@ -99,35 +100,21 @@ export const TodoistServiceLive = Layer.effect(
 
 					const response = yield* httpClient.get(url);
 
-					const parsed = yield* Effect.try({
-						try: () => {
-							// Todoist API returns either direct array or paginated response
-							if (Array.isArray(response)) {
-								return { results: response, nextCursor: null };
-							}
-							return response as {
-								results: unknown[];
-								nextCursor?: string | null;
-							};
-						},
-						catch: (error) =>
-							new ParseError({
-								message: "タスクレスポンスの解析に失敗しました",
-								cause: error,
-							}),
-					});
-
-					const tasksResponse = yield* S.decodeUnknown(TasksResponse)(
-						parsed,
+					const apiResponse = yield* S.decodeUnknown(TasksApiResponse)(
+						response,
 					).pipe(
 						Effect.mapError(
 							(error) =>
 								new ParseError({
-									message: "タスクのバリデーションに失敗しました",
+									message: "タスクレスポンスの解析に失敗しました",
 									cause: error,
 								}),
 						),
 					);
+
+					const tasksResponse = Array.isArray(apiResponse)
+						? { results: apiResponse as Task[], nextCursor: undefined }
+						: (apiResponse as TasksResponse);
 
 					allTasks.push(...tasksResponse.results);
 
@@ -217,8 +204,7 @@ export const TodoistServiceLive = Layer.effect(
 			});
 
 		const hasDepLabelInAncestors = (taskNode: TaskNode): boolean => {
-			const labels = [...taskNode.labels];
-			if (hasDependencyLabel(labels)) {
+			if (hasDependencyLabel(taskNode.labels)) {
 				return true;
 			}
 
