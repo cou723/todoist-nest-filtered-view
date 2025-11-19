@@ -1,11 +1,13 @@
-import { Text, Title } from "@mantine/core";
+import { Stack, Text, Title } from "@mantine/core";
 import { PanelWrapper } from "../../shared/components/PanelWrapper";
 
 export function TaskListPanel() {
 	return (
 		<PanelWrapper data-testid="task-list-panel">
-			<Title order={3}>タスク一覧</Title>
-			<Text c="dimmed">Task list panel will be implemented here</Text>
+			<Stack gap="md">
+				<Title order={3}>タスク一覧</Title>
+				<Text c="dimmed">Task list panel will be implemented here</Text>
+			</Stack>
 		</PanelWrapper>
 	);
 }

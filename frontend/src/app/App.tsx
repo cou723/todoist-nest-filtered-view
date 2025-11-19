@@ -1,4 +1,4 @@
-import { createTheme, MantineProvider } from "@mantine/core";
+import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppShell } from "./AppShell";
 
@@ -14,14 +14,10 @@ const queryClient = new QueryClient({
 	},
 });
 
-const theme = createTheme({
-	/** Customize theme here if needed */
-});
-
 export function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<MantineProvider theme={theme}>
+			<MantineProvider>
 				<AppShell />
 			</MantineProvider>
 		</QueryClientProvider>

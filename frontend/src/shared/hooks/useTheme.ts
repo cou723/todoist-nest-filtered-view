@@ -1,53 +1,23 @@
-import { useEffect, useState } from "react";
-
-type Theme = "light" | "dark";
-
-const THEME_STORAGE_KEY = "theme";
+import { useMantineColorScheme } from "@mantine/core";
+import { useEffect } from "react";
 
 /**
- * Get the initial theme based on localStorage or system preference
- */
-function getInitialTheme(): Theme {
-	// Check localStorage first
-	const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-	if (storedTheme === "light" || storedTheme === "dark") {
-		return storedTheme;
-	}
-
-	// Fall back to system preference
-	if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-		return "dark";
-	}
-
-	return "light";
-}
-
-/**
- * Hook to manage theme state with localStorage and system preference sync
+ * Hook to manage theme state using Mantine's official useMantineColorScheme
+ * This syncs with localStorage and system preferences automatically
+ * Reference: https://mantine.dev/theming/color-schemes/
  */
 export function useTheme() {
-	const [theme, setTheme] = useState<Theme>(() => {
-		const initial = getInitialTheme();
-		// Immediately apply the theme on first render
-		document.documentElement.dataset.theme = initial;
-		document.documentElement.setAttribute("data-mantine-color-scheme", initial);
-		return initial;
-	});
+	const { colorScheme, setColorScheme, toggleColorScheme } =
+		useMantineColorScheme();
 
 	useEffect(() => {
-		// Apply theme to document element
-		document.documentElement.dataset.theme = theme;
+		// Sync data-theme attribute for custom CSS that may reference it
+		document.documentElement.dataset.theme = colorScheme;
+	}, [colorScheme]);
 
-		// Apply Mantine color scheme by setting data-mantine-color-scheme
-		document.documentElement.setAttribute("data-mantine-color-scheme", theme);
-
-		// Save to localStorage
-		localStorage.setItem(THEME_STORAGE_KEY, theme);
-	}, [theme]);
-
-	const toggleTheme = () => {
-		setTheme((prev) => (prev === "light" ? "dark" : "light"));
+	return {
+		theme: colorScheme,
+		setTheme: setColorScheme,
+		toggleTheme: toggleColorScheme,
 	};
-
-	return { theme, setTheme, toggleTheme };
 }

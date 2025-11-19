@@ -1,4 +1,4 @@
-import { Paper, type PaperProps, Stack } from "@mantine/core";
+import { Paper, type PaperProps } from "@mantine/core";
 import type { ReactNode } from "react";
 
 interface PanelWrapperProps extends Omit<PaperProps, "children"> {
@@ -8,7 +8,7 @@ interface PanelWrapperProps extends Omit<PaperProps, "children"> {
 
 /**
  * Common wrapper for all panel components
- * Provides consistent styling and layout structure
+ * Provides consistent Paper styling
  */
 export function PanelWrapper({
 	children,
@@ -24,7 +24,7 @@ export function PanelWrapper({
 			data-testid={dataTestId}
 			{...paperProps}
 		>
-			<Stack gap="md">{children}</Stack>
+			{children}
 		</Paper>
 	);
 }
