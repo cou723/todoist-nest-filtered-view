@@ -144,21 +144,30 @@ export const TodoistServiceLive = Layer.effect(
 					return yield* Effect.promise(() => pending);
 				}
 
-				const response = yield* httpClient.get(`/tasks/${id}`);
+				const fetchPromise = Effect.runPromise(
+					Effect.gen(function* () {
+						const response = yield* httpClient.get(`/tasks/${id}`);
 
-				const task = yield* S.decodeUnknown(Task)(response).pipe(
-					Effect.mapError(
-						(error) =>
-							new ParseError({
-								message: "タスクのデコードに失敗しました",
-								cause: error,
-							}),
-					),
+						const task = yield* S.decodeUnknown(Task)(response).pipe(
+							Effect.mapError(
+								(error) =>
+									new ParseError({
+										message: "タスクのデコードに失敗しました",
+										cause: error,
+									}),
+							),
+						);
+
+						taskCache.set(id, task);
+						pendingFetches.delete(id);
+
+						return task;
+					}).pipe(Effect.provide(httpClient)),
 				);
 
-				taskCache.set(id, task);
+				pendingFetches.set(id, fetchPromise);
 
-				return task;
+				return yield* Effect.promise(() => fetchPromise);
 			});
 
 		const fetchTaskNode = (
