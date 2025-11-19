@@ -1,19 +1,18 @@
-import { ActionIcon } from "@mantine/core";
+import { ActionIcon, useMantineColorScheme } from "@mantine/core";
 import { IconMoon, IconSun } from "@tabler/icons-react";
-import { useTheme } from "../hooks/useTheme";
 
 export function ThemeToggle() {
-	const { theme, toggleTheme } = useTheme();
+	const { colorScheme, toggleColorScheme } = useMantineColorScheme();
 
 	return (
 		<ActionIcon
 			variant="default"
 			size="lg"
-			onClick={toggleTheme}
+			onClick={toggleColorScheme}
 			aria-label="Toggle theme"
 			data-testid="theme-toggle"
 		>
-			{theme === "dark" ? <IconSun size={18} /> : <IconMoon size={18} />}
+			{colorScheme === "dark" ? <IconSun size={18} /> : <IconMoon size={18} />}
 		</ActionIcon>
 	);
 }
