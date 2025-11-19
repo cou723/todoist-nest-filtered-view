@@ -87,6 +87,24 @@ export class CompletedTask extends S.Class<CompletedTask>("CompletedTask")({
 }) {}
 
 /**
+ * 完了済みタスク API レスポンス（生データ）
+ */
+export const CompletedTasksApiResponse = S.Struct({
+	items: S.optional(
+		S.Array(
+			S.Struct({
+				id: S.String,
+				completed_at: S.String,
+				content: S.String,
+				project_id: S.String,
+				user_id: S.String,
+			}),
+		),
+	),
+	next_cursor: S.optional(S.NullOr(S.String)),
+});
+
+/**
  * 完了済みタスクのページネーションレスポンス
  */
 export class CompletedTasksResponse extends S.Class<CompletedTasksResponse>(

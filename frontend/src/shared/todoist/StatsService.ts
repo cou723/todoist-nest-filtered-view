@@ -12,6 +12,7 @@ import { ParseError } from "../errors/types";
 import { TodoistHttpClient } from "../http/client";
 import {
 	CompletedTask,
+	CompletedTasksApiResponse,
 	CompletedTasksResponse,
 	DailyCompletionStat,
 	extractLabelsFromContent,
@@ -70,6 +71,60 @@ export class StatsService extends Context.Tag("StatsService")<
 
 const MAX_WINDOW_DAYS = 90;
 
+// ヘルパー関数: クエリパラメータを構築
+const buildCompletedTasksUrl = (
+	since?: string,
+	until?: string,
+	cursor?: string,
+): string => {
+	const params = new URLSearchParams();
+	if (since) params.set("since", since);
+	if (until) params.set("until", until);
+	if (cursor) params.set("cursor", cursor);
+	params.set("limit", "50");
+	return `/v1/tasks/completed/by_completion_date?${params.toString()}`;
+};
+
+// ヘルパー関数: API レスポンスをデコードして CompletedTask に変換
+const decodeAndEnrichCompletedTasks = (
+	response: unknown,
+): Effect.Effect<{ tasks: CompletedTask[]; nextCursor?: string }, ParseError> =>
+	Effect.gen(function* () {
+		const apiResponse = yield* S.decodeUnknown(CompletedTasksApiResponse)(
+			response,
+		).pipe(
+			Effect.mapError(
+				(error) =>
+					new ParseError({
+						message: "完了タスクレスポンスの解析に失敗しました",
+						cause: error,
+					}),
+			),
+		);
+
+		const validated = new CompletedTasksResponse({
+			items: apiResponse.items ?? [],
+			nextCursor: apiResponse.next_cursor ?? null,
+		});
+
+		const tasks = validated.items.map((item) => {
+			const labels = extractLabelsFromContent(item.content);
+			return new CompletedTask({
+				id: item.id,
+				completedAt: item.completed_at,
+				content: item.content,
+				projectId: item.project_id,
+				userId: item.user_id,
+				labels,
+			});
+		});
+
+		return {
+			tasks,
+			nextCursor: validated.nextCursor ?? undefined,
+		};
+	});
+
 export const StatsServiceLive = Layer.effect(
 	StatsService,
 	Effect.gen(function* () {
@@ -84,60 +139,13 @@ export const StatsServiceLive = Layer.effect(
 				let cursor: string | undefined;
 
 				do {
-					const params = new URLSearchParams();
-					if (since) params.set("since", since);
-					if (until) params.set("until", until);
-					if (cursor) params.set("cursor", cursor);
-					params.set("limit", "50"); // API default max per page
-
-					const url = `/v1/tasks/completed/by_completion_date?${params.toString()}`;
-
+					const url = buildCompletedTasksUrl(since, until, cursor);
 					const response = yield* httpClient.get(url);
+					const { tasks, nextCursor } =
+						yield* decodeAndEnrichCompletedTasks(response);
 
-					const parsed = yield* Effect.try({
-						try: () => {
-							const data = response as {
-								items?: unknown[];
-								next_cursor?: string | null;
-							};
-							return {
-								items: data.items ?? [],
-								nextCursor: data.next_cursor ?? null,
-							};
-						},
-						catch: (error) =>
-							new ParseError({
-								message: "完了タスクレスポンスの解析に失敗しました",
-								cause: error,
-							}),
-					});
-
-					const validated = yield* S.decodeUnknown(CompletedTasksResponse)(
-						parsed,
-					).pipe(
-						Effect.mapError(
-							(error) =>
-								new ParseError({
-									message: "完了タスクのバリデーションに失敗しました",
-									cause: error,
-								}),
-						),
-					);
-
-					const enrichedItems = validated.items.map((item) => {
-						const labels = extractLabelsFromContent(item.content);
-						return new CompletedTask({
-							id: item.id,
-							completedAt: item.completed_at,
-							content: item.content,
-							projectId: item.project_id,
-							userId: item.user_id,
-							labels,
-						});
-					});
-
-					allItems.push(...enrichedItems);
-					cursor = validated.nextCursor ?? undefined;
+					allItems.push(...tasks);
+					cursor = nextCursor;
 				} while (cursor);
 
 				return allItems;

@@ -67,6 +67,42 @@ export class TodoistService extends Context.Tag("TodoistService")<
 	ITodoistService
 >() {}
 
+// ヘルパー関数: API レスポンスをデコード
+const decodeTasksResponse = (
+	response: unknown,
+): Effect.Effect<TasksResponse, ParseError> =>
+	Effect.gen(function* () {
+		const apiResponse = yield* S.decodeUnknown(TasksApiResponse)(response).pipe(
+			Effect.mapError(
+				(error) =>
+					new ParseError({
+						message: "タスクレスポンスの解析に失敗しました",
+						cause: error,
+					}),
+			),
+		);
+
+		return Array.isArray(apiResponse)
+			? { results: apiResponse as Task[], nextCursor: undefined }
+			: (apiResponse as TasksResponse);
+	});
+
+// ヘルパー関数: タスクをキャッシュに追加
+const cacheTasks = (tasks: readonly Task[], cache: Map<string, Task>): void => {
+	for (const task of tasks) {
+		cache.set(task.id, task);
+	}
+};
+
+// ヘルパー関数: クエリパラメータを構築
+const buildTasksUrl = (query?: string, cursor?: string | null): string => {
+	const params = new URLSearchParams();
+	if (query) params.set("filter", query);
+	if (cursor) params.set("cursor", cursor);
+	const queryString = params.toString();
+	return `/tasks${queryString ? `?${queryString}` : ""}`;
+};
+
 export const TodoistServiceLive = Layer.effect(
 	TodoistService,
 	Effect.gen(function* () {
@@ -83,36 +119,12 @@ export const TodoistServiceLive = Layer.effect(
 				let cursor: string | null = null;
 
 				do {
-					const params = new URLSearchParams();
-					if (query) params.set("filter", query);
-					if (cursor) params.set("cursor", cursor);
-
-					const queryString = params.toString();
-					const url = `/tasks${queryString ? `?${queryString}` : ""}`;
-
+					const url = buildTasksUrl(query, cursor);
 					const response = yield* httpClient.get(url);
-
-					const apiResponse = yield* S.decodeUnknown(TasksApiResponse)(
-						response,
-					).pipe(
-						Effect.mapError(
-							(error) =>
-								new ParseError({
-									message: "タスクレスポンスの解析に失敗しました",
-									cause: error,
-								}),
-						),
-					);
-
-					const tasksResponse = Array.isArray(apiResponse)
-						? { results: apiResponse as Task[], nextCursor: undefined }
-						: (apiResponse as TasksResponse);
+					const tasksResponse = yield* decodeTasksResponse(response);
 
 					allTasks.push(...tasksResponse.results);
-
-					for (const task of tasksResponse.results) {
-						taskCache.set(task.id, task);
-					}
+					cacheTasks(tasksResponse.results, taskCache);
 
 					cursor = tasksResponse.nextCursor ?? null;
 				} while (cursor !== null);

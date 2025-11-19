@@ -85,6 +85,46 @@ export class AuthService extends Context.Tag("AuthService")<
 const TOKEN_KEY = "todoist_token";
 const STATE_KEY = "oauth_state";
 
+// ヘルパー関数: OAuth URL を生成
+const buildOAuthUrl = (
+	clientId: string,
+	scope: string,
+	state: string,
+): string => {
+	const params = new URLSearchParams({
+		client_id: clientId,
+		scope,
+		state,
+	});
+	return `https://todoist.com/oauth/authorize?${params.toString()}`;
+};
+
+// ヘルパー関数: state を保存
+const saveState = (state: string): void => {
+	localStorage.setItem(STATE_KEY, state);
+	sessionStorage.setItem(STATE_KEY, state);
+};
+
+// ヘルパー関数: state を削除
+const clearState = (): void => {
+	localStorage.removeItem(STATE_KEY);
+	sessionStorage.removeItem(STATE_KEY);
+};
+
+// ヘルパー関数: トークンレスポンスをデコード
+const decodeTokenResponse = (
+	response: unknown,
+): Effect.Effect<OAuthTokenResponse, ParseError> =>
+	S.decodeUnknown(OAuthTokenResponse)(response).pipe(
+		Effect.mapError(
+			(error) =>
+				new ParseError({
+					message: "トークンレスポンスの解析に失敗しました",
+					cause: error,
+				}),
+		),
+	);
+
 export const AuthServiceLive = (config: OAuthConfig) =>
 	Layer.effect(
 		AuthService,
@@ -97,18 +137,12 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 			> =>
 				Effect.sync(() => {
 					const state = crypto.randomUUID();
-
-					localStorage.setItem(STATE_KEY, state);
-					sessionStorage.setItem(STATE_KEY, state);
-
-					const params = new URLSearchParams({
-						client_id: config.clientId,
-						scope: config.scope || "data:read_write,data:delete",
+					saveState(state);
+					const url = buildOAuthUrl(
+						config.clientId,
+						config.scope || "data:read_write,data:delete",
 						state,
-					});
-
-					const url = `https://todoist.com/oauth/authorize?${params.toString()}`;
-
+					);
 					return { url, state };
 				});
 
@@ -132,22 +166,10 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 						redirect_uri: config.redirectUri,
 					});
 
-					const tokenResponse = yield* S.decodeUnknown(OAuthTokenResponse)(
-						response,
-					).pipe(
-						Effect.mapError(
-							(error) =>
-								new ParseError({
-									message: "トークンレスポンスの解析に失敗しました",
-									cause: error,
-								}),
-						),
-					);
+					const tokenResponse = yield* decodeTokenResponse(response);
 
 					yield* saveToken(tokenResponse.accessToken);
-
-					localStorage.removeItem(STATE_KEY);
-					sessionStorage.removeItem(STATE_KEY);
+					clearState();
 
 					return tokenResponse.accessToken;
 				});
