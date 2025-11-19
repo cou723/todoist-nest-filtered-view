@@ -6,7 +6,5 @@
 
 export * from "./AuthService";
 export * from "./StatsService";
-// スキーマと型
 export * from "./schema";
-// サービス
 export * from "./TodoistService";

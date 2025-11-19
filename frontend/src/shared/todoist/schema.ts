@@ -16,7 +16,7 @@ export class DueDate extends S.Class<DueDate>("DueDate")({
 	lang: S.String, // 言語コード（例: "ja"）
 	isRecurring: S.Boolean,
 	datetime: S.optional(S.NullOr(S.String)), // タスクに時刻がある場合の完全な日時
-	timezone: S.optional(S.NullOr(S.String)), // タイムゾーン文字列
+	timezone: S.optional(S.NullOr(S.String)),
 }) {}
 
 /**
@@ -104,9 +104,6 @@ export class CompletedTasksResponse extends S.Class<CompletedTasksResponse>(
 	nextCursor: S.optional(S.NullOr(S.String)),
 }) {}
 
-/**
- * 日次完了統計
- */
 export class DailyCompletionStat extends S.Class<DailyCompletionStat>(
 	"DailyCompletionStat",
 )({
@@ -115,19 +112,13 @@ export class DailyCompletionStat extends S.Class<DailyCompletionStat>(
 	displayDate: S.String, // ローカライズされた表示文字列（例: "11/17"）
 }) {}
 
-/**
- * 当日のタスク統計
- */
 export class TodayTaskStat extends S.Class<TodayTaskStat>("TodayTaskStat")({
 	date: S.String, // YYYY-MM-DD 形式
 	completedCount: S.Number.pipe(S.nonNegative()),
 	displayDate: S.String, // ローカライズされた表示文字列
 }) {}
 
-/**
- * Todoist プロジェクト
- */
-export class Project extends S.Class<Project>("Project")({
+export class TodoistProject extends S.Class<TodoistProject>("TodoistProject")({
 	id: S.String,
 	name: S.String,
 	color: S.String,
@@ -142,9 +133,6 @@ export class Project extends S.Class<Project>("Project")({
 	url: S.String,
 }) {}
 
-/**
- * OAuth トークンレスポンス
- */
 export class OAuthTokenResponse extends S.Class<OAuthTokenResponse>(
 	"OAuthTokenResponse",
 )({
@@ -152,56 +140,30 @@ export class OAuthTokenResponse extends S.Class<OAuthTokenResponse>(
 	tokenType: S.String,
 }) {}
 
-/**
- * ゴール関連の型
- */
-
-/**
- * タスクがゴールかどうかを確認（@goal ラベルを持つ）
- */
 export const isGoalTask = (task: Task): boolean => {
 	return task.labels.includes("goal");
 };
 
-/**
- * タスクがマイルストーン未設定のゴールかどうかを確認（@goal と @non-milestone の両方のラベルを持つ）
- */
 export const isNonMilestoneGoal = (task: Task): boolean => {
 	return task.labels.includes("goal") && task.labels.includes("non-milestone");
 };
 
-/**
- * タスクが作業タスクかどうかを確認（@task ラベルを持つ）
- */
 export const isWorkTask = (task: Task | CompletedTask): boolean => {
 	return task.labels.includes("task");
 };
 
-/**
- * タスクが毎日のタスクかどうかを確認（@毎日のタスク ラベルを持つ）
- */
 export const isDailyTask = (task: Task | CompletedTask): boolean => {
 	return task.labels.includes("毎日のタスク");
 };
 
-/**
- * タスクがマイルストーンタスクかどうかを確認（コンテンツが「のマイルストーンを置く」で終わる）
- */
 export const isMilestoneTask = (content: string): boolean => {
 	return /のマイルストーンを置く$/.test(content);
 };
 
-/**
- * タスクまたはその祖先が依存関係ラベルを持つかどうかを確認（"dep-" で始まる）
- */
 export const hasDependencyLabel = (labels: readonly string[]): boolean => {
 	return labels.some((label) => label.startsWith("dep-"));
 };
 
-/**
- * タスクコンテンツから @ プレフィックス付きラベルを抽出
- * 例: "@task @goal" -> ["task", "goal"]
- */
 export const extractLabelsFromContent = (content: string): string[] => {
 	const labelRegex = /@([^\s@]+)/gu;
 	const labels: string[] = [];

@@ -17,9 +17,6 @@ import {
 	type TasksResponse,
 } from "./schema";
 
-/**
- * TodoistService インターフェース
- */
 export interface ITodoistService {
 	/**
 	 * フィルタクエリでタスクを取得
@@ -55,11 +52,6 @@ export interface ITodoistService {
 		query?: string,
 	) => Effect.Effect<TaskNode[], TodoistErrorType>;
 
-	/**
-	 * タスクを完了する
-	 * @param id タスク ID
-	 * @returns 成功または失敗するエフェクト
-	 */
 	readonly completeTask: (id: string) => Effect.Effect<void, TodoistErrorType>;
 
 	/**
