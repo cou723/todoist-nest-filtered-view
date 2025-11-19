@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Lock files - このプロジェクトは pnpm を使用
+# pnpm-lock.yaml のみをコミットし、npm/yarn のロックファイルは除外
+package-lock.json
+yarn.lock
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
