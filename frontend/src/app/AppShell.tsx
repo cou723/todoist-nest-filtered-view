@@ -1,17 +1,54 @@
-import { Container, Stack, Text, Title } from "@mantine/core";
+import {
+	Container,
+	Flex,
+	Grid,
+	Group,
+	AppShell as MantineAppShell,
+	Title,
+} from "@mantine/core";
+import { CompletionStatsPanel } from "../features/completion-stats/CompletionStatsPanel";
+import { DatedGoalsPanel } from "../features/dated-goals/DatedGoalsPanel";
+import { GoalRatePanel } from "../features/goal-rate/GoalRatePanel";
+import { TaskListPanel } from "../features/task-list/TaskListPanel";
+import { ThemeToggle } from "../shared/components/ThemeToggle";
 
 export function AppShell() {
 	return (
-		<Container size="xl" py="xl">
-			<Stack gap="md">
-				<Title order={1}>Todoist Nest Filtered View</Title>
-				<Text size="lg" c="dimmed">
-					フロントエンド Phase 1 - プロジェクトセットアップ完了
-				</Text>
-				<Text>
-					このアプリケーションは、Todoistのタスク構造を可視化し、進捗を追跡するためのツールです。
-				</Text>
-			</Stack>
-		</Container>
+		<MantineAppShell header={{ height: 60 }} padding="md">
+			<MantineAppShell.Header>
+				<Container size="xl" h="100%">
+					<Flex justify="space-between" align="center" h="100%">
+						<Title order={2}>Todoist Nest Filtered View</Title>
+						<Group gap="sm">
+							<ThemeToggle />
+						</Group>
+					</Flex>
+				</Container>
+			</MantineAppShell.Header>
+
+			<MantineAppShell.Main>
+				<Container size="xl">
+					<Grid gutter="md">
+						{/* First row: Goal Rate and Dated Goals - 2 columns on desktop, 1 on mobile */}
+						<Grid.Col span={{ base: 12, md: 6 }}>
+							<GoalRatePanel />
+						</Grid.Col>
+						<Grid.Col span={{ base: 12, md: 6 }}>
+							<DatedGoalsPanel />
+						</Grid.Col>
+
+						{/* Second row: Completion Stats - full width */}
+						<Grid.Col span={12}>
+							<CompletionStatsPanel />
+						</Grid.Col>
+
+						{/* Third row: Task List - full width */}
+						<Grid.Col span={12}>
+							<TaskListPanel />
+						</Grid.Col>
+					</Grid>
+				</Container>
+			</MantineAppShell.Main>
+		</MantineAppShell>
 	);
 }
