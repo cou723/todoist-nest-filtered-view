@@ -18,7 +18,9 @@ async function debugRun() {
     console.log(`[${new Date().toISOString()}] デバッグ実行開始`);
 
     const todoService = new TodoService(new TodoistApi(token));
-    const dependencyLabelAutomation = new DependencyLabelAutomation(todoService);
+    const dependencyLabelAutomation = new DependencyLabelAutomation(
+      todoService,
+    );
 
     // 依存関係ラベル管理のみを実行
     await dependencyLabelAutomation.manageDependencyLabels();

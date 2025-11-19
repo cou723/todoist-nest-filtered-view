@@ -1,0 +1,38 @@
+{
+  "folders": [
+    {
+      "path": "frontend",
+      "name": "frontend (Biome)"
+    },
+    {
+      "path": "cron",
+      "name": "cron (Deno)"
+    },
+    {
+      "path": "proxy",
+      "name": "proxy (Deno)"
+    }
+  ],
+  "settings": {
+    "workbench.colorCustomizations": {
+      "activityBar.activeBackground": "#b5512d",
+      "activityBar.background": "#b5512d",
+      "activityBar.foreground": "#e7e7e7",
+      "activityBar.inactiveForeground": "#e7e7e799",
+      "activityBarBadge.background": "#33cc5b",
+      "activityBarBadge.foreground": "#15202b",
+      "commandCenter.border": "#e7e7e799",
+      "sash.hoverBorder": "#b5512d",
+      "statusBar.background": "#8c3f23",
+      "statusBar.foreground": "#e7e7e7",
+      "statusBarItem.hoverBackground": "#b5512d",
+      "statusBarItem.remoteBackground": "#8c3f23",
+      "statusBarItem.remoteForeground": "#e7e7e7",
+      "titleBar.activeBackground": "#8c3f23",
+      "titleBar.activeForeground": "#e7e7e7",
+      "titleBar.inactiveBackground": "#8c3f2399",
+      "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.remoteColor": "#8c3f23"
+  }
+}
