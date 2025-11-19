@@ -162,7 +162,7 @@ export const TodoistServiceLive = Layer.effect(
 						pendingFetches.delete(id);
 
 						return task;
-					}).pipe(Effect.provide(httpClient)),
+					}),
 				);
 
 				pendingFetches.set(id, fetchPromise);
