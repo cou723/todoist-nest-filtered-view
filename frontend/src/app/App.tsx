@@ -1,6 +1,5 @@
 import { createTheme, MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useTheme } from "../shared/hooks/useTheme";
 import { AppShell } from "./AppShell";
 
 // Mantine CSS は index.css で読み込む
@@ -20,16 +19,9 @@ const theme = createTheme({
 });
 
 export function App() {
-	// Initialize theme on app mount
-	const { theme: currentTheme } = useTheme();
-
 	return (
 		<QueryClientProvider client={queryClient}>
-			<MantineProvider
-				theme={theme}
-				defaultColorScheme={currentTheme}
-				forceColorScheme={currentTheme}
-			>
+			<MantineProvider theme={theme}>
 				<AppShell />
 			</MantineProvider>
 		</QueryClientProvider>

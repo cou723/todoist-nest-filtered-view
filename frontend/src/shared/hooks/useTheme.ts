@@ -26,11 +26,20 @@ function getInitialTheme(): Theme {
  * Hook to manage theme state with localStorage and system preference sync
  */
 export function useTheme() {
-	const [theme, setTheme] = useState<Theme>(getInitialTheme);
+	const [theme, setTheme] = useState<Theme>(() => {
+		const initial = getInitialTheme();
+		// Immediately apply the theme on first render
+		document.documentElement.dataset.theme = initial;
+		document.documentElement.setAttribute("data-mantine-color-scheme", initial);
+		return initial;
+	});
 
 	useEffect(() => {
 		// Apply theme to document element
 		document.documentElement.dataset.theme = theme;
+
+		// Apply Mantine color scheme by setting data-mantine-color-scheme
+		document.documentElement.setAttribute("data-mantine-color-scheme", theme);
 
 		// Save to localStorage
 		localStorage.setItem(THEME_STORAGE_KEY, theme);
