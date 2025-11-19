@@ -112,22 +112,34 @@ export class AuthButton extends LitElement {
           <p>Todoistからの認証情報を処理しています。</p>
         </div>
       </ui-modal>
-      <ui-button
-        @click=${() => {
-          const oauthService = this.authController.getOAuthService();
-          const authUrl = oauthService.generateAuthUrl();
-          window.location.href = authUrl;
-        }}
-        variant="primary"
-      >
-        Todoistでログイン
-      </ui-button>
+      <div class="auth-container">
+        <ui-button
+          @click=${() => {
+            const oauthService = this.authController.getOAuthService();
+            const authUrl = oauthService.generateAuthUrl();
+            window.location.href = authUrl;
+          }}
+          variant="primary"
+        >
+          Todoistでログイン
+        </ui-button>
+        ${this.authController.authError
+          ? html`<div class="error-message">${this.authController.authError}</div>`
+          : ""}
+      </div>
     `;
   }
 
   public static styles = [
     layoutStyles,
     css`
+      .auth-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+      }
+
       .auth-box {
         display: flex;
         flex-direction: column;
@@ -152,6 +164,17 @@ export class AuthButton extends LitElement {
         100% {
           transform: rotate(360deg);
         }
+      }
+
+      .error-message {
+        color: var(--error-color, #dc3545);
+        font-size: 0.875rem;
+        padding: 0.5rem;
+        background-color: var(--error-bg-color, #f8d7da);
+        border: 1px solid var(--error-border-color, #f5c6cb);
+        border-radius: 4px;
+        max-width: 300px;
+        text-align: left;
       }
 
       h2 {

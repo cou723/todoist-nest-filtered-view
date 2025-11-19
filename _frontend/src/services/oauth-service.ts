@@ -105,6 +105,7 @@ export class OAuthService {
       const tokenData = await response.json();
 
       // トークンをlocalStorageに保存
+      // Note: Todoistのアクセストークンは期限切れにならないため、expiration dateは保存しない
       localStorage.setItem("todoist_token", tokenData.access_token);
 
       return {
@@ -145,17 +146,19 @@ export class OAuthService {
 
   /**
    * トークンが有効かチェック
+   * Note: Todoistのアクセストークンは無期限なため、存在チェックのみ行う
    */
   public isTokenValid(): boolean {
     const token = this.getStoredToken();
     if (!token) return false;
 
+    // Todoistのトークンは期限切れにならないため、トークンが存在すれば有効
+    // 将来的に有効期限が設定された場合に備えて、expires_atのチェックロジックを残す
     const expiresAt = localStorage.getItem("todoist_token_expires_at");
     if (expiresAt) {
       return Date.now() < parseInt(expiresAt);
     }
 
-    // 有効期限が不明な場合は有効とみなす
     return true;
   }
 
