@@ -86,23 +86,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 							</Button>
 						</Stack>
 					</form>
-
-					<Paper p="md" bg="gray.0" radius="sm">
-						<Stack gap="xs">
-							<Text size="sm" fw={600}>
-								アクセストークンの取得方法：
-							</Text>
-							<Text size="xs" c="dimmed">
-								1. Todoistにログイン
-							</Text>
-							<Text size="xs" c="dimmed">
-								2. 設定 → 連携機能 → 開発者 へ移動
-							</Text>
-							<Text size="xs" c="dimmed">
-								3. 「APIトークン」をコピー
-							</Text>
-						</Stack>
-					</Paper>
 				</Stack>
 			</Paper>
 		</Container>
