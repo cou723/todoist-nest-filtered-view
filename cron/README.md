@@ -36,6 +36,29 @@ deno task dev    # 開発モード
 deno task start  # 本番モード
 ```
 
+## 開発コマンド
+
+```bash
+# 開発モード（ウォッチモード）
+deno task dev
+
+# 本番モード
+deno task start
+
+# コードの整形
+deno task fmt
+
+# コードのリント
+deno task lint
+
+# 型チェック
+deno task check
+
+# 特定のスクリプトを実行
+deno run --allow-net --allow-env --allow-read --env remove_milestone_tasks.ts
+```
+
+
 ## Deno Deployでの使用
 
 環境変数 `TODOIST_TOKEN` を設定してデプロイ。
@@ -54,3 +77,31 @@ deno task start  # 本番モード
 - 全件取得ではなく、ラベルフィルタを使用した必要なタスクのみの取得
 - 公式`@doist/todoist-api-typescript`クライアントを使用
 - ページング処理にも対応
+
+## 用語の統一ルール
+
+このプロジェクトでは以下の用語統一ルールを適用します：
+
+### 基本用語
+
+- **Todo**: TodoistのTodo全般を指す基本単位
+- **Goal**: `@goal`ラベルが付いたTodoを指す
+- **Task**: `@task`ラベルが付いたTodoを指す
+
+### 命名規則
+
+- **変数名・関数名**: 上記の用語を使用（例: `goalTodos`, `taskTodos`, `findGoalTodos`）
+- **コメント・ログ**: 文脈に応じて適切な用語を使用
+- **TypeScript型**: Todoist APIの型定義に合わせて`Task`を使用（`Task`型）
+
+### 具体例
+
+```typescript
+// ✓ 正しい命名
+const goalTodos = todos.filter((todo) => todo.labels.includes("goal"));
+const taskTodos = todos.filter((todo) => todo.labels.includes("task"));
+
+// ✗ 避けるべき命名
+const goalTasks = todos.filter((todo) => todo.labels.includes("goal"));
+const taskTasks = todos.filter((todo) => todo.labels.includes("task"));
+```
