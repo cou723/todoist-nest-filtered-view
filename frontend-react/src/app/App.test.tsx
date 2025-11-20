@@ -16,7 +16,9 @@ describe("App", () => {
 			screen.getByText("Todoistのアクセストークンを入力してください"),
 		).toBeInTheDocument();
 		expect(screen.getByLabelText("Todoist Access Token *")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "ログイン" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "ログイン" }),
+		).toBeInTheDocument();
 	});
 
 	it("renders authenticated app when token exists in localStorage", () => {
