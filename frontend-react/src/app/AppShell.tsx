@@ -6,7 +6,6 @@ import {
 	AppShell as MantineAppShell,
 	Title,
 } from "@mantine/core";
-import { useEffect } from "react";
 import { LoginPanel, LogoutButton, OAuthCallback } from "../features/auth";
 import { CompletionStatsPanel } from "../features/completion-stats/CompletionStatsPanel";
 import { DatedGoalsPanel } from "../features/dated-goals/DatedGoalsPanel";
@@ -16,22 +15,14 @@ import { useAuth } from "../shared/auth";
 import { ThemeToggle } from "../shared/components/ThemeToggle";
 
 export function AppShell() {
-	const { isAuthenticated, isProcessingAuth } = useAuth();
+	const { isAuthenticated } = useAuth();
 
-	// OAuthコールバック処理
-	useEffect(() => {
-		const params = new URLSearchParams(window.location.search);
-		if (params.has("code") && params.has("state")) {
-			// OAuthCallback コンポーネントで処理されるので何もしない
-		}
-	}, []);
-
-	// OAuthコールバック処理中の場合
+	// OAuthコールバック処理中の場合（OAuth params があれば処理を開始）
 	const hasOAuthParams =
 		new URLSearchParams(window.location.search).has("code") &&
 		new URLSearchParams(window.location.search).has("state");
 
-	if (hasOAuthParams && isProcessingAuth) {
+	if (hasOAuthParams) {
 		return (
 			<MantineAppShell header={{ height: 60 }} padding="md">
 				<MantineAppShell.Header>
