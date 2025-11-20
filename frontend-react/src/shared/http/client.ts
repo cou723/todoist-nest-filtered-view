@@ -172,3 +172,20 @@ export const createProxyClient = (proxyUrl?: string) =>
 		}),
 		FetchHttpClient.layer,
 	);
+
+/**
+ * 環境変数に基づいて適切な HTTP クライアントを作成するヘルパー
+ *
+ * VITE_USE_MOCK_CLIENT=true の場合、モッククライアントを返します。
+ * それ以外の場合、実際の Todoist API クライアントを返します。
+ *
+ * @param token アクセストークン（モック時は無視されます）
+ */
+export const createClientWithEnv = (token: string) => {
+	if (import.meta.env.VITE_USE_MOCK_CLIENT === "true") {
+		// 動的インポートを避けるため、ここでは型のみ参照
+		// 実際のインポートは使用側で行う
+		return import("./mockClient").then((mod) => mod.TodoistHttpClientMock());
+	}
+	return Promise.resolve(createTodoistClient(token));
+};
