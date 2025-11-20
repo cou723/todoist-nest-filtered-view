@@ -156,14 +156,7 @@ export class OAuthTokenResponse extends S.Class<OAuthTokenResponse>(
 )({
 	access_token: S.String,
 	token_type: S.String,
-}) {
-	get accessToken(): string {
-		return this.access_token;
-	}
-	get tokenType(): string {
-		return this.token_type;
-	}
-}
+}) {}
 
 export const isGoalTask = (task: Task): boolean => {
 	return task.labels.includes("goal");

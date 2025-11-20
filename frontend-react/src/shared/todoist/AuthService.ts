@@ -168,10 +168,10 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 
 					const tokenResponse = yield* decodeTokenResponse(response);
 
-					yield* saveToken(tokenResponse.accessToken);
+					yield* saveToken(tokenResponse.access_token);
 					clearState();
 
-					return tokenResponse.accessToken;
+					return tokenResponse.access_token;
 				});
 
 			const saveToken = (token: string): Effect.Effect<void, never> =>
