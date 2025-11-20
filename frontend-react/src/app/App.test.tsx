@@ -5,26 +5,26 @@ import { App } from "./App";
 describe("App", () => {
 	it("renders the application title", () => {
 		render(<App />);
-		expect(screen.getByText("Todoist Nest Filtered View")).toBeInTheDocument();
+		// Title appears in both header and login panel
+		const titles = screen.getAllByText("Todoist Nest Filtered View");
+		expect(titles.length).toBeGreaterThan(0);
 	});
 
-	it("renders all four panels with correct data-testid attributes", () => {
+	it("renders login panel when unauthenticated", () => {
 		render(<App />);
 
-		// Check for all four panels
-		expect(screen.getByTestId("goal-rate-panel")).toBeInTheDocument();
-		expect(screen.getByTestId("dated-goals-panel")).toBeInTheDocument();
-		expect(screen.getByTestId("completion-stats-panel")).toBeInTheDocument();
-		expect(screen.getByTestId("task-list-panel")).toBeInTheDocument();
+		// Check for login panel
+		expect(screen.getByTestId("login-panel")).toBeInTheDocument();
+		expect(screen.getByTestId("login-button")).toBeInTheDocument();
+		expect(screen.getByText("Todoistでログイン")).toBeInTheDocument();
 	});
 
-	it("renders panel titles", () => {
+	it("renders login panel description", () => {
 		render(<App />);
 
-		expect(screen.getByText("ゴール率")).toBeInTheDocument();
-		expect(screen.getByText("日付付きゴール")).toBeInTheDocument();
-		expect(screen.getByText("完了統計")).toBeInTheDocument();
-		expect(screen.getByText("タスク一覧")).toBeInTheDocument();
+		// Check for specific text in login panel (using test ID to ensure we're looking at the right element)
+		const loginPanel = screen.getByTestId("login-panel");
+		expect(loginPanel.textContent).toContain("Todoistアカウントでログインして");
 	});
 
 	it("renders theme toggle button", () => {
