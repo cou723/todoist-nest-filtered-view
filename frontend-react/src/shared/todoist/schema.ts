@@ -151,13 +151,6 @@ export class TodoistProject extends S.Class<TodoistProject>("TodoistProject")({
 	url: S.String,
 }) {}
 
-export class OAuthTokenResponse extends S.Class<OAuthTokenResponse>(
-	"OAuthTokenResponse",
-)({
-	accessToken: S.String,
-	tokenType: S.String,
-}) {}
-
 export const isGoalTask = (task: Task): boolean => {
 	return task.labels.includes("goal");
 };
