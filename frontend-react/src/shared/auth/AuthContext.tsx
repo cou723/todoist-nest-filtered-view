@@ -2,7 +2,7 @@
  * AuthContext - 認証状態を管理するReact Context
  */
 
-import { Effect, Either } from "effect";
+import { Effect, Either, Layer } from "effect";
 import {
 	createContext,
 	type ReactNode,
@@ -38,19 +38,23 @@ export function AuthProvider({ children, config }: AuthProviderProps) {
 
 	// AuthService のレイヤーを作成（useMemoで安定化）
 	const authLayer = useMemo(
-		() => AuthServiceLive(config).pipe(Effect.provide(createProxyClient())),
+		() => Layer.provide(AuthServiceLive(config), createProxyClient()),
 		[config],
 	);
 
 	// 初期化時に認証状態をチェック
 	useEffect(() => {
 		const checkAuth = async () => {
-			const result = await Effect.gen(function* () {
+			const program = Effect.gen(function* () {
 				const authService = yield* AuthService;
 				return yield* authService.isAuthenticated();
-			})
-				.pipe(Effect.provide(authLayer), Effect.either)
-				.pipe(Effect.runPromise);
+			});
+
+			const result = await program.pipe(
+				Effect.provide(authLayer),
+				Effect.either,
+				Effect.runPromise,
+			);
 
 			if (Either.isRight(result)) {
 				setIsAuthenticated(result.right);
@@ -63,12 +67,16 @@ export function AuthProvider({ children, config }: AuthProviderProps) {
 	// ログイン処理
 	const login = useCallback(() => {
 		const runLogin = async () => {
-			const result = await Effect.gen(function* () {
+			const program = Effect.gen(function* () {
 				const authService = yield* AuthService;
 				return yield* authService.generateAuthUrl();
-			})
-				.pipe(Effect.provide(authLayer), Effect.either)
-				.pipe(Effect.runPromise);
+			});
+
+			const result = await program.pipe(
+				Effect.provide(authLayer),
+				Effect.either,
+				Effect.runPromise,
+			);
 
 			if (Either.isRight(result)) {
 				// OAuth 認可 URL にリダイレクト
@@ -85,12 +93,16 @@ export function AuthProvider({ children, config }: AuthProviderProps) {
 			setIsProcessingAuth(true);
 			setAuthError(null);
 
-			const result = await Effect.gen(function* () {
+			const program = Effect.gen(function* () {
 				const authService = yield* AuthService;
 				return yield* authService.exchangeCode(code, state);
-			})
-				.pipe(Effect.provide(authLayer), Effect.either)
-				.pipe(Effect.runPromise);
+			});
+
+			const result = await program.pipe(
+				Effect.provide(authLayer),
+				Effect.either,
+				Effect.runPromise,
+			);
 
 			if (Either.isRight(result)) {
 				setIsAuthenticated(true);
@@ -112,12 +124,16 @@ export function AuthProvider({ children, config }: AuthProviderProps) {
 	// ログアウト処理
 	const logout = useCallback(() => {
 		const runLogout = async () => {
-			await Effect.gen(function* () {
+			const program = Effect.gen(function* () {
 				const authService = yield* AuthService;
 				yield* authService.removeToken();
-			})
-				.pipe(Effect.provide(authLayer), Effect.either)
-				.pipe(Effect.runPromise);
+			});
+
+			await program.pipe(
+				Effect.provide(authLayer),
+				Effect.either,
+				Effect.runPromise,
+			);
 
 			setIsAuthenticated(false);
 			setAuthError(null);
