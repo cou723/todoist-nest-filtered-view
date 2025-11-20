@@ -85,12 +85,17 @@ async function handleOAuthToken(request: Request): Promise<Response> {
       }),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: OAuthResponse = await response.json();
+    const data = await response.json();
     headers.set("Content-Type", "application/json");
+
+    // Todoistからのレスポンスをそのまま返す（エラーも含む）
+    if (!response.ok) {
+      console.error("❌ [Proxy] Todoist OAuth error:", response.status, data);
+      return new Response(JSON.stringify(data), {
+        status: response.status,
+        headers,
+      });
+    }
 
     return new Response(JSON.stringify(data), {
       status: 200,

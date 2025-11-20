@@ -88,11 +88,13 @@ const STATE_KEY = "oauth_state";
 // ヘルパー関数: OAuth URL を生成
 const buildOAuthUrl = (
 	clientId: string,
+	redirectUri: string,
 	scope: string,
 	state: string,
 ): string => {
 	const params = new URLSearchParams({
 		client_id: clientId,
+		redirect_uri: redirectUri,
 		scope,
 		state,
 	});
@@ -140,6 +142,7 @@ export const AuthServiceLive = (config: OAuthConfig) =>
 					saveState(state);
 					const url = buildOAuthUrl(
 						config.clientId,
+						config.redirectUri,
 						config.scope || "data:read_write,data:delete",
 						state,
 					);
