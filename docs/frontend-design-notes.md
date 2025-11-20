@@ -1,12 +1,12 @@
 # フロントエンド設計ノート
 
-本ドキュメントは、現行 `_frontend` 実装の主要機能と API 依存関係を整理し、LLM が参照しやすい形でまとめたものです。
+本ドキュメントは、現行 `frontend-lit-legacy` 実装の主要機能と API 依存関係を整理し、LLM が参照しやすい形でまとめたものです。
 
 ## 1. 機能概要
 
 ### 1.1 認証（Authentication）
 
-**実装場所**: `_frontend/src/controllers/auth-controller.ts`, `_frontend/src/services/oauth-service.ts`
+**実装場所**: `frontend-lit-legacy/src/controllers/auth-controller.ts`, `frontend-lit-legacy/src/services/oauth-service.ts`
 
 **振る舞い**:
 - Todoist OAuth 2.0 を使用した認証フロー
@@ -33,7 +33,7 @@
 
 ### 1.2 タスク一覧（Task List with Filter）
 
-**実装場所**: `_frontend/src/controllers/filtered-task-controller.ts`, `_frontend/src/services/todoist-service.ts`
+**実装場所**: `frontend-lit-legacy/src/controllers/filtered-task-controller.ts`, `frontend-lit-legacy/src/services/todoist-service.ts`
 
 **振る舞い**:
 - Todoist のフィルタクエリを使用してタスクを取得・表示
@@ -63,7 +63,7 @@
 
 ### 1.3 ゴールマイルストーン率（Goal Milestone Panel）
 
-**実装場所**: `_frontend/src/controllers/goal-milestone-controller.ts`
+**実装場所**: `frontend-lit-legacy/src/controllers/goal-milestone-controller.ts`
 
 **振る舞い**:
 - `@goal` ラベルを持つタスクを取得
@@ -82,7 +82,7 @@
 
 ### 1.4 日付付きゴール（Date Goal Panel）
 
-**実装場所**: `_frontend/src/controllers/date-goal-controller.ts`
+**実装場所**: `frontend-lit-legacy/src/controllers/date-goal-controller.ts`
 
 **振る舞い**:
 - フィルタ `@goal & !日付なし` を使用してタスクを取得
@@ -106,7 +106,7 @@
 
 ### 1.5 作業完了統計（Task Daily Completion Panel）
 
-**実装場所**: `_frontend/src/controllers/task-daily-completion-controller.ts`, `_frontend/src/services/todoist-sync-service.ts`
+**実装場所**: `frontend-lit-legacy/src/controllers/task-daily-completion-controller.ts`, `frontend-lit-legacy/src/services/todoist-sync-service.ts`
 
 **振る舞い**:
 - Todoist Sync API v1 をプロキシ経由で呼び出して完了履歴を取得
@@ -158,7 +158,7 @@
 
 ### 1.6 テーマ切り替え（Theme Toggle）
 
-**実装場所**: `_frontend/src/services/theme-service.ts`
+**実装場所**: `frontend-lit-legacy/src/services/theme-service.ts`
 
 **振る舞い**:
 - `light` / `dark` の2種類のテーマを提供
@@ -357,7 +357,7 @@ OAuth プロキシは Deno Deploy で稼働し、フロントエンドと Todois
 
 ### 3.2 実装詳細
 
-**実装場所**: `_frontend/src/controllers/task-daily-completion-controller.ts`
+**実装場所**: `frontend-lit-legacy/src/controllers/task-daily-completion-controller.ts`
 
 #### データ構造
 
@@ -655,4 +655,4 @@ Cron サービスは Deno Deploy の `Deno.cron` 機能を使用して1時間お
 
 ---
 
-以上が現行 `_frontend` 実装の主要機能と API 依存関係の整理です。
+以上が現行 `frontend-lit-legacy` 実装の主要機能と API 依存関係の整理です。

@@ -4,8 +4,8 @@
 
 # 並列実行のため関数を定義
 start_frontend() {
-    echo "Starting frontend development server..."
-    cd frontend
+    echo "Starting frontend-react development server..."
+    cd frontend-react
     pnpm dev
 }
 
@@ -17,7 +17,7 @@ start_proxy() {
 
 # 背景色付きでステータス表示
 echo -e "\033[32m=== Todoist Task List Development Environment ===\033[0m"
-echo "Frontend: http://localhost:5173"
+echo "Frontend (React): http://localhost:5173"
 echo "Proxy:    http://localhost:8000"
 echo ""
 echo "Press Ctrl+C to stop all servers"

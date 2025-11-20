@@ -1,6 +1,6 @@
 # Frontend - Todoist Nest Filtered View
 
-Vite + React 19 + TypeScript で構築された SPA フロントエンドプロジェクトです。
+Vite + React 19 + TypeScript で構築された SPA フロントエンドプロジェクトです。リポジトリ内では `frontend-react/` ディレクトリに配置され、現行運用中の Lit 版は `frontend-lit-legacy/` に残しています。
 
 ## 技術スタック
 
@@ -25,7 +25,7 @@ Vite + React 19 + TypeScript で構築された SPA フロントエンドプロ�
 ## プロジェクト構成
 
 ```
-frontend/
+frontend-react/
 ├── src/
 │   ├── app/            # アプリケーションのエントリーポイントとルート設定
 │   ├── features/       # 機能別のモジュール（ドメインロジック、コンポーネント）

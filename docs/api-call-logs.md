@@ -411,7 +411,7 @@ Content-Type: application/json
 
 ### 手動テスト
 1. プロキシを起動: `cd proxy && deno task start`
-2. フロントエンドを起動: `cd frontend && pnpm dev`
+2. フロントエンドを起動: `cd frontend-react && pnpm dev`（Legacy を検証したい場合は `frontend-lit-legacy` を使用）
 3. 有効な Todoist アカウントで OAuth フローをテスト
 4. さまざまなフィルタでタスク取得を確認
 5. タスクを完了してリストから削除されることを確認

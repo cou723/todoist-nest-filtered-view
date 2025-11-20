@@ -4,15 +4,20 @@
 
 ## プロジェクト構成
 
-このプロジェクトは、もともとフロントエンドのみのアプリケーションでしたが、OAuth認証とCORS問題を解決するためにプロキシサーバーを追加し、さらにTodoistの自動化機能を提供するCronサービスを追加した結果、3つのコンポーネントからなるフルスタックアプリケーションになりました。
+このプロジェクトは、もともとフロントエンドのみのアプリケーションでしたが、OAuth認証とCORS問題を解決するためにプロキシサーバーを追加し、さらにTodoistの自動化機能を提供するCronサービスを追加した結果、複数コンポーネントからなるフルスタックアプリケーションになりました。現在は「Lit 版 (現行運用)」と「React 版 (リプレイス中)」の2つのフロントエンドが同居しています。
 
 ```
 todoist_tasklist/
-├── frontend/          # フロントエンドアプリケーション（Lit + TypeScript）
+├── frontend-react/        # 次世代フロントエンド（React 19 + TypeScript）
 │   ├── src/
 │   ├── public/
 │   ├── package.json
-│   └── README.md      # フロントエンド詳細ドキュメント
+│   └── README.md          # React 版の詳細ドキュメント
+├── frontend-lit-legacy/   # 現行運用中のフロントエンド（Lit + TypeScript）
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── README.md          # Lit 版の詳細ドキュメント
 ├── proxy/             # OAuth認証プロキシサーバー（Deno）
 │   ├── main.ts
 │   ├── deno.json
@@ -26,12 +31,18 @@ todoist_tasklist/
 └── README.md          # このファイル（プロジェクト全体の説明）
 ```
 
-### フロントエンド (`frontend/`)
+### フロントエンド（React リプレイス: `frontend-react/`）
 
+- **目的**: Lit 版の機能を段階的に移植する次世代 SPA。新規 Issue は原則こちらへ追加する。
+- **技術スタック**: React 19、TypeScript、Vite、Effect、React Query、Mantine、Recharts、date-fns
+- **状態**: Phase 1（基盤整備）完了、順次機能実装中
+- **詳細**: [`frontend-react/README.md`](frontend-react/README.md)
+
+### フロントエンド（現行運用: `frontend-lit-legacy/`）
+
+- **目的**: 本番利用されている Lit 版。バグ修正や運用フォローのみ実施。
 - **技術スタック**: Lit、TypeScript、Vite
-- **機能**: TodoistTodoの表示、フィルタリング、OAuth認証UI
-- **ポート**: 5173（開発時）
-- **詳細**: [`frontend/README.md`](frontend/README.md) を参照
+- **詳細**: [`frontend-lit-legacy/README.md`](frontend-lit-legacy/README.md)
 
 ### OAuth認証プロキシ (`proxy/`)
 
@@ -67,10 +78,12 @@ todoist_tasklist/
 
 #### フロントエンド環境変数
 ```bash
-cd frontend
+cd frontend-react
 cp .env.example .env
 # .envファイルを編集してTodoistのクライアントIDとシークレットを設定
 ```
+
+> 旧 Lit 版のメンテナンスが必要な場合は `frontend-lit-legacy` ディレクトリ内で同じ手順を実行する。
 
 #### プロキシサーバー環境変数
 ```bash
@@ -94,8 +107,8 @@ cp .env.example .env
 cd proxy
 ./start.sh
 
-# ターミナル2: フロントエンド起動
-cd frontend
+# ターミナル2: フロントエンド起動（React版）
+cd frontend-react
 pnpm install
 pnpm run dev
 ```
@@ -103,21 +116,22 @@ pnpm run dev
 #### 方法2: 並行起動（推奨）
 ```bash
 # ルートディレクトリから
-cd frontend && pnpm install && cd ..
+cd frontend-react && pnpm install && cd ..
 cd proxy && ./start.sh &
-cd frontend && pnpm run dev
+cd frontend-react && pnpm run dev
 ```
 
 ### 4. アクセス
 
-- フロントエンド: http://localhost:5173
+- フロントエンド: http://localhost:5173（React 版 / Legacy 版共通）
 - プロキシサーバー: http://localhost:8000
 
 ## デプロイ
 
 ### フロントエンド
-- Vercel、Netlify、GitHub Pagesなどの静的ホスティングサービス
-- 詳細は [`frontend/README.md`](frontend/README.md) を参照
+- React 版: Vercel、Netlify、GitHub Pagesなどの静的ホスティングサービス
+- Legacy 版: 既存ホスティングへ引き続きデプロイ。段階的に React 版へ移行予定
+- 詳細は [`frontend-react/README.md`](frontend-react/README.md) と [`frontend-lit-legacy/README.md`](frontend-lit-legacy/README.md) を参照
 
 ### OAuth認証プロキシ
 - Deno Deploy（推奨）
@@ -136,12 +150,14 @@ cd frontend && pnpm run dev
 
 #### プロファイル設定方法
 
-1. **フロントエンド用プロファイル**:
+1. **Reactフロントエンド用プロファイル**:
    ```bash
-   code frontend/ --profile "Frontend"
+   code frontend-react/ --profile "Frontend"
    ```
-   - 推奨拡張機能: TypeScript、Lit、Vite、ESLint、Prettier
+   - 推奨拡張機能: TypeScript、React、Vite、biome、Vitest
    - Node.js環境での開発
+
+   Legacy 版を調査する場合は `code frontend-lit-legacy/ --profile "Frontend-Legacy"` のように別プロファイルで開く。
 
 2. **バックエンド用プロファイル**:
    ```bash
@@ -158,7 +174,7 @@ cd frontend && pnpm run dev
 
 ### 開発ワークフロー
 
-1. **フロントエンド開発**: `frontend/` ディレクトリをFrontendプロファイルで開いて作業
+1. **フロントエンド開発**: `frontend-react/` ディレクトリをFrontendプロファイルで開いて作業（Legacy 調査時のみ `frontend-lit-legacy/` を使用）
 2. **プロキシサーバー開発**: `proxy/` ディレクトリをBackendプロファイルで開いて作業
 3. **Cronサービス開発**: `cron/` ディレクトリをBackendプロファイルで開いて作業
 4. **統合テスト**: フロントエンドとプロキシサーバーを起動して動作確認
