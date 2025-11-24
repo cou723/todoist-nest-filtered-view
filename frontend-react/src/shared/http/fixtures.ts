@@ -2,7 +2,6 @@
  * Fixture data for mock TodoistHttpClient
  *
  * 成功ケースのみのモックデータを提供します。
- * docs/api-call-logs.md のスキーマに基づいています。
  */
 
 import type { Task } from "../todoist/schema";

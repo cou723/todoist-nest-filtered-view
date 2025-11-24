@@ -21,7 +21,10 @@ const OAUTH_STATE_KEY = "oauth_state";
 const TOKEN_KEY = "todoist_token";
 
 export class OAuthService {
-	constructor(private readonly config: OAuthConfig) {}
+	private readonly config: OAuthConfig;
+	constructor(config: OAuthConfig) {
+		this.config = config;
+	}
 
 	generateState(): string {
 		const state = getAuthStateParameter();
