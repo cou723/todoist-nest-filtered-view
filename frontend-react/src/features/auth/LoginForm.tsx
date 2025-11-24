@@ -1,48 +1,51 @@
 /**
- * LoginForm - Todoist access_token 入力フォーム
+ * LoginForm - Todoist OAuth ログイン UI（手動入力はデバッグ用のフォールバック）
  */
 
 import {
 	Alert,
+	Anchor,
 	Button,
+	Collapse,
 	Container,
+	Group,
 	Paper,
 	Stack,
 	Text,
 	TextInput,
 	Title,
 } from "@mantine/core";
-import { IconAlertCircle, IconKey } from "@tabler/icons-react";
+import { IconAlertCircle, IconShieldLock } from "@tabler/icons-react";
 import { useState } from "react";
 
 interface LoginFormProps {
-	onLogin: (token: string) => void;
+	onOAuth: () => void;
+	onManualLogin: (token: string) => void;
+	isLoading: boolean;
+	error?: string | null;
 }
 
-export function LoginForm({ onLogin }: LoginFormProps) {
+export function LoginForm({
+	onOAuth,
+	onManualLogin,
+	isLoading,
+	error,
+}: LoginFormProps) {
 	const [token, setToken] = useState("");
-	const [error, setError] = useState("");
+	const [showManual, setShowManual] = useState(false);
+	const [manualError, setManualError] = useState("");
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleManualSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		setError("");
+		setManualError("");
 
-		const trimmedToken = token.trim();
-
-		if (!trimmedToken) {
-			setError("アクセストークンを入力してください");
+		const trimmed = token.trim();
+		if (!trimmed) {
+			setManualError("アクセストークンを入力してください");
 			return;
 		}
 
-		// 基本的なバリデーション（Todoist トークンは通常40文字）
-		if (trimmedToken.length < 20) {
-			setError(
-				"トークンが短すぎます。正しいアクセストークンを入力してください",
-			);
-			return;
-		}
-
-		onLogin(trimmedToken);
+		onManualLogin(trimmed);
 	};
 
 	return (
@@ -50,42 +53,59 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 			<Paper p="xl" shadow="md" radius="md">
 				<Stack gap="lg">
 					<div style={{ textAlign: "center" }}>
-						<IconKey size={48} stroke={1.5} style={{ margin: "0 auto" }} />
+						<IconShieldLock
+							size={48}
+							stroke={1.5}
+							style={{ margin: "0 auto" }}
+						/>
 						<Title order={2} mt="md">
 							Todoist Nest Filtered View
 						</Title>
 						<Text c="dimmed" size="sm" mt="xs">
-							Todoistのアクセストークンを入力してください
+							Todoist でログインして開始してください
 						</Text>
 					</div>
 
-					<form onSubmit={handleSubmit}>
-						<Stack gap="md">
-							<TextInput
-								label="Todoist Access Token"
-								placeholder="あなたのアクセストークンを入力"
-								value={token}
-								onChange={(e) => setToken(e.currentTarget.value)}
-								required
-								type="password"
-								autoComplete="off"
-							/>
+					<Button onClick={onOAuth} loading={isLoading} fullWidth size="md">
+						Todoistでログイン
+					</Button>
 
-							{error && (
-								<Alert
-									icon={<IconAlertCircle size={16} />}
-									title="エラー"
-									color="red"
-								>
-									{error}
-								</Alert>
-							)}
+					{(error || manualError) && (
+						<Alert
+							icon={<IconAlertCircle size={16} />}
+							title="認証エラー"
+							color="red"
+						>
+							{error ?? manualError}
+						</Alert>
+					)}
 
-							<Button type="submit" fullWidth>
-								ログイン
-							</Button>
-						</Stack>
-					</form>
+					<Group justify="space-between" gap="xs">
+						<Text size="xs" c="dimmed">
+							デバッグ用のアクセストークン手動入力
+						</Text>
+						<Anchor size="xs" onClick={() => setShowManual((prev) => !prev)}>
+							{showManual ? "閉じる" : "開く"}
+						</Anchor>
+					</Group>
+
+					<Collapse in={showManual}>
+						<form onSubmit={handleManualSubmit}>
+							<Stack gap="md">
+								<TextInput
+									label="Todoist Access Token"
+									placeholder="デバッグ用に直接入力"
+									value={token}
+									onChange={(e) => setToken(e.currentTarget.value)}
+									type="password"
+									autoComplete="off"
+								/>
+								<Button type="submit" variant="light" fullWidth>
+									トークンを保存
+								</Button>
+							</Stack>
+						</form>
+					</Collapse>
 				</Stack>
 			</Paper>
 		</Container>

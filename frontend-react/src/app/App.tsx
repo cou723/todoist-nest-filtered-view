@@ -1,5 +1,7 @@
 import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { OAuthCallback } from "../features/auth/OAuthCallback";
 import { AppShell } from "./AppShell";
 import { AuthProvider } from "./AuthContext";
 
@@ -20,7 +22,13 @@ export function App() {
 		<QueryClientProvider client={queryClient}>
 			<MantineProvider>
 				<AuthProvider>
-					<AppShell />
+					<BrowserRouter>
+						<Routes>
+							<Route path="/callback" element={<OAuthCallback />} />
+							<Route path="/*" element={<AppShell />} />
+							<Route path="*" element={<Navigate to="/" replace />} />
+						</Routes>
+					</BrowserRouter>
 				</AuthProvider>
 			</MantineProvider>
 		</QueryClientProvider>

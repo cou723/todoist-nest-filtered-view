@@ -94,8 +94,13 @@ export const TodoistHttpClientLive = (
 				...options?.headers,
 			});
 
-			const buildUrl = (url: string): string =>
-				config?.baseUrl ? `${config.baseUrl}${url}` : url;
+			const buildUrl = (url: string): string => {
+				if (url.startsWith("http://") || url.startsWith("https://")) {
+					return url;
+				}
+
+				return config?.baseUrl ? `${config.baseUrl}${url}` : url;
+			};
 
 			return TodoistHttpClient.of({
 				get: (
@@ -164,11 +169,12 @@ export const createTodoistClient = (token: string) =>
 /**
  * プロキシ用の設定済み HTTP クライアントを作成するヘルパー
  */
-export const createProxyClient = (proxyUrl?: string) =>
+export const createProxyClient = (token?: string, proxyUrl?: string) =>
 	Layer.provide(
 		TodoistHttpClientLive({
 			baseUrl:
 				proxyUrl || import.meta.env.VITE_PROXY_URL || "http://localhost:8000",
+			token,
 		}),
 		FetchHttpClient.layer,
 	);

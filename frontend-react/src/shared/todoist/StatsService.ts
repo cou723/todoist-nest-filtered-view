@@ -70,6 +70,7 @@ export class StatsService extends Context.Tag("StatsService")<
 >() {}
 
 const MAX_WINDOW_DAYS = 90;
+const PROXY_BASE = import.meta.env.VITE_PROXY_URL ?? "http://localhost:8000";
 
 // ヘルパー関数: クエリパラメータを構築
 const buildCompletedTasksUrl = (
@@ -82,7 +83,7 @@ const buildCompletedTasksUrl = (
 	if (until) params.set("until", until);
 	if (cursor) params.set("cursor", cursor);
 	params.set("limit", "50");
-	return `/v1/tasks/completed/by_completion_date?${params.toString()}`;
+	return `${PROXY_BASE}/v1/tasks/completed/by_completion_date?${params.toString()}`;
 };
 
 // ヘルパー関数: API レスポンスをデコードして CompletedTask に変換
