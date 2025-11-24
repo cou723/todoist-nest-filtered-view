@@ -16,20 +16,6 @@
 - `todoist_token`: アクセストークン
 - `oauth_state`: CSRF 対策用 state（localStorage / sessionStorage 両方）
 
-## 設定値（.env.sample 参照）
-- `VITE_TODOIST_CLIENT_ID`（必須）
-- `VITE_TODOIST_REDIRECT_URI`（例: `http://localhost:5173/callback`）
-- `VITE_PROXY_URL`（例: `http://localhost:8000`）
-
 ## API 経路
 - v1 Completed API: `VITE_PROXY_URL/v1/tasks/completed/by_completion_date`（Authorization ヘッダーを付与）
 - REST v2: これまでどおり直接呼び出し。CORS 問題が出る場合はプロキシ経由に切り替え検討。
-
-## UI ポイント
-- ログインボタン主体、トークン入力フォームは折り畳みのフォールバック。
-- `/callback` ではローディングとエラーメッセージを表示し、成功時にルートへ戻る。
-- 認証ヘッダーにはトークン末尾4文字のみ表示して露出を最小化。
-
-## テストと確認
-- Vitest で AuthContext / アプリシェルの表示切り替えを検証。
-- 手動確認: プロキシを `ALLOWED_ORIGIN=http://localhost:5173` で起動し、ログイン→各パネル表示まで。ブラウザで CORS エラーが出ないことを確認。
