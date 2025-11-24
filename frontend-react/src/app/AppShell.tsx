@@ -6,6 +6,7 @@ import {
 	Group,
 	Loader,
 	AppShell as MantineAppShell,
+	Text,
 	Title,
 } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
@@ -18,7 +19,15 @@ import { ThemeToggle } from "../shared/components/ThemeToggle";
 import { useAuth } from "./AuthContext";
 
 export function AppShell() {
-	const { isAuthenticated, isLoading, login, logout } = useAuth();
+	const {
+		isAuthenticated,
+		isLoading,
+		authError,
+		token,
+		startOAuth,
+		loginWithToken,
+		logout,
+	} = useAuth();
 
 	// 読み込み中の表示
 	if (isLoading) {
@@ -39,8 +48,17 @@ export function AppShell() {
 
 	// 未認証時はログインフォームのみ表示
 	if (!isAuthenticated) {
-		return <LoginForm onLogin={login} />;
+		return (
+			<LoginForm
+				onOAuth={startOAuth}
+				onManualLogin={loginWithToken}
+				isLoading={isLoading}
+				error={authError}
+			/>
+		);
 	}
+
+	const tokenSuffix = token ? token.slice(-4) : "";
 
 	// 認証済みの場合は通常のアプリケーションを表示
 	return (
@@ -50,6 +68,11 @@ export function AppShell() {
 					<Flex justify="space-between" align="center" h="100%">
 						<Title order={2}>Todoist Nest Filtered View</Title>
 						<Group gap="sm">
+							{tokenSuffix && (
+								<Text size="sm" c="dimmed">
+									Token …{tokenSuffix}
+								</Text>
+							)}
 							<ThemeToggle />
 							<Button
 								variant="subtle"

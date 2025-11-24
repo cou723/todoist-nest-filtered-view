@@ -1,57 +1,141 @@
-/**
- * AuthContext - アプリケーション全体の認証状態管理
- *
- * Todoist access_token を直接入力する方式の認証を提供します。
- */
-
+import type { Permission } from "@doist/todoist-api-typescript";
 import type React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
+import { OAuthService } from "../shared/todoist/OAuthService";
 
 interface AuthContextType {
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	token: string | null;
-	login: (token: string) => void;
-	logout: () => void;
+	authError: string | null;
+	startOAuth: () => void;
+	completeOAuth: (params: { code?: string; state?: string }) => Promise<void>;
+	loginWithToken: (token: string) => void;
+	logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const TOKEN_KEY = "todoist_token";
 
+const DEFAULT_PERMISSIONS: Permission[] = ["data:read", "task:add"];
+const requireEnv = (key: keyof ImportMetaEnv): string => {
+	const value = import.meta.env[key];
+	if (!value || String(value).trim() === "") {
+		throw new Error(`Environment variable ${key} is required`);
+	}
+	return String(value);
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [token, setToken] = useState<string | null>(null);
+	const [authError, setAuthError] = useState<string | null>(null);
 
-	// 起動時に localStorage からトークンを読み込み
+	const oauthConfig = useMemo(
+		() => ({
+			clientId: requireEnv("VITE_TODOIST_CLIENT_ID"),
+			redirectUri: requireEnv("VITE_TODOIST_REDIRECT_URI"),
+			proxyUrl: requireEnv("VITE_PROXY_URL"),
+			permissions: DEFAULT_PERMISSIONS,
+		}),
+		[],
+	);
+
+	const oauthService = useMemo(
+		() => new OAuthService(oauthConfig),
+		[oauthConfig],
+	);
+
 	useEffect(() => {
-		const savedToken = localStorage.getItem(TOKEN_KEY);
+		const savedToken = oauthService.getStoredToken();
 		if (savedToken) {
 			setToken(savedToken);
 			setIsAuthenticated(true);
 		}
 		setIsLoading(false);
-	}, []);
+	}, [oauthService]);
 
-	const login = (newToken: string) => {
+	const startOAuth = useCallback(() => {
+		setAuthError(null);
+		oauthService.redirectToAuthorize();
+	}, [oauthService]);
+
+	const loginWithToken = useCallback((newToken: string) => {
 		localStorage.setItem(TOKEN_KEY, newToken);
 		setToken(newToken);
 		setIsAuthenticated(true);
-	};
+		setAuthError(null);
+	}, []);
 
-	const logout = () => {
-		localStorage.removeItem(TOKEN_KEY);
-		// OAuth state keys も削除（将来の互換性のため）
-		localStorage.removeItem("oauth_state");
-		sessionStorage.removeItem("oauth_state");
-		setToken(null);
-		setIsAuthenticated(false);
-	};
+	const completeOAuth = useCallback(
+		async ({ code, state }: { code?: string; state?: string }) => {
+			if (!code) {
+				setAuthError("code パラメータが見つかりません");
+				return;
+			}
+			setIsLoading(true);
+			setAuthError(null);
+
+			try {
+				const result = await oauthService.exchangeCodeForToken(code, state);
+				setToken(result.accessToken);
+				setIsAuthenticated(true);
+			} catch (error) {
+				console.error("[Auth] トークン交換失敗", error);
+				setAuthError(
+					error instanceof Error ? error.message : "トークン交換に失敗しました",
+				);
+				oauthService.clearToken();
+				setIsAuthenticated(false);
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[oauthService],
+	);
+
+	const logout = useCallback(async () => {
+		if (!token) {
+			setIsAuthenticated(false);
+			return;
+		}
+
+		setIsLoading(true);
+		setAuthError(null);
+		try {
+			await oauthService.revokeToken(token);
+		} catch (error) {
+			console.warn("[Auth] トークン無効化に失敗しました", error);
+		} finally {
+			oauthService.clearToken();
+			oauthService.clearState();
+			setToken(null);
+			setIsAuthenticated(false);
+			setIsLoading(false);
+		}
+	}, [oauthService, token]);
 
 	return (
 		<AuthContext.Provider
-			value={{ isAuthenticated, isLoading, token, login, logout }}
+			value={{
+				isAuthenticated,
+				isLoading,
+				authError,
+				token,
+				startOAuth,
+				completeOAuth,
+				loginWithToken,
+				logout,
+			}}
 		>
 			{children}
 		</AuthContext.Provider>
