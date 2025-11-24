@@ -1,24 +1,45 @@
 # Agent Notes
 
-本リポジトリの期間集計（Todoist 完了件数）に関する重要メモ。
+## 本リポジトリについて
 
-- 目的: 「過去7日間平均」を先頭日から欠損なく描画する。
-- 方針: 表示対象日数に対して先行6日ぶんを追加取得し、移動平均の計算には先読みを含むデータ列を用いる。
-- 実装ポイント:
-  - `TodoDailyCompletionController.fetchDailyCompletionStats(days)` は `days + 6` 日ぶん取得し、
-    - `statsForAverage` に「先頭6日 + 表示対象`days`」を保持。
-    - `dailyCompletionStats` は UI 表示用として直近 `days` のみに制限。
-  - 7日平均は `getSevenDayAverageDataForChart()` で算出。
-    - 可視領域 i 日目の平均は `statsForAverage.slice(i, i + 7)` の合計/件数。
-    - 当日がある場合は、`statsForAverage` の末尾6日と当日を合算して平均化。
-  - UI はラベル・合計ともに「表示対象日数（`visibleDays`）」に同期。
+Todoistのオリジナルクライアントで、個人で使う用のプロジェクトです。
+Todoistのタスクをツリー構造上に表示したり、統計データを表示したりして、自己肯定感を高めるのに使います。
 
-既定動作: 表示は90日（3か月）とし、取得は97日（+6日）です。
+## それぞれのディレクトリについて
+
+基本的には以下のディレクトリが主なコンテンツです
+
+- `frontend-react`
+- `frontend-lit-legacy`
+- `proxy`
+- `cron`
+
+### frontend-react
+
+後述するfrontend-lit-legacyをreactで書き直しているディレクトリです。
+フロントエンドの改修を依頼された場合は基本的にこちらを編集してください。
+
+### frontend-lit-legacy
+
+旧実装であるlitで実装されたフロントエンドのプロジェクトがあるディレクトリです。
+基本的に参考のために残しており、ユーザーから特に指示がない場合は、こちらのディレクトリは編集せずに、`frontend-react`のことだと思ってください。
+
+### proxy
+
+いわゆるバックエンドですが、ほぼラッパーのようなもので以下の二つ目的のために作成されました。
+
+- Sync APIのCORS回避
+- Todoist APIのClient Secretの秘匿
+
+現在`Deno Deploy Classic`にデプロイされています。
+
+### cron
+
+現在のTodoistの運用のために`Deno Deploy Classic`にデプロイしている、cronジョブです。
 
 ## ドキュメント
-- ドキュメントは基本的にdocs/に配置してください。
-- 現在は以下のドキュメントが配置されています 
-  - [requirements.md](./docs/requirements.md) :フルリプレイス予定のフロントエンドの要求について書いてあります
-  - [functional-requirements.md](./docs/functional-requirements.md) :フルリプレイス予定のフロントエンドの機能要件について書いてあります。
-  - [non-functional-requirements.md](./docs/non-functional-requirements.md) :フルリプレイス予定のフロントエンドの非機能要件について書いてあります。
-  - [frontend-tech-stack.md](./docs/frontend-tech-stack.md) :フルリプレイス予定のフロントエンドの選定済み技術スタックについて書いてあります。
+
+基本的にすべてのドキュメントは`docs`ディレクトリの中に格納されます。
+プロジェクト全体にかかわるものは`./docs`にあり、フロントエンドなどの身に関係するなどのスコープが小さいドキュメントに関しては、そのプロジェクトの`./docs`にあります。
+
+例えば`frontend-react`に関係するドキュメントは`./frontend-react/docs/`に格納されます。
