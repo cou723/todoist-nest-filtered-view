@@ -1,245 +1,209 @@
-import { Effect, Schema } from "effect";
-interface OAuthTokenRequest {
-  client_id: string;
-  code: string;
-  redirect_uri: string;
-}
+import { Effect, Exit, Schema } from "effect";
+import { env } from "./config.ts";
+import {
+  CompletedByDateRequestSchema,
+  OAuthRevokeRequestSchema,
+  OAuthTokenRequestSchema,
+  ProxyError,
+} from "./rpc/api.ts";
+import {
+  exchangeOAuthToken,
+  fetchCompletedByDate,
+  revokeOAuthToken,
+  RpcWebHandler,
+} from "./rpc/server.ts";
+import { pipe } from "effect/Function";
 
-interface OAuthRevokeRequest {
-  client_id: string;
-  access_token: string;
-}
+const rpcHandler = await Effect.runPromise(RpcWebHandler.pipe(Effect.scoped));
 
-interface OAuthResponse {
-  access_token: string;
-  token_type: string;
-}
-
-const EnvSchema = Schema.Struct({
-  ALLOWED_ORIGIN: Schema.String,
-  TODOIST_CLIENT_SECRET: Schema.String,
-});
-
-const env = Schema.decodeUnknownSync(EnvSchema)(Deno.env.toObject());
-
-function setCorsHeaders(headers: Headers): void {
+const buildCorsHeaders = (): Headers => {
+  const headers = new Headers();
   headers.set("Access-Control-Allow-Origin", env.ALLOWED_ORIGIN);
   headers.set("Access-Control-Allow-Credentials", "true");
   headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  headers.set(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization",
+  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return headers;
+};
+
+const withCors = (response: Response): Response => {
+  const headers = buildCorsHeaders();
+  response.headers.forEach((value, key) => headers.set(key, value));
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
+
+const preflightResponse = (): Response =>
+  new Response(null, { status: 200, headers: buildCorsHeaders() });
+
+const jsonResponse = (body: unknown, status = 200): Response =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: new Headers({ "Content-Type": "application/json" }),
+  });
+
+const handleError = (error: unknown): Response => {
+  if (error instanceof ProxyError) {
+    return jsonResponse({ error: error.message }, error.status ?? 400);
+  }
+
+  console.error("❌ [Proxy] Unexpected error:", error);
+  return jsonResponse({ error: "Internal Server Error" }, 500);
+};
+
+const runProxyEffect = async <A>(
+  effect: Effect.Effect<A, ProxyError>,
+): Promise<Response> => {
+  return Exit.match(await Effect.runPromiseExit(effect), {
+    onSuccess: jsonResponse,
+    onFailure: handleError,
+  });
+};
+
+const toProxyErrorEffect = <A, E>(
+  effect: Effect.Effect<A, E>,
+): Effect.Effect<A, ProxyError> =>
+  pipe(
+    effect,
+    Effect.mapError((error) =>
+      error instanceof ProxyError ? error : new ProxyError({
+        message: error instanceof Error
+          ? error.message
+          : "Invalid request body",
+        status: 400,
+      })
+    ),
   );
-}
 
-async function handleOAuthToken(request: Request): Promise<Response> {
-  const headers = new Headers();
-
-  setCorsHeaders(headers);
-
-  // プリフライトリクエストの処理
-  if (request.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers });
-  }
-
-  // POSTメソッドのみ許可
-  if (request.method !== "POST") {
-    headers.set("Content-Type", "application/json");
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers,
-    });
-  }
-
-  try {
-    const body: OAuthTokenRequest = await request.json();
-    const { client_id, code, redirect_uri } = body;
-
-    // 必要なパラメータの検証
-    if (!client_id || !code || !redirect_uri) {
-      headers.set("Content-Type", "application/json");
-      return new Response(
-        JSON.stringify({ error: "Missing required parameters" }),
-        { status: 400, headers },
-      );
-    }
-
-    // TodoistのOAuth APIを呼び出し（サーバー側でclient_secretを使用）
-    const response = await fetch("https://todoist.com/oauth/access_token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        client_id,
-        client_secret: env.TODOIST_CLIENT_SECRET!,
-        code,
-        redirect_uri,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: OAuthResponse = await response.json();
-    headers.set("Content-Type", "application/json");
-
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers,
-    });
-  } catch (error) {
-    console.error("❌ [Proxy] エラー:", error);
-    headers.set("Content-Type", "application/json");
-
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
-      status: 500,
-      headers,
-    });
-  }
-}
-
-async function handleOAuthRevoke(request: Request): Promise<Response> {
-  const headers = new Headers();
-  setCorsHeaders(headers);
-
-  // プリフライトリクエストの処理
-  if (request.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers });
-  }
-
-  // POSTメソッドのみ許可
-  if (request.method !== "POST") {
-    headers.set("Content-Type", "application/json");
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers,
-    });
-  }
-
-  try {
-    const body: OAuthRevokeRequest = await request.json();
-    const { client_id, access_token } = body;
-
-    // 必要なパラメータの検証
-    if (!client_id || !access_token) {
-      headers.set("Content-Type", "application/json");
-      return new Response(
-        JSON.stringify({ error: "Missing required parameters" }),
-        { status: 400, headers },
-      );
-    }
-
-    // TodoistのOAuth revoke APIを呼び出し
-    const response = await fetch("https://todoist.com/oauth/revoke_token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        client_id,
-        client_secret: env.TODOIST_CLIENT_SECRET!,
-        access_token,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    headers.set("Content-Type", "application/json");
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers,
-    });
-  } catch (error) {
-    console.error("❌ [Proxy] Revoke エラー:", error);
-    headers.set("Content-Type", "application/json");
-
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
-      status: 500,
-      headers,
-    });
-  }
-}
-
-// v1 Completed by completion date 中継
-async function handleCompletedByDate(request: Request): Promise<Response> {
-  const headers = new Headers();
-  setCorsHeaders(headers);
-
-  // プリフライト
-  if (request.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers });
-  }
-
-  if (request.method !== "GET") {
-    headers.set("Content-Type", "application/json");
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers,
-    });
-  }
-
-  try {
-    const url = new URL(request.url);
-    const auth = request.headers.get("Authorization");
-    if (!auth) {
-      headers.set("Content-Type", "application/json");
-      return new Response(JSON.stringify({ error: "Missing Authorization" }), {
-        status: 401,
-        headers,
+function requestBodyToJson(
+  request: Request,
+): Effect.Effect<unknown, ProxyError> {
+  return Effect.tryPromise({
+    try: async () => {
+      const bodyText = await request.text();
+      return JSON.parse(bodyText);
+    },
+    catch: (error) => {
+      if (error instanceof SyntaxError) {
+        return new ProxyError({
+          message: "Invalid JSON body: " + error.message,
+          status: 400,
+        });
+      }
+      return new ProxyError({
+        message: "Failed to parse JSON body: " + error,
+        status: 400,
       });
-    }
-
-    // そのままクエリを転送
-    const upstream = new URL(
-      "https://api.todoist.com/api/v1/tasks/completed/by_completion_date",
-    );
-    url.searchParams.forEach((v, k) => upstream.searchParams.set(k, v));
-
-    const resp = await fetch(upstream, {
-      method: "GET",
-      headers: {
-        Authorization: auth,
-      },
-    });
-
-    const body = await resp.text();
-    headers.set("Content-Type", "application/json");
-    return new Response(body, { status: resp.status, headers });
-  } catch (error) {
-    console.error("❌ [Proxy] CompletedByDate エラー:", error);
-    headers.set("Content-Type", "application/json");
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
-      status: 500,
-      headers,
-    });
-  }
+    },
+  });
 }
 
-async function handler(request: Request): Promise<Response> {
+const handleOAuthToken = async (request: Request): Promise<Response> => {
+  if (request.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
+  return runProxyEffect(
+    Effect.gen(function* () {
+      const unknownPayload = yield* requestBodyToJson(request);
+      const payload = yield* Schema.decodeUnknown(OAuthTokenRequestSchema)(
+        unknownPayload,
+      ).pipe(toProxyErrorEffect);
+      return yield* exchangeOAuthToken(payload);
+    }),
+  );
+};
+
+const handleOAuthRevoke = async (request: Request): Promise<Response> => {
+  if (request.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
+  return runProxyEffect(
+    Effect.gen(function* () {
+      const unknownPayload = yield* requestBodyToJson(request);
+      const payload = yield* Schema.decodeUnknown(OAuthRevokeRequestSchema)(
+        unknownPayload,
+      )
+        .pipe(toProxyErrorEffect);
+      return yield* revokeOAuthToken(payload);
+    }),
+  );
+};
+
+const handleCompletedByDate = async (request: Request): Promise<Response> => {
+  if (request.method !== "GET") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
   const url = new URL(request.url);
+  const query: Record<string, string> = {};
+  url.searchParams.forEach((value, key) => {
+    query[key] = value;
+  });
 
-  // OAuth トークン交換エンドポイント
-  if (url.pathname === "/oauth/token") {
-    return handleOAuthToken(request);
+  return runProxyEffect(
+    Effect.gen(function* () {
+      const authorization = request.headers.get("Authorization");
+      if (!authorization) {
+        return yield* Effect.fail(
+          new ProxyError({
+            message: "Missing Authorization",
+            status: 401,
+          }),
+        );
+      }
+
+      const payload = yield* toProxyErrorEffect(
+        Schema.decodeUnknown(CompletedByDateRequestSchema)({
+          authorization,
+          query,
+        }),
+      );
+      return yield* fetchCompletedByDate(payload);
+    }),
+  );
+};
+
+const handleRpc = async (request: Request): Promise<Response> => {
+  if (request.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
-  // OAuth トークン無効化エンドポイント
-  if (url.pathname === "/oauth/revoke") {
-    return handleOAuthRevoke(request);
+  try {
+    const response = await rpcHandler(request);
+    return response;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+Deno.serve(async (request) => {
+  if (request.method === "OPTIONS") {
+    return preflightResponse();
   }
 
-  // v1 Completed by completion date 中継
-  if (url.pathname === "/v1/tasks/completed/by_completion_date") {
-    return handleCompletedByDate(request);
+  const url = new URL(request.url);
+  switch (url.pathname) {
+    case "/rpc":
+      return withCors(await handleRpc(request));
+    case "/oauth/token":
+      return withCors(await handleOAuthToken(request));
+    case "/oauth/revoke":
+      return withCors(await handleOAuthRevoke(request));
+    case "/v1/tasks/completed/by_completion_date":
+      return withCors(
+        await handleCompletedByDate(request),
+      );
+    default:
+      return withCors(
+        new Response("Not Found", {
+          status: 404,
+          headers: new Headers({ "Content-Type": "text/plain" }),
+        }),
+      );
   }
-
-  // 404 Not Found
-  return new Response("Not Found", { status: 404 });
-}
-
-// サーバー起動
-Deno.serve(handler);
+});

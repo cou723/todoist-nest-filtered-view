@@ -29,6 +29,8 @@
     "check": "deno check main.ts"
   },
   "imports": {
-    "effect": "npm:effect@^3.19.6"
+    "effect": "npm:effect@^3.19.6",
+    "@effect/rpc": "npm:@effect/rpc@^0.72.2",
+    "@effect/platform": "npm:@effect/platform@^0.93.3"
   }
 }

@@ -109,6 +109,12 @@ TodoistのOAuthトークン交換をプロキシします。
 }
 ```
 
+### POST `/rpc`
+
+Effect RPC のHTTPエンドポイント。`proxy/rpc/api.ts` で定義した
+`ExchangeOAuthToken` / `RevokeOAuthToken` / `CompletedByDate` をNDJSON経由で受け付けます。
+クライアントは `@effect/rpc` のHTTPプロトコルクライアントを利用してください。
+
 ## 🌐 環境変数
 
 ### `ALLOWED_ORIGIN`
