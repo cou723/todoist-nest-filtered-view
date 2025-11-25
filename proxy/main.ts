@@ -1,6 +1,4 @@
-// Deno Deploy用のOAuthプロキシサーバー
-import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
-
+import { Effect, Schema } from "effect";
 interface OAuthTokenRequest {
   client_id: string;
   code: string;
@@ -17,25 +15,20 @@ interface OAuthResponse {
   token_type: string;
 }
 
-// 環境変数からoriginを取得（デフォルトはlocalhost:5173）
-const ALLOWED_ORIGIN =
-  Deno.env.get("ALLOWED_ORIGIN") || "http://localhost:5173";
+const EnvSchema = Schema.Struct({
+  ALLOWED_ORIGIN: Schema.String,
+  TODOIST_CLIENT_SECRET: Schema.String,
+});
 
-// 環境変数からTodoist Client Secretを取得
-const TODOIST_CLIENT_SECRET = Deno.env.get("TODOIST_CLIENT_SECRET");
-
-if (!TODOIST_CLIENT_SECRET) {
-  console.error("❌ TODOIST_CLIENT_SECRET environment variable is required");
-  Deno.exit(1);
-}
+const env = Schema.decodeUnknownSync(EnvSchema)(Deno.env.toObject());
 
 function setCorsHeaders(headers: Headers): void {
-  headers.set("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  headers.set("Access-Control-Allow-Origin", env.ALLOWED_ORIGIN);
   headers.set("Access-Control-Allow-Credentials", "true");
   headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   headers.set(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
+    "Content-Type, Authorization",
   );
 }
 
@@ -67,7 +60,7 @@ async function handleOAuthToken(request: Request): Promise<Response> {
       headers.set("Content-Type", "application/json");
       return new Response(
         JSON.stringify({ error: "Missing required parameters" }),
-        { status: 400, headers }
+        { status: 400, headers },
       );
     }
 
@@ -79,7 +72,7 @@ async function handleOAuthToken(request: Request): Promise<Response> {
       },
       body: new URLSearchParams({
         client_id,
-        client_secret: TODOIST_CLIENT_SECRET!,
+        client_secret: env.TODOIST_CLIENT_SECRET!,
         code,
         redirect_uri,
       }),
@@ -134,7 +127,7 @@ async function handleOAuthRevoke(request: Request): Promise<Response> {
       headers.set("Content-Type", "application/json");
       return new Response(
         JSON.stringify({ error: "Missing required parameters" }),
-        { status: 400, headers }
+        { status: 400, headers },
       );
     }
 
@@ -146,7 +139,7 @@ async function handleOAuthRevoke(request: Request): Promise<Response> {
       },
       body: new URLSearchParams({
         client_id,
-        client_secret: TODOIST_CLIENT_SECRET!,
+        client_secret: env.TODOIST_CLIENT_SECRET!,
         access_token,
       }),
     });
@@ -202,7 +195,7 @@ async function handleCompletedByDate(request: Request): Promise<Response> {
 
     // そのままクエリを転送
     const upstream = new URL(
-      "https://api.todoist.com/api/v1/tasks/completed/by_completion_date"
+      "https://api.todoist.com/api/v1/tasks/completed/by_completion_date",
     );
     url.searchParams.forEach((v, k) => upstream.searchParams.set(k, v));
 
@@ -249,4 +242,4 @@ async function handler(request: Request): Promise<Response> {
 }
 
 // サーバー起動
-serve(handler);
+Deno.serve(handler);
