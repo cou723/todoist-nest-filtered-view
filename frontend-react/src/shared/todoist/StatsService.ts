@@ -8,8 +8,9 @@ import { Schema as S } from "@effect/schema";
 import { addDays, format, startOfDay, subDays } from "date-fns";
 import { Context, Effect, Layer } from "effect";
 import type { TodoistErrorType } from "../errors/types";
-import { ParseError } from "../errors/types";
-import { TodoistHttpClient } from "../http/client";
+import { mapHttpError, NetworkError, ParseError } from "../errors/types";
+import { type CompletedByDateResponse, ProxyError } from "../rpc/api";
+import { getProxyRpcClient } from "../rpc/client";
 import {
 	CompletedTask,
 	CompletedTasksApiResponse,
@@ -33,6 +34,7 @@ export interface IStatsService {
 	 * @returns 完了済みタスクの配列
 	 */
 	readonly getCompletedTasks: (
+		token: string,
 		since?: string,
 		until?: string,
 	) => Effect.Effect<CompletedTask[], TodoistErrorType>;
@@ -44,6 +46,7 @@ export interface IStatsService {
 	 * @returns 完了済み作業タスクの配列
 	 */
 	readonly getCompletedWorkTasks: (
+		token: string,
 		since?: string,
 		until?: string,
 	) => Effect.Effect<CompletedTask[], TodoistErrorType>;
@@ -52,7 +55,7 @@ export interface IStatsService {
 	 * 今日のタスク統計を取得
 	 * @returns 今日の完了統計
 	 */
-	readonly getTodayStats: () => Effect.Effect<TodayTaskStat, TodoistErrorType>;
+	readonly getTodayStats: (token: string) => Effect.Effect<TodayTaskStat, TodoistErrorType>;
 
 	/**
 	 * 日付範囲の日次完了統計を取得
@@ -60,6 +63,7 @@ export interface IStatsService {
 	 * @returns 日次統計の配列
 	 */
 	readonly getDailyStats: (
+		token: string,
 		days?: number,
 	) => Effect.Effect<DailyCompletionStat[], TodoistErrorType>;
 }
@@ -70,21 +74,46 @@ export class StatsService extends Context.Tag("StatsService")<
 >() {}
 
 const MAX_WINDOW_DAYS = 90;
-const PROXY_BASE = import.meta.env.VITE_PROXY_URL ?? "http://localhost:8000";
 
-// ヘルパー関数: クエリパラメータを構築
-const buildCompletedTasksUrl = (
+const mapProxyError = (error: unknown): TodoistErrorType => {
+	if (error instanceof ProxyError) {
+		if (typeof error.status === "number") {
+			return mapHttpError(error.status, error.message, error);
+		}
+		return new NetworkError({
+			message: error.message,
+			cause: error,
+		});
+	}
+	return new NetworkError({
+		message: "プロキシとの通信に失敗しました",
+		cause: error,
+	});
+};
+
+const buildCompletedTasksQuery = (
 	since?: string,
 	until?: string,
 	cursor?: string,
-): string => {
-	const params = new URLSearchParams();
-	if (since) params.set("since", since);
-	if (until) params.set("until", until);
-	if (cursor) params.set("cursor", cursor);
-	params.set("limit", "50");
-	return `${PROXY_BASE}/v1/tasks/completed/by_completion_date?${params.toString()}`;
+): Record<string, string> => {
+	const query: Record<string, string> = { limit: "50" };
+	if (since) query.since = since;
+	if (until) query.until = until;
+	if (cursor) query.cursor = cursor;
+	return query;
 };
+
+const callCompletedByDateRpc = (
+	token: string,
+	query: Record<string, string>,
+): Effect.Effect<CompletedByDateResponse, ProxyError> =>
+	Effect.gen(function* () {
+		const client = yield* Effect.promise(() => getProxyRpcClient());
+		return yield* client.CompletedByDate({
+			authorization: `Bearer ${token}`,
+			query,
+		});
+	});
 
 // ヘルパー関数: API レスポンスをデコードして CompletedTask に変換
 const decodeAndEnrichCompletedTasks = (
@@ -129,9 +158,19 @@ const decodeAndEnrichCompletedTasks = (
 export const StatsServiceLive = Layer.effect(
 	StatsService,
 	Effect.gen(function* () {
-		const httpClient = yield* TodoistHttpClient;
+		const fetchChunk = (
+			token: string,
+			query: Record<string, string>,
+		): Effect.Effect<{ tasks: CompletedTask[]; nextCursor?: string }, TodoistErrorType> =>
+			Effect.gen(function* () {
+				const response = yield* callCompletedByDateRpc(token, query).pipe(
+					Effect.mapError(mapProxyError),
+				);
+				return yield* decodeAndEnrichCompletedTasks(response);
+			});
 
 		const getCompletedTasks = (
+			token: string,
 			since?: string,
 			until?: string,
 		): Effect.Effect<CompletedTask[], TodoistErrorType> =>
@@ -140,10 +179,8 @@ export const StatsServiceLive = Layer.effect(
 				let cursor: string | undefined;
 
 				do {
-					const url = buildCompletedTasksUrl(since, until, cursor);
-					const response = yield* httpClient.get(url);
-					const { tasks, nextCursor } =
-						yield* decodeAndEnrichCompletedTasks(response);
+					const query = buildCompletedTasksQuery(since, until, cursor);
+					const { tasks, nextCursor } = yield* fetchChunk(token, query);
 
 					allItems.push(...tasks);
 					cursor = nextCursor;
@@ -153,11 +190,12 @@ export const StatsServiceLive = Layer.effect(
 			});
 
 		const getCompletedWorkTasks = (
+			token: string,
 			since?: string,
 			until?: string,
 		): Effect.Effect<CompletedTask[], TodoistErrorType> =>
 			Effect.gen(function* () {
-				const allTasks = yield* getCompletedTasks(since, until);
+				const allTasks = yield* getCompletedTasks(token, since, until);
 
 				return allTasks.filter((task) => {
 					if (isDailyTask(task)) return false;
@@ -165,7 +203,7 @@ export const StatsServiceLive = Layer.effect(
 				});
 			});
 
-		const getTodayStats = (): Effect.Effect<TodayTaskStat, TodoistErrorType> =>
+		const getTodayStats = (token: string): Effect.Effect<TodayTaskStat, TodoistErrorType> =>
 			Effect.gen(function* () {
 				const today = new Date();
 				const todayKey = format(today, "yyyy-MM-dd");
@@ -174,6 +212,7 @@ export const StatsServiceLive = Layer.effect(
 				const tomorrowStart = startOfDay(addDays(today, 1));
 
 				const completedTasks = yield* getCompletedWorkTasks(
+					token,
 					todayStart.toISOString(),
 					tomorrowStart.toISOString(),
 				);
@@ -189,6 +228,7 @@ export const StatsServiceLive = Layer.effect(
 			});
 
 		const getDailyStats = (
+			token: string,
 			days = 90,
 		): Effect.Effect<DailyCompletionStat[], TodoistErrorType> =>
 			Effect.gen(function* () {
@@ -205,6 +245,7 @@ export const StatsServiceLive = Layer.effect(
 					const sinceInclusive = subDays(untilExclusive, chunkDays);
 
 					const chunk = yield* getCompletedWorkTasks(
+						token,
 						sinceInclusive.toISOString(),
 						untilExclusive.toISOString(),
 					);

@@ -4,11 +4,11 @@ import {
 	getAuthStateParameter,
 	type Permission,
 } from "@doist/todoist-api-typescript";
+import { callProxyRpc } from "../rpc/client";
 
 export interface OAuthConfig {
 	readonly clientId: string;
 	readonly redirectUri: string;
-	readonly proxyUrl: string;
 	readonly permissions: Permission[];
 }
 
@@ -93,65 +93,36 @@ export class OAuthService {
 		this.validateState(state);
 		this.clearState();
 
-		const requestUrl = `${this.config.proxyUrl}/oauth/token`;
-
-		const response = await fetch(requestUrl, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				client_id: this.config.clientId,
-				code,
-				redirect_uri: this.config.redirectUri,
-			}),
-		});
-
-		if (!response.ok) {
-			const message = await response.text();
-			throw new Error(
-				`トークン交換に失敗しました (status: ${response.status}) ${message}`,
+		try {
+			const raw = await callProxyRpc((client) =>
+				client.ExchangeOAuthToken({
+					client_id: this.config.clientId,
+					code,
+					redirect_uri: this.config.redirectUri,
+				}),
 			);
+
+			localStorage.setItem(TOKEN_KEY, raw.access_token);
+
+			return {
+				accessToken: raw.access_token,
+				tokenType: raw.token_type,
+			};
+		} catch (error) {
+			throw error instanceof Error ? error : new Error("トークン交換に失敗しました");
 		}
-
-		const raw = (await response.json()) as
-			| AuthTokenResponse
-			| { access_token?: string; token_type?: string };
-
-		const accessToken =raw.access_token;
-			// (raw as AuthTokenResponse).accessToken ?? raw.access_token ?? "";
-		const tokenType = (raw as AuthTokenResponse).tokenType ?? raw.token_type;
-
-		if (!accessToken) {
-			throw new Error("アクセストークンを取得できませんでした");
-		}
-
-		localStorage.setItem(TOKEN_KEY, accessToken);
-
-		return {
-			accessToken,
-			tokenType: tokenType ?? "Bearer",
-		};
 	}
 
 	async revokeToken(token: string): Promise<void> {
-		const requestUrl = `${this.config.proxyUrl}/oauth/revoke`;
-		const response = await fetch(requestUrl, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				client_id: this.config.clientId,
-				access_token: token,
-			}),
-		});
-
-		if (!response.ok) {
-			const message = await response.text();
-			throw new Error(
-				`トークン無効化に失敗しました (status: ${response.status}) ${message}`,
+		try {
+			await callProxyRpc((client) =>
+				client.RevokeOAuthToken({
+					client_id: this.config.clientId,
+					access_token: token,
+				}),
 			);
+		} catch (error) {
+			throw error instanceof Error ? error : new Error("トークン無効化に失敗しました");
 		}
 	}
 

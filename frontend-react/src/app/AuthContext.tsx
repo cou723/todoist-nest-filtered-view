@@ -9,6 +9,7 @@ import {
 	useState,
 } from "react";
 import { OAuthService } from "../shared/todoist/OAuthService";
+import { setProxyRpcBaseUrl } from "../shared/rpc/client";
 
 interface AuthContextType {
 	isAuthenticated: boolean;
@@ -40,14 +41,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [token, setToken] = useState<string | null>(null);
 	const [authError, setAuthError] = useState<string | null>(null);
 
+	const clientId = requireEnv("VITE_TODOIST_CLIENT_ID");
+	const redirectUri = requireEnv("VITE_TODOIST_REDIRECT_URI");
+	const proxyUrl = requireEnv("VITE_PROXY_URL");
+	setProxyRpcBaseUrl(proxyUrl);
+
 	const oauthConfig = useMemo(
 		() => ({
-			clientId: requireEnv("VITE_TODOIST_CLIENT_ID"),
-			redirectUri: requireEnv("VITE_TODOIST_REDIRECT_URI"),
-			proxyUrl: requireEnv("VITE_PROXY_URL"),
+			clientId,
+			redirectUri,
 			permissions: DEFAULT_PERMISSIONS,
 		}),
-		[],
+		[clientId, redirectUri],
 	);
 
 	const oauthService = useMemo(
