@@ -29,3 +29,4 @@ yarn.lock
 *.sw?
 
 .env
+.vite

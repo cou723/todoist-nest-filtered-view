@@ -47,10 +47,10 @@
 - タスク行からの完了操作（`closeTask` API 呼び出し）
 
 **依存 API**:
-- Todoist REST API: `GET /rest/v2/tasks` (フィルタなし)
-- Todoist REST API: `GET /rest/v2/tasks?filter={query}` (フィルタあり)
-- Todoist REST API: `GET /rest/v2/tasks/{id}` (親タスク取得)
-- Todoist REST API: `POST /rest/v2/tasks/{id}/close` (タスク完了)
+- Todoist API（tasks）: `GET /rest/v2/tasks` (フィルタなし)
+- Todoist API（tasks）: `GET /rest/v2/tasks?filter={query}` (フィルタあり)
+- Todoist API（tasks）: `GET /rest/v2/tasks/{id}` (親タスク取得)
+- Todoist API（tasks）: `POST /rest/v2/tasks/{id}/close` (タスク完了)
 
 **パフォーマンス前提**:
 - 中規模（〜500件程度）のタスク数を想定
@@ -74,7 +74,7 @@
 - エラー時は「読み込み中」「エラー」などの状態を表示
 
 **依存 API**:
-- Todoist REST API: `GET /rest/v2/tasks?filter=@goal`
+- Todoist API（tasks）: `GET /rest/v2/tasks?filter=@goal`
 
 **ラベル依存**:
 - `@goal`: ゴールタスクを示すラベル
@@ -98,7 +98,7 @@
 - 対象タスクが0件の場合、「日付付きゴールタスクがありません」と表示
 
 **依存 API**:
-- Todoist REST API: `GET /rest/v2/tasks?filter=@goal & !日付なし`
+- Todoist API（tasks）: `GET /rest/v2/tasks?filter=@goal & !日付なし`
 
 **日付処理**:
 - `date-fns` を使用してローカルタイムゾーン基準で計算
@@ -127,8 +127,8 @@
 - 「データを取得しなおす」ボタンで統計再取得
 
 **依存 API**:
-- Todoist REST API v1: `GET /v1/tasks/completed/by_completion_date` (プロキシ経由)
-- Todoist REST API: `GET /rest/v2/tasks?filter=@task` (残りタスク数取得)
+- Todoist API（completed tasks）: `GET https://api.todoist.com/api/v1/tasks/completed/by_completion_date`
+- Todoist API（tasks）: `GET https://api.todoist.com/rest/v2/tasks?filter=@task` (残りタスク数取得)
 
 **期間集計ロジック（重要）**:
 ```
@@ -172,9 +172,9 @@
 
 ## 2. Todoist API・OAuth プロキシ エンドポイント一覧
 
-### 2.1 Todoist REST API v2
+### 2.1 Todoist API（tasks エンドポイント）
 
-現行フロントエンドが使用する主要なエンドポイント:
+現行フロントエンドが使用する主要なタスク関連エンドポイント:
 
 #### タスク取得（フィルタなし）
 - **エンドポイント**: `GET https://api.todoist.com/rest/v2/tasks`
@@ -219,7 +219,7 @@
 - **ヘッダー**: `Authorization: Bearer {access_token}`
 - **レスポンス**: 204 No Content
 
-### 2.2 Todoist REST API v1（完了済みタスク）
+### 2.2 Todoist API（completed tasks エンドポイント）
 
 #### 完了済みタスク取得（完了日時順）
 - **エンドポイント**: `GET https://api.todoist.com/api/v1/tasks/completed/by_completion_date`
@@ -328,14 +328,11 @@ OAuth プロキシは Deno Deploy で稼働し、フロントエンドと Todois
   }
   ```
 
-#### 完了済みタスク取得（中継）
-- **エンドポイント**: `GET {PROXY_URL}/v1/tasks/completed/by_completion_date`
-- **パラメータ**: Todoist API v1 のパラメータをそのまま中継
+#### 完了済みタスク取得
+- **エンドポイント**: `GET https://api.todoist.com/api/v1/tasks/completed/by_completion_date`
+- **パラメータ**: `since` / `until` / `limit` / `cursor` など Todoist API v1 のパラメータ
 - **ヘッダー**: `Authorization: Bearer {access_token}`
-- **処理内容**:
-  - クエリパラメータをそのまま Todoist API v1 に転送
-  - Authorization ヘッダーもそのまま転送
-  - レスポンスをそのままフロントエンドに返す
+- **備考**: フロントエンド（ブラウザ）から直接呼び出し、レスポンスはアプリ側で `content` からラベルを抽出して利用する
 
 #### CORS設定
 - **許可オリジン**: 環境変数 `ALLOWED_ORIGIN`（デフォルト: `http://localhost:5173`）

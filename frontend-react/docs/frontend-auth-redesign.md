@@ -1,7 +1,7 @@
 # フロントエンド認証設計：OAuth コードフロー（プロキシ経由）
 
 ## 背景と目的
-- v1 Completed API で CORS を解消するため、プロキシ経由の OAuth コードフローを復活させる。
+- Todoist OAuth のクライアントシークレットをフロントに露出させないため、プロキシ経由の OAuth コードフローを採用する。
 - クライアントシークレットはフロントに置かず、Deno Deploy 上の `proxy/main.ts` に集約。
 - 既存の Effect ベースのサービス層を温存しつつ、認証は公式 SDK で state 生成を行う。
 
@@ -71,5 +71,7 @@ sequenceDiagram
 - `oauth_state`: CSRF 対策用 state（localStorage / sessionStorage 両方）
 
 ## API 経路
-- `VITE_PROXY_URL/rpc`: `@effect/rpc` を経由して `ExchangeOAuthToken`/`RevokeOAuthToken`/`CompletedByDate` を呼び出す。NDJSON プロトコルで型の一致を担保し、アクセストークンは `Authorization` ヘッダー付きで `CompletedByDate` に渡す。
-- REST v2: これまでどおり直接呼び出し。CORS 問題が出る場合はプロキシ経由に切り替え検討。
+- `VITE_PROXY_URL/rpc`: `@effect/rpc` を経由して `ExchangeOAuthToken` / `RevokeOAuthToken` を呼び出す。NDJSON プロトコルで型の一致を担保する。
+- Todoist API 本体:
+  - REST v2 系エンドポイント（例: `GET https://api.todoist.com/rest/v2/tasks`）はブラウザから直接呼び出す。
+  - 完了済みタスク統計は `GET https://api.todoist.com/api/v1/tasks/completed/by_completion_date` をブラウザから直接呼び出す（CORS 対応済み）。

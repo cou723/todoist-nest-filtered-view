@@ -4,17 +4,18 @@
  * このサービスは、完了済みタスクの取得と統計の計算を処理します。
  */
 
-import { Schema as S } from "@effect/schema";
+import {
+	type GetCompletedTasksByCompletionDateArgs,
+	type GetCompletedTasksResponse,
+	TodoistApi,
+	TodoistRequestError,
+} from "@doist/todoist-api-typescript";
 import { addDays, format, startOfDay, subDays } from "date-fns";
 import { Context, Effect, Layer } from "effect";
 import type { TodoistErrorType } from "../errors/types";
 import { mapHttpError, NetworkError, ParseError } from "../errors/types";
-import { type CompletedByDateResponse, ProxyError } from "../rpc/api";
-import { getProxyRpcClient } from "../rpc/client";
 import {
 	CompletedTask,
-	CompletedTasksApiResponse,
-	CompletedTasksResponse,
 	DailyCompletionStat,
 	extractLabelsFromContent,
 	isDailyTask,
@@ -75,84 +76,78 @@ export class StatsService extends Context.Tag("StatsService")<
 
 const MAX_WINDOW_DAYS = 90;
 
-const mapProxyError = (error: unknown): TodoistErrorType => {
-	if (error instanceof ProxyError) {
-		if (typeof error.status === "number") {
-			return mapHttpError(error.status, error.message, error);
-		}
-		return new NetworkError({
-			message: error.message,
-			cause: error,
-		});
-	}
-	return new NetworkError({
-		message: "プロキシとの通信に失敗しました",
-		cause: error,
-	});
-};
-
-const buildCompletedTasksQuery = (
-	since?: string,
-	until?: string,
+const buildCompletedTasksArgs = (
+	since: string,
+	until: string,
 	cursor?: string,
-): Record<string, string> => {
-	const query: Record<string, string> = { limit: "50" };
-	if (since) query.since = since;
-	if (until) query.until = until;
-	if (cursor) query.cursor = cursor;
-	return query;
-};
+): GetCompletedTasksByCompletionDateArgs => ({
+	since,
+	until,
+	cursor: cursor ?? null,
+	limit: 50,
+});
 
-const callCompletedByDateRpc = (
+const callCompletedByDate = (
 	token: string,
-	query: Record<string, string>,
-): Effect.Effect<CompletedByDateResponse, ProxyError> =>
-	Effect.gen(function* () {
-		const client = yield* Effect.promise(() => getProxyRpcClient());
-		return yield* client.CompletedByDate({
-			authorization: `Bearer ${token}`,
-			query,
-		});
+	args: GetCompletedTasksByCompletionDateArgs,
+): Effect.Effect<GetCompletedTasksResponse, TodoistErrorType> =>
+	Effect.tryPromise({
+		try: async () => {
+			const api = new TodoistApi(token);
+			return await api.getCompletedTasksByCompletionDate(args);
+		},
+		catch: (error) => {
+			if (error instanceof TodoistRequestError) {
+				const status = error.httpStatusCode ?? 500;
+				const message = error.message || "Todoist API エラー";
+
+				return mapHttpError(status, message, error.responseData);
+			}
+
+			return new NetworkError({
+				message: "完了済みタスクの取得に失敗しました",
+				cause: error,
+			});
+		},
 	});
 
 // ヘルパー関数: API レスポンスをデコードして CompletedTask に変換
 const decodeAndEnrichCompletedTasks = (
-	response: unknown,
+	response: GetCompletedTasksResponse,
 ): Effect.Effect<{ tasks: CompletedTask[]; nextCursor?: string }, ParseError> =>
 	Effect.gen(function* () {
-		const apiResponse = yield* S.decodeUnknown(CompletedTasksApiResponse)(
-			response,
-		).pipe(
-			Effect.mapError(
-				(error) =>
-					new ParseError({
-						message: "完了タスクレスポンスの解析に失敗しました",
-						cause: error,
-					}),
-			),
-		);
+		const result = yield* Effect.try({
+			try: () => {
+				const tasks = response.items.map((item) => {
+					if (!item.completedAt) {
+						throw new Error("completedAt が存在しません");
+					}
 
-		const validated = new CompletedTasksResponse({
-			items: apiResponse.items ?? [],
-			nextCursor: apiResponse.next_cursor ?? null,
+					const labels = extractLabelsFromContent(item.content);
+
+					return new CompletedTask({
+						id: item.id,
+						completedAt: item.completedAt,
+						content: item.content,
+						projectId: item.projectId,
+						userId: item.userId,
+						labels,
+					});
+				});
+
+				return {
+					tasks,
+					nextCursor: response.nextCursor ?? undefined,
+				};
+			},
+			catch: (error) =>
+				new ParseError({
+					message: "完了タスクレスポンスの解析に失敗しました",
+					cause: error,
+				}),
 		});
 
-		const tasks = validated.items.map((item) => {
-			const labels = extractLabelsFromContent(item.content);
-			return new CompletedTask({
-				id: item.id,
-				completedAt: item.completed_at,
-				content: item.content,
-				projectId: item.project_id,
-				userId: item.user_id,
-				labels,
-			});
-		});
-
-		return {
-			tasks,
-			nextCursor: validated.nextCursor ?? undefined,
-		};
+		return result;
 	});
 
 export const StatsServiceLive = Layer.effect(
@@ -160,12 +155,10 @@ export const StatsServiceLive = Layer.effect(
 	Effect.gen(function* () {
 		const fetchChunk = (
 			token: string,
-			query: Record<string, string>,
+			args: GetCompletedTasksByCompletionDateArgs,
 		): Effect.Effect<{ tasks: CompletedTask[]; nextCursor?: string }, TodoistErrorType> =>
 			Effect.gen(function* () {
-				const response = yield* callCompletedByDateRpc(token, query).pipe(
-					Effect.mapError(mapProxyError),
-				);
+				const response = yield* callCompletedByDate(token, args);
 				return yield* decodeAndEnrichCompletedTasks(response);
 			});
 
@@ -175,12 +168,21 @@ export const StatsServiceLive = Layer.effect(
 			until?: string,
 		): Effect.Effect<CompletedTask[], TodoistErrorType> =>
 			Effect.gen(function* () {
+				if (!since || !until) {
+					return yield* Effect.fail(
+						new ParseError({
+							message: "since と until は必須です",
+							cause: new Error("Invalid date range"),
+						}),
+					);
+				}
+
 				const allItems: CompletedTask[] = [];
 				let cursor: string | undefined;
 
 				do {
-					const query = buildCompletedTasksQuery(since, until, cursor);
-					const { tasks, nextCursor } = yield* fetchChunk(token, query);
+					const args = buildCompletedTasksArgs(since, until, cursor);
+					const { tasks, nextCursor } = yield* fetchChunk(token, args);
 
 					allItems.push(...tasks);
 					cursor = nextCursor;
