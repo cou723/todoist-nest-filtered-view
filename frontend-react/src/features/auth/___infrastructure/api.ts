@@ -3,13 +3,10 @@ import { Schema } from "effect";
 
 export type SchemaType<S extends { Type: unknown }> = S["Type"];
 
-export class ProxyError extends Schema.TaggedError<ProxyError>()(
-	"ProxyError",
-	{
-		message: Schema.String,
-		status: Schema.optional(Schema.Number),
-	},
-) {}
+export class ProxyError extends Schema.TaggedError<ProxyError>()("ProxyError", {
+	message: Schema.String,
+	status: Schema.optional(Schema.Number),
+}) {}
 
 export const OAuthTokenRequestSchema = Schema.Struct({
 	client_id: Schema.NonEmptyString,
@@ -47,5 +44,5 @@ export class ProxyRpc extends RpcGroup.make(
 		error: ProxyError,
 		success: OAuthRevokeResponseSchema,
 		payload: OAuthRevokeRequestSchema,
-	})
+	}),
 ) {}

@@ -1,3 +1,4 @@
+import { Cause, Effect, Exit } from "effect";
 import type React from "react";
 import {
 	createContext,
@@ -6,9 +7,11 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import { setProxyRpcBaseUrl } from "../__application/apiClient";
+import { logout as logoutUseCase } from "../__application/usecases/logout";
+import { handleOAuthCallback } from "../__application/usecases/handleOAuthCallback";
+import { startOAuth as startOAuthUseCase } from "../__application/usecases/startOAuth";
 import type { OAuthService } from "../__application/oAuthService";
-import { useEnv } from "../../env/__application";
+import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
 	isAuthenticated: boolean;
@@ -16,12 +19,11 @@ interface AuthContextType {
 	token: string | null;
 	authError: string | null;
 	startOAuth: () => void;
-	completeOAuth: (params: { code?: string; state?: string }) => Promise<void>;
+	processOAuthCallback: (href: string) => void;
 	logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 
 export function AuthProvider({
 	children,
@@ -30,15 +32,11 @@ export function AuthProvider({
 	children: React.ReactNode;
 	oauthService: OAuthService;
 }) {
-	const { VITE_PROXY_URL: proxyUrl } = useEnv();
+	const navigate = useNavigate();
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [token, setToken] = useState<string | null>(null);
 	const [authError, setAuthError] = useState<string | null>(null);
-
-	useEffect(() => {
-		setProxyRpcBaseUrl(proxyUrl);
-	}, [proxyUrl]);
 
 	useEffect(() => {
 		const savedToken = oauthService.getStoredToken();
@@ -51,51 +49,63 @@ export function AuthProvider({
 
 	const startOAuth = useCallback(() => {
 		setAuthError(null);
-		oauthService.redirectToAuthorize();
-	}, [oauthService]);
+		startOAuthUseCase({
+			oauthService,
+			redirect: navigate,
+		});
+	}, [oauthService, navigate]);
 
 	const completeOAuth = useCallback(
-		async ({ code, state }: { code?: string; state?: string }) => {
-			if (!code) {
-				setAuthError("code パラメータが見つかりません");
-				return;
-			}
+		async ({ code, state }: { code: string; state: string }) => {
 			setIsLoading(true);
 			setAuthError(null);
-
-			try {
-				const result = await oauthService.exchangeCodeForToken(code, state);
-				setToken(result.accessToken);
-				setIsAuthenticated(true);
-			} catch (error) {
-				console.error("[Auth] トークン交換失敗", error);
-				setAuthError(
-					error instanceof Error ? error.message : "トークン交換に失敗しました",
-				);
-				oauthService.clearToken();
-				setIsAuthenticated(false);
-			} finally {
-				setIsLoading(false);
-			}
+			await Effect.runPromise(
+				oauthService
+					.getToken(code, state)
+					.pipe(Effect.tap((result) => setToken(result.accessToken)))
+					.pipe(Effect.tap(() => setIsAuthenticated(true)))
+					.pipe(
+						Effect.mapError((error) => {
+							console.error("[Auth] トークン交換失敗", error);
+							setAuthError(error.message);
+							oauthService.clearToken();
+							setIsAuthenticated(false);
+						}),
+					),
+			);
+			setIsLoading(false);
 		},
 		[oauthService],
 	);
 
-	const logout = useCallback(async () => {
-		if (!token) {
-			setIsAuthenticated(false);
-			return;
-		}
+	const processOAuthCallback = useCallback(
+		(href: string) => {
+			Effect.runSync(
+				handleOAuthCallback(href, oauthService).pipe(
+					Effect.tap(completeOAuth),
+					Effect.mapError((e) => {
+						setAuthError(e.message);
+						setIsAuthenticated(false);
+					}),
+				),
+			);
+		},
+		[completeOAuth, oauthService],
+	);
 
+	const logout = useCallback(async () => {
 		setIsLoading(true);
 		setAuthError(null);
 		try {
-			await oauthService.revokeToken(token);
+			await Effect.runPromise(
+				logoutUseCase({
+					oauthService,
+					token,
+				}),
+			);
 		} catch (error) {
 			console.warn("[Auth] トークン無効化に失敗しました", error);
 		} finally {
-			oauthService.clearToken();
-			oauthService.clearState();
 			setToken(null);
 			setIsAuthenticated(false);
 			setIsLoading(false);
@@ -110,7 +120,7 @@ export function AuthProvider({
 				authError,
 				token,
 				startOAuth,
-				completeOAuth,
+				processOAuthCallback,
 				logout,
 			}}
 		>

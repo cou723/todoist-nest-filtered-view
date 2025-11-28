@@ -1,19 +1,19 @@
-import { Effect } from "effect";
-import type { Task } from "../_domain/task";
 import {
 	TodoistApi,
 	TodoistRequestError,
 	type Task as TodoistTask,
 } from "@doist/todoist-api-typescript";
+import { Effect } from "effect";
 import type { TaskRepository } from "../__application/taskRepository";
+import type { Task } from "../_domain/task";
 
 const mapTodoistTaskToDomain = (task: TodoistTask): Task => ({
-    id: task.id.toString(),
-    summary: task.content,
-    labels: task.labels,
-    deadline: task.due ? new Date(task.due.date) : null,
-    priority: task.priority,
-    parentId: task.parentId ? task.parentId.toString() : null,
+	id: task.id.toString(),
+	summary: task.content,
+	labels: task.labels,
+	deadline: task.due ? new Date(task.due.date) : null,
+	priority: task.priority,
+	parentId: task.parentId ? task.parentId.toString() : null,
 });
 
 export class TaskRepositoryImpl implements TaskRepository {

@@ -1,4 +1,5 @@
 import type { Permission } from "@doist/todoist-api-typescript";
+import type { Effect } from "effect";
 
 export interface OAuthConfig {
 	readonly clientId: string;
@@ -13,26 +14,15 @@ export interface OAuthExchangeResult {
 
 export interface OAuthService {
 	generateState(): string;
-
-	buildAuthorizeUrl(state: string): string;
-
-	redirectToAuthorize(): void;
-
+	getAuthorizeUrl(state: string): string;
 	clearState(): void;
 
-	validateState(state?: string | null): void;
-
-	extractAuthParams(url: string): {
-		code?: string;
-		state?: string;
-		error?: string;
-	};
-	exchangeCodeForToken(
+	getToken(
 		code: string,
-		state?: string | null,
-	): Promise<OAuthExchangeResult>;
+		state: string,
+	): Effect.Effect<OAuthExchangeResult, Error>;
 
-	revokeToken(token: string): Promise<void>;
+	revokeToken(token: string): Effect.Effect<void, Error>;
 	getStoredToken(): string | null;
 	clearToken(): void;
 }

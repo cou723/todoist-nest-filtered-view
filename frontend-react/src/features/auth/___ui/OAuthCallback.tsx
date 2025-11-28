@@ -13,29 +13,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 export function OAuthCallback() {
-	const { completeOAuth, isAuthenticated, authError } = useAuth();
-	const [localError, setLocalError] = useState<string | null>(null);
+	const { processOAuthCallback, isAuthenticated, authError } = useAuth();
 	const handledRef = useRef(false);
 	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (handledRef.current) return;
 		handledRef.current = true;
-		const url = new URL(window.location.href);
-		const code = url.searchParams.get("code") ?? undefined;
-		const state = url.searchParams.get("state") ?? undefined;
-		const error = url.searchParams.get("error");
-
-		if (error) {
-			setLocalError(error);
-			return;
-		}
-
-		void completeOAuth({ code, state }).catch((err) => {
-			const message = err instanceof Error ? err.message : String(err);
-			setLocalError(message);
-		});
-	}, [completeOAuth]);
+		processOAuthCallback(window.location.href)
+	}, [processOAuthCallback]);
 
 	useEffect(() => {
 		if (isAuthenticated) {
@@ -43,7 +29,7 @@ export function OAuthCallback() {
 		}
 	}, [isAuthenticated, navigate]);
 
-	const errorMessage = localError ?? authError;
+	const errorMessage = authError;
 
 	return (
 		<Center style={{ minHeight: "100vh" }}>

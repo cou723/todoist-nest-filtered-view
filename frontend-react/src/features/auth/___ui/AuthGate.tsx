@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
 import { Container, Loader } from "@mantine/core";
-import { LoginForm } from "./LoginForm";
+import type { ReactNode } from "react";
 import { useAuth } from "./AuthContext";
+import { LoginForm } from "./LoginForm";
 
 interface AuthGateProps {
 	children: ReactNode;

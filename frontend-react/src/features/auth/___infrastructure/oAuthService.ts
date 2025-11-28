@@ -2,7 +2,8 @@ import {
 	getAuthorizationUrl,
 	getAuthStateParameter,
 } from "@doist/todoist-api-typescript";
-import { callProxyRpc } from "../../../features/auth/__application/apiClient";
+import { Effect } from "effect";
+import { callProxyRpc } from "../__application/apiClient";
 import type {
 	OAuthConfig,
 	OAuthExchangeResult,
@@ -34,7 +35,7 @@ export class OAuthServiceLive implements OAuthService {
 		return state;
 	}
 
-	buildAuthorizeUrl(state: string): string {
+	getAuthorizeUrl(state: string): string {
 		const baseUrl = getAuthorizationUrl({
 			clientId: this.config.clientId,
 			permissions: this.config.permissions,
@@ -48,54 +49,30 @@ export class OAuthServiceLive implements OAuthService {
 		return url.toString();
 	}
 
-	redirectToAuthorize(): void {
-		const state = this.generateState();
-		const authUrl = this.buildAuthorizeUrl(state);
-		window.location.assign(authUrl);
-	}
-
 	clearState(): void {
 		this.localStorage.removeItem(OAUTH_STATE_KEY);
 		this.sessionStorage.removeItem(OAUTH_STATE_KEY);
 	}
 
-	validateState(state?: string | null): void {
+	validateState(state: string): Effect.Effect<void, Error> {
 		const savedState =
 			this.localStorage.getItem(OAUTH_STATE_KEY) ||
 			this.sessionStorage.getItem(OAUTH_STATE_KEY);
-
-		if (!state) {
-			throw new Error("state パラメータが見つかりません");
-		}
-
 		if (savedState && savedState !== state) {
-			throw new Error("state が一致しません");
+			return Effect.fail(new Error("state が一致しません"));
 		}
+		return Effect.succeedNone;
 	}
 
-	extractAuthParams(url: string): {
-		code?: string;
-		state?: string;
-		error?: string;
-	} {
-		const urlObj = new URL(url);
-		return {
-			code: urlObj.searchParams.get("code") ?? undefined,
-			state: urlObj.searchParams.get("state") ?? undefined,
-			error: urlObj.searchParams.get("error") ?? undefined,
-		};
-	}
-
-	async exchangeCodeForToken(
+	getToken(
 		code: string,
-		state?: string | null,
-	): Promise<OAuthExchangeResult> {
-		console.log("Exchanging code for token...");
-		this.validateState(state);
-		this.clearState();
-
-		try {
-			const raw = await callProxyRpc((client) =>
+		state: string,
+	): Effect.Effect<OAuthExchangeResult, Error> {
+		return Effect.gen(this, function* () {
+			console.log("Exchanging code for token...");
+			yield* this.validateState(state);
+			this.clearState();
+			const raw = yield* callProxyRpc((client) =>
 				client.ExchangeOAuthToken({
 					client_id: this.config.clientId,
 					code,
@@ -104,31 +81,20 @@ export class OAuthServiceLive implements OAuthService {
 			);
 
 			this.localStorage.setItem(TOKEN_KEY, raw.access_token);
-
 			return {
 				accessToken: raw.access_token,
 				tokenType: raw.token_type,
 			};
-		} catch (error) {
-			throw error instanceof Error
-				? error
-				: new Error("トークン交換に失敗しました");
-		}
+		});
 	}
 
-	async revokeToken(token: string): Promise<void> {
-		try {
-			await callProxyRpc((client) =>
-				client.RevokeOAuthToken({
-					client_id: this.config.clientId,
-					access_token: token,
-				}),
-			);
-		} catch (error) {
-			throw error instanceof Error
-				? error
-				: new Error("トークン無効化に失敗しました");
-		}
+	revokeToken(token: string): Effect.Effect<void, Error> {
+		return callProxyRpc((client) =>
+			client.RevokeOAuthToken({
+				client_id: this.config.clientId,
+				access_token: token,
+			}),
+		);
 	}
 
 	getStoredToken(): string | null {
