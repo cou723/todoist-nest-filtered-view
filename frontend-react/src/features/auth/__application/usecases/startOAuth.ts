@@ -1,7 +1,10 @@
 import type { OAuthService } from "../oAuthService";
 
 interface StartOAuthDeps {
-	readonly oauthService: Pick<OAuthService, "generateState" | "getAuthorizeUrl">;
+	readonly oauthService: Pick<
+		OAuthService,
+		"generateState" | "getAuthorizeUrl"
+	>;
 	readonly redirect: (url: string) => void;
 }
 

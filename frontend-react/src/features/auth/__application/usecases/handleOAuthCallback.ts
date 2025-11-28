@@ -1,9 +1,9 @@
-import { Effect,Schema as S } from "effect";
+import { Effect, Schema as S } from "effect";
 import type { OAuthService } from "../oAuthService";
 
 const CallbackParamsSchema = S.Struct({
 	code: S.NonEmptyString,
-	state: S.NonEmptyString
+	state: S.NonEmptyString,
 });
 
 interface OAuthCallbackResult {
@@ -13,8 +13,8 @@ interface OAuthCallbackResult {
 
 export function handleOAuthCallback(
 	href: string,
-	oauthService: Pick<OAuthService, "clearToken">
-	): Effect.Effect<OAuthCallbackResult, Error> {
+	oauthService: Pick<OAuthService, "clearToken">,
+): Effect.Effect<OAuthCallbackResult, Error> {
 	return Effect.gen(function* () {
 		const url = new URL(href);
 		const error = url.searchParams.get("error");
@@ -26,8 +26,10 @@ export function handleOAuthCallback(
 		const state = url.searchParams.get("state");
 
 		return S.decodeUnknownSync(CallbackParamsSchema)({ code, state });
-	}).pipe(Effect.mapError((e)=>{
-		oauthService.clearToken();
-		return e;
-	}));
+	}).pipe(
+		Effect.mapError((e) => {
+			oauthService.clearToken();
+			return e;
+		}),
+	);
 }

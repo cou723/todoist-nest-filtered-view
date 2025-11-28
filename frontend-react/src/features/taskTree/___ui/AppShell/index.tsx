@@ -8,12 +8,12 @@ import {
 	Title,
 } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
+import { useAuth } from "../../../auth/___ui/AuthContext";
 import { CompletionStatsPanel } from "./completion-stats/CompletionStatsPanel";
 import { DatedGoalsPanel } from "./dated-goals/DatedGoalsPanel";
 import { GoalRatePanel } from "./goal-rate/GoalRatePanel";
 import { ThemeToggle } from "./ThemeToggle";
 import { TaskListPanel } from "./task-list/TaskListPanel";
-import { useAuth } from "../../../auth/___ui/AuthContext";
 
 export function AppShell() {
 	const { logout } = useAuth();

@@ -20,7 +20,7 @@ export function OAuthCallback() {
 	useEffect(() => {
 		if (handledRef.current) return;
 		handledRef.current = true;
-		processOAuthCallback(window.location.href)
+		processOAuthCallback(window.location.href);
 	}, [processOAuthCallback]);
 
 	useEffect(() => {

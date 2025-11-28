@@ -14,7 +14,9 @@ const makeProxyClient = (baseUrl: string) =>
 		Effect.provide(
 			RpcClient.layerProtocolHttp({
 				url: `${normalizeBaseUrl(baseUrl)}/rpc`,
-			}).pipe(Layer.provide([FetchHttpClient.layer, RpcSerialization.layerNdjson])),
+			}).pipe(
+				Layer.provide([FetchHttpClient.layer, RpcSerialization.layerNdjson]),
+			),
 		),
 		Effect.scoped,
 	);

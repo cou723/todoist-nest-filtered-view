@@ -24,7 +24,11 @@ export class OAuthService {
 	private readonly localStorage: Storage;
 	private readonly sessionStorage: Storage;
 
-	constructor(config: OAuthConfig, localStorage: Storage, sessionStorage: Storage) {
+	constructor(
+		config: OAuthConfig,
+		localStorage: Storage,
+		sessionStorage: Storage,
+	) {
 		this.config = config;
 		this.localStorage = localStorage;
 		this.sessionStorage = sessionStorage;
@@ -113,7 +117,9 @@ export class OAuthService {
 				tokenType: raw.token_type,
 			};
 		} catch (error) {
-			throw error instanceof Error ? error : new Error("トークン交換に失敗しました");
+			throw error instanceof Error
+				? error
+				: new Error("トークン交換に失敗しました");
 		}
 	}
 
@@ -126,7 +132,9 @@ export class OAuthService {
 				}),
 			);
 		} catch (error) {
-			throw error instanceof Error ? error : new Error("トークン無効化に失敗しました");
+			throw error instanceof Error
+				? error
+				: new Error("トークン無効化に失敗しました");
 		}
 	}
 

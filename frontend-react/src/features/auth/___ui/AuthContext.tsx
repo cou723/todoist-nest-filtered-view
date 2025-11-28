@@ -1,4 +1,4 @@
-import { Cause, Effect, Exit } from "effect";
+import { Effect } from "effect";
 import type React from "react";
 import {
 	createContext,
@@ -7,11 +7,11 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import { logout as logoutUseCase } from "../__application/usecases/logout";
-import { handleOAuthCallback } from "../__application/usecases/handleOAuthCallback";
-import { startOAuth as startOAuthUseCase } from "../__application/usecases/startOAuth";
-import type { OAuthService } from "../__application/oAuthService";
 import { useNavigate } from "react-router-dom";
+import type { OAuthService } from "../__application/oAuthService";
+import { handleOAuthCallback } from "../__application/usecases/handleOAuthCallback";
+import { logout as logoutUseCase } from "../__application/usecases/logout";
+import { startOAuth as startOAuthUseCase } from "../__application/usecases/startOAuth";
 
 interface AuthContextType {
 	isAuthenticated: boolean;

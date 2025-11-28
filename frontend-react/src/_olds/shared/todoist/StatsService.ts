@@ -56,7 +56,9 @@ export interface IStatsService {
 	 * 今日のタスク統計を取得
 	 * @returns 今日の完了統計
 	 */
-	readonly getTodayStats: (token: string) => Effect.Effect<TodayTaskStat, TodoistErrorType>;
+	readonly getTodayStats: (
+		token: string,
+	) => Effect.Effect<TodayTaskStat, TodoistErrorType>;
 
 	/**
 	 * 日付範囲の日次完了統計を取得
@@ -156,7 +158,10 @@ export const StatsServiceLive = Layer.effect(
 		const fetchChunk = (
 			token: string,
 			args: GetCompletedTasksByCompletionDateArgs,
-		): Effect.Effect<{ tasks: CompletedTask[]; nextCursor?: string }, TodoistErrorType> =>
+		): Effect.Effect<
+			{ tasks: CompletedTask[]; nextCursor?: string },
+			TodoistErrorType
+		> =>
 			Effect.gen(function* () {
 				const response = yield* callCompletedByDate(token, args);
 				return yield* decodeAndEnrichCompletedTasks(response);
@@ -205,7 +210,9 @@ export const StatsServiceLive = Layer.effect(
 				});
 			});
 
-		const getTodayStats = (token: string): Effect.Effect<TodayTaskStat, TodoistErrorType> =>
+		const getTodayStats = (
+			token: string,
+		): Effect.Effect<TodayTaskStat, TodoistErrorType> =>
 			Effect.gen(function* () {
 				const today = new Date();
 				const todayKey = format(today, "yyyy-MM-dd");
