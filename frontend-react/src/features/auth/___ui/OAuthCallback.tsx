@@ -8,7 +8,7 @@ import {
 	Title,
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
