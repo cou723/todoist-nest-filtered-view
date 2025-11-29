@@ -21,7 +21,7 @@ const makeProxyClient = (baseUrl: string) =>
 		Effect.scoped,
 	);
 
-// getEnvを依存性注入したほうがテスタビリティは高いが、callProxyRpc単体のテストは基本しないので、ここでは直接呼び出す。
+// getEnvを依存性注入したほうがテスタビリティは高いが、callProxyRpc単体のテストはcallProxyRpcがeffect/rpcの薄いラップのため、効果が薄いためここでは直接呼び出す。
 const { VITE_PROXY_URL } = getEnv();
 const DEFAULT_PROXY_URL = normalizeBaseUrl(VITE_PROXY_URL);
 

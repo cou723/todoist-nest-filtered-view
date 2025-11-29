@@ -5,7 +5,7 @@ type ParentTask = {
 };
 export type RefreshTaskTreesUseCase = (filter: string) => {
 	summary: string;
-	labe: string[];
+	label: string[];
 	deadline: Date;
 	priority: number;
 	parent: ParentTask | null;
