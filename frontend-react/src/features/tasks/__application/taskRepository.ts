@@ -4,4 +4,5 @@ import type { Task } from "../_domain/task";
 
 export interface TaskRepository {
 	getAll(filter: string): Effect.Effect<Task[], TodoistRequestError>;
+	complete(id: string): Effect.Effect<void, TodoistRequestError>;
 }

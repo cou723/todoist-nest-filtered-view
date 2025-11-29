@@ -5,4 +5,5 @@ export type Task = {
 	deadline: Date | null;
 	priority: number;
 	parentId: string | null;
+	order: number;
 };
