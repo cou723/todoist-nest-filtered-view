@@ -1,5 +1,7 @@
-import type { CompletionStatsConfig } from "@/features/config/domain/completionStatsConfig";
-import type { TaskPanelConfig } from "@/features/config/domain/taskPanelConfig";
+import type {
+	CompletionStatsConfig,
+	TaskPanelConfig,
+} from "@/features/config/domain";
 
 export interface ConfigRepository {
 	getTaskPanelConfig(): TaskPanelConfig;

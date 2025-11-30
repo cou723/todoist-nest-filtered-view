@@ -8,9 +8,9 @@ import {
 	Tooltip,
 } from "@mantine/core";
 import { IconRefresh } from "@tabler/icons-react";
-import { PanelWrapper } from "@/features/tasks/ui/AppShell/PanelWrapper";
-import { TaskListItem } from "@/features/tasks/ui/AppShell/task-list/TaskListPanel/TaskListItem";
-import { useTaskPanel } from "@/features/tasks/ui/AppShell/task-list/useTaskPanel";
+import { PanelWrapper } from "@/features/tasks/ui";
+import { useTaskPanel } from "../useTaskPanel";
+import { TaskListItem } from "./TaskListItem";
 
 export function TaskListPanel() {
 	const {

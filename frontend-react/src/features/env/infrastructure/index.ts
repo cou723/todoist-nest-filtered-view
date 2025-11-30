@@ -1,7 +1,7 @@
 import { Schema as S } from "@effect/schema";
 import * as TreeFormatter from "@effect/schema/TreeFormatter";
 import { Effect } from "effect";
-import type { getEnv } from "@/features/env/application/usecase/getEnv";
+import type { getEnv } from "@/features/env/application";
 
 const EnvSchema = S.Struct({
 	VITE_TODOIST_CLIENT_ID: S.NonEmptyTrimmedString,

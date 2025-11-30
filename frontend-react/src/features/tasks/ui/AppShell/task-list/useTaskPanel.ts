@@ -1,14 +1,16 @@
 import { Effect } from "effect";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/features/auth/ui/AuthContext";
-import { LocalStorageConfigRepository } from "@/features/config/infrastructure/localStorageConfigRepository";
-import type { TaskPanelConfig } from "@/features/config/domain/taskPanelConfig";
-import { TaskRepositoryImpl } from "@/features/tasks/infrastructure/taskRepositoryImpl";
-import { completeTask } from "@/features/tasks/application/usecases/completeTask";
-import { fetchTaskTrees } from "@/features/tasks/application/usecases/fetchTaskTrees";
-import { loadTaskPanelConfig } from "@/features/tasks/application/usecases/loadTaskPanelConfig";
-import { updateTaskPanelConfig } from "@/features/tasks/application/usecases/updateTaskPanelConfig";
-import type { TaskTreeNode } from "@/features/tasks/domain/fetchTaskTreesUseCase";
+import { useAuth } from "@/features/auth/ui";
+import type { TaskPanelConfig } from "@/features/config/domain";
+import { LocalStorageConfigRepository } from "@/features/config/infrastructure";
+import {
+	completeTask,
+	fetchTaskTrees,
+	loadTaskPanelConfig,
+	updateTaskPanelConfig,
+} from "@/features/tasks/application";
+import type { TaskTreeNode } from "@/features/tasks/domain";
+import { TaskRepositoryImpl } from "@/features/tasks/infrastructure";
 
 type PanelStatus = "idle" | "loading" | "ready" | "error";
 

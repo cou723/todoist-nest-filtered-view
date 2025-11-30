@@ -1,11 +1,7 @@
 import type { TodoistRequestError } from "@doist/todoist-api-typescript";
 import { Effect } from "effect";
-import type { TaskRepository } from "@/features/tasks/application/taskRepository";
-import type {
-	ParentTask,
-	TaskTreeNode,
-} from "@/features/tasks/domain/fetchTaskTreesUseCase";
-import type { Task } from "@/features/tasks/domain/task";
+import type { TaskRepository } from "@/features/tasks/application";
+import type { ParentTask, Task, TaskTreeNode } from "@/features/tasks/domain";
 
 interface fetchTaskTreesDeps {
 	readonly taskRepository: Pick<TaskRepository, "getAll">;

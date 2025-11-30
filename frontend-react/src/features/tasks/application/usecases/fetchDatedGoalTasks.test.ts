@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import type { TaskRepository } from "@/features/tasks/application/taskRepository";
+import type { TaskRepository } from "@/features/tasks/application";
 import {
 	DATED_GOAL_FILTER,
 	fetchDatedGoalTasks,
-} from "@/features/tasks/application/usecases/fetchDatedGoalTasks";
-import type { Task } from "@/features/tasks/domain/task";
+} from "@/features/tasks/application";
+import type { Task } from "@/features/tasks/domain";
 
 const createTaskRepository = (tasks: Task[]): TaskRepository => ({
 	getAll: () => Effect.succeed(tasks),

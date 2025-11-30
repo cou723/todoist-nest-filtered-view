@@ -8,12 +8,12 @@ import {
 	Title,
 } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
-import { useAuth } from "@/features/auth/ui/AuthContext";
-import { CompletionStatsPanel } from "@/features/tasks/ui/AppShell/completion-stats/CompletionStatsPanel";
-import { DatedGoalsPanel } from "@/features/tasks/ui/AppShell/dated-goals/DatedGoalsPanel";
-import { GoalRatePanel } from "@/features/tasks/ui/AppShell/goal-rate/GoalRatePanel";
-import { ThemeToggle } from "@/features/tasks/ui/AppShell/ThemeToggle";
-import { TaskListPanel } from "@/features/tasks/ui/AppShell/task-list/TaskListPanel";
+import { useAuth } from "@/features/auth/ui";
+import { ThemeToggle } from "@/features/tasks/ui";
+import { CompletionStatsPanel } from "@/features/tasks/ui/AppShell/completion-stats";
+import { DatedGoalsPanel } from "@/features/tasks/ui/AppShell/dated-goals";
+import { GoalRatePanel } from "@/features/tasks/ui/AppShell/goal-rate";
+import { TaskListPanel } from "@/features/tasks/ui/AppShell/task-list";
 
 export function AppShell() {
 	const { logout } = useAuth();

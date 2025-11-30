@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
 	CompletionStatsRepository,
 	CompletionStatsRepositoryError,
-} from "@/features/tasks/application/completionStatsRepository";
-import { fetchCompletionStats } from "@/features/tasks/application/usecases/fetchCompletionStats";
-import type { CompletedTask } from "@/features/tasks/domain/completionStats";
+} from "@/features/tasks/application";
+import { fetchCompletionStats } from "@/features/tasks/application";
+import type { CompletedTask } from "@/features/tasks/domain";
 
 class StubCompletionStatsRepository implements CompletionStatsRepository {
 	private readonly tasks: CompletedTask[];

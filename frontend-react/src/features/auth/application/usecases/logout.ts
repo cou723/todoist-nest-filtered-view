@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { OAuthService } from "@/features/auth/application/oAuthService";
+import type { OAuthService } from "@/features/auth/application";
 
 interface LogoutDeps {
 	readonly oauthService: Pick<

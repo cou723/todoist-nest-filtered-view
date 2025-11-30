@@ -1,14 +1,18 @@
 import { Effect } from "effect";
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/features/auth/ui/AuthContext";
-import { LocalStorageConfigRepository } from "@/features/config/infrastructure/localStorageConfigRepository";
-import type { CompletionStatsConfig } from "@/features/config/domain/completionStatsConfig";
-import { CompletionStatsRepositoryImpl } from "@/features/tasks/infrastructure/completionStatsRepositoryImpl";
-import { TaskRepositoryImpl } from "@/features/tasks/infrastructure/taskRepositoryImpl";
-import { fetchCompletionStats } from "@/features/tasks/application/usecases/fetchCompletionStats";
-import { fetchRemainingWorkTasks } from "@/features/tasks/application/usecases/fetchRemainingWorkTasks";
-import { loadCompletionStatsConfig } from "@/features/tasks/application/usecases/loadCompletionStatsConfig";
-import type { CompletionStats } from "@/features/tasks/domain/completionStats";
+import { useAuth } from "@/features/auth/ui";
+import type { CompletionStatsConfig } from "@/features/config/domain";
+import { LocalStorageConfigRepository } from "@/features/config/infrastructure";
+import {
+	fetchCompletionStats,
+	fetchRemainingWorkTasks,
+	loadCompletionStatsConfig,
+} from "@/features/tasks/application";
+import type { CompletionStats } from "@/features/tasks/domain";
+import {
+	CompletionStatsRepositoryImpl,
+	TaskRepositoryImpl,
+} from "@/features/tasks/infrastructure";
 
 type PanelStatus = "idle" | "loading" | "ready" | "error";
 

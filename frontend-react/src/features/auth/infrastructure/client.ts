@@ -2,11 +2,8 @@ import { FetchHttpClient } from "@effect/platform";
 import { RpcClient, RpcSerialization } from "@effect/rpc";
 import type { RpcClientError } from "@effect/rpc/RpcClientError";
 import { Effect, Layer } from "effect";
-import {
-	type ProxyError,
-	ProxyRpc,
-} from "@/features/auth/infrastructure/api";
-import { getEnvImpl as getEnv } from "@/features/env/infrastructure";
+import { type ProxyError, ProxyRpc } from "@/features/auth/infrastructure/api";
+import { getEnvImpl as getEnv } from "@/features/env";
 
 const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
 

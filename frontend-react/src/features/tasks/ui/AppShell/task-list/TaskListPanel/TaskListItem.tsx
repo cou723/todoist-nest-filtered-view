@@ -18,10 +18,7 @@ import {
 	isTomorrow,
 } from "date-fns";
 import { ja } from "date-fns/locale";
-import type {
-	ParentTask,
-	TaskTreeNode,
-} from "@/features/tasks/domain/fetchTaskTreesUseCase";
+import type { ParentTask, TaskTreeNode } from "@/features/tasks/domain";
 
 const buildAncestorChain = (task: TaskTreeNode): ParentTask[] => {
 	const chain: ParentTask[] = [];

@@ -22,12 +22,9 @@ import {
 	isTomorrow,
 } from "date-fns";
 import { ja } from "date-fns/locale";
-import { PanelWrapper } from "@/features/tasks/ui/AppShell/PanelWrapper";
-import { useTaskPanel } from "@/features/tasks/ui/AppShell/task-list/useTaskPanel";
-import type {
-	ParentTask,
-	TaskTreeNode,
-} from "@/features/tasks/domain/fetchTaskTreesUseCase";
+import type { ParentTask, TaskTreeNode } from "@/features/tasks/domain";
+import { PanelWrapper } from "@/features/tasks/ui";
+import { useTaskPanel } from "./useTaskPanel";
 
 const buildAncestorChain = (task: TaskTreeNode): ParentTask[] => {
 	const chain: ParentTask[] = [];

@@ -1,5 +1,5 @@
 import type { Effect } from "effect";
-import type { CompletedTask } from "@/features/tasks/domain/completionStats";
+import type { CompletedTask } from "@/features/tasks/domain";
 
 export class CompletionStatsRepositoryError extends Error {
 	status?: number;

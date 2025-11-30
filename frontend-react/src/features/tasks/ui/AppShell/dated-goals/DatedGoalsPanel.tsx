@@ -1,7 +1,15 @@
-import { Anchor, Badge, Group, Loader, Stack, Text, Title } from "@mantine/core";
-import { PanelWrapper } from "@/features/tasks/ui/AppShell/PanelWrapper";
-import { formatDeadlineDisplay } from "@/features/tasks/ui/AppShell/dated-goals/deadlineDisplay";
-import { useDatedGoalsPanel } from "@/features/tasks/ui/AppShell/dated-goals/useDatedGoalsPanel";
+import {
+	Anchor,
+	Badge,
+	Group,
+	Loader,
+	Stack,
+	Text,
+	Title,
+} from "@mantine/core";
+import { PanelWrapper } from "@/features/tasks/ui";
+import { formatDeadlineDisplay } from "./deadlineDisplay";
+import { useDatedGoalsPanel } from "./useDatedGoalsPanel";
 
 const taskUrl = (taskId: string) => `https://todoist.com/showTask?id=${taskId}`;
 

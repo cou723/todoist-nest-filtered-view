@@ -3,12 +3,12 @@ import {
 	getAuthStateParameter,
 } from "@doist/todoist-api-typescript";
 import { Effect } from "effect";
-import { callProxyRpc } from "@/features/auth/infrastructure/client";
 import type {
 	OAuthConfig,
 	OAuthExchangeResult,
 	OAuthService,
-} from "@/features/auth/application/oAuthService";
+} from "@/features/auth/application";
+import { callProxyRpc } from "@/features/auth/infrastructure/client";
 
 const OAUTH_STATE_KEY = "oauth_state";
 const TOKEN_KEY = "todoist_token";

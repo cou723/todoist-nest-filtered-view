@@ -1,7 +1,7 @@
 import type { TodoistRequestError } from "@doist/todoist-api-typescript";
 import { Effect } from "effect";
-import type { TaskRepository } from "@/features/tasks/application/taskRepository";
-import type { GoalRate } from "@/features/tasks/domain/goalRate";
+import type { TaskRepository } from "@/features/tasks/application";
+import type { GoalRate } from "@/features/tasks/domain";
 
 const normalizeLabel = (label: string) => label.trim().replace(/^@+/, "");
 
@@ -17,15 +17,11 @@ export const fetchGoalRate = ({
 
 		const goalCount = tasks.length;
 		const nonMilestoneCount = tasks.filter((task) =>
-			task.labels.some(
-				(label) => normalizeLabel(label) === "non-milestone",
-			),
+			task.labels.some((label) => normalizeLabel(label) === "non-milestone"),
 		).length;
 
 		const percentage =
-			goalCount > 0
-				? Math.round((nonMilestoneCount / goalCount) * 100)
-				: 0;
+			goalCount > 0 ? Math.round((nonMilestoneCount / goalCount) * 100) : 0;
 
 		return {
 			percentage,

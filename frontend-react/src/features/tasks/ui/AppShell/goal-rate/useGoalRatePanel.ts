@@ -1,10 +1,10 @@
 import { notifications } from "@mantine/notifications";
 import { Effect } from "effect";
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/features/auth/ui/AuthContext";
-import { TaskRepositoryImpl } from "@/features/tasks/infrastructure/taskRepositoryImpl";
-import { fetchGoalRate } from "@/features/tasks/application/usecases/fetchGoalRate";
-import type { GoalRate } from "@/features/tasks/domain/goalRate";
+import { useAuth } from "@/features/auth/ui";
+import { fetchGoalRate } from "@/features/tasks/application";
+import type { GoalRate } from "@/features/tasks/domain";
+import { TaskRepositoryImpl } from "@/features/tasks/infrastructure";
 
 type PanelStatus = "idle" | "loading" | "ready" | "error";
 

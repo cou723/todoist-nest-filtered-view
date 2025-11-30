@@ -1,6 +1,6 @@
 import { Group, Loader, Stack, Text, Title } from "@mantine/core";
-import { PanelWrapper } from "@/features/tasks/ui/AppShell/PanelWrapper";
-import { useGoalRatePanel } from "@/features/tasks/ui/AppShell/goal-rate/useGoalRatePanel";
+import { PanelWrapper } from "@/features/tasks/ui";
+import { useGoalRatePanel } from "./useGoalRatePanel";
 
 export function GoalRatePanel() {
 	const { goalRate, status } = useGoalRatePanel();

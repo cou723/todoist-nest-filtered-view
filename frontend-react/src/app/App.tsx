@@ -7,9 +7,9 @@ import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import { useMemo } from "react";
 import { Router } from "@/app/router";
-import { OAuthServiceLive } from "@/features/auth/infrastructure/oAuthService";
-import { AuthProvider } from "@/features/auth/ui/AuthContext";
-import { getEnvImpl as getEnv } from "@/features/env/infrastructure";
+import { OAuthServiceLive } from "@/features/auth/infrastructure";
+import { AuthProvider } from "@/features/auth/ui";
+import { getEnvImpl as getEnv } from "@/features/env";
 
 export function App() {
 	const {

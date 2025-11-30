@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/features/auth/ui/AuthContext";
-import { TaskRepositoryImpl } from "@/features/tasks/infrastructure/taskRepositoryImpl";
-import { fetchDatedGoalTasks } from "@/features/tasks/application/usecases/fetchDatedGoalTasks";
-import type { DatedGoalTask } from "@/features/tasks/domain/datedGoalTask";
+import { useAuth } from "@/features/auth/ui";
+import { fetchDatedGoalTasks } from "@/features/tasks/application";
+import type { DatedGoalTask } from "@/features/tasks/domain";
+import { TaskRepositoryImpl } from "@/features/tasks/infrastructure";
 
 type PanelStatus = "idle" | "loading" | "ready" | "error";
 

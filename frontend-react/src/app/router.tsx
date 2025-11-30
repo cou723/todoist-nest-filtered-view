@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AuthGate } from "@/features/auth/ui/AuthGate";
-import { OAuthCallback } from "@/features/auth/ui/OAuthCallback";
-import { AppShell } from "@/features/tasks/ui/AppShell";
+import { AuthGate, OAuthCallback } from "@/features/auth/ui";
+import { AppShell } from "@/features/tasks/ui";
 
 export function Router() {
 	return (

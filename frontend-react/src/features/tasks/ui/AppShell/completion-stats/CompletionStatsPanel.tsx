@@ -13,8 +13,8 @@ import {
 import { ResponsiveLine } from "@nivo/line";
 import { format } from "date-fns";
 import { useMemo } from "react";
-import { useCompletionStatsPanel } from "@/features/tasks/ui/AppShell/completion-stats/useCompletionStatsPanel";
-import { PanelWrapper } from "@/features/tasks/ui/AppShell/PanelWrapper";
+import { PanelWrapper } from "@/features/tasks/ui";
+import { useCompletionStatsPanel } from "./useCompletionStatsPanel";
 
 const formatDateLabel = (date: Date) => format(date, "M/d");
 

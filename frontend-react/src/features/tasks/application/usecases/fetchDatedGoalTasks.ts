@@ -1,9 +1,8 @@
 import type { TodoistRequestError } from "@doist/todoist-api-typescript";
 import { compareAsc } from "date-fns";
 import { Effect } from "effect";
-import type { TaskRepository } from "@/features/tasks/application/taskRepository";
-import type { DatedGoalTask } from "@/features/tasks/domain/datedGoalTask";
-import type { Task } from "@/features/tasks/domain/task";
+import type { TaskRepository } from "@/features/tasks/application";
+import type { DatedGoalTask, Task } from "@/features/tasks/domain";
 
 export const DATED_GOAL_FILTER = "@goal & !no date";
 
@@ -22,19 +21,20 @@ interface FetchDatedGoalTasksDeps {
 	readonly taskRepository: Pick<TaskRepository, "getAll">;
 }
 
-export const fetchDatedGoalTasks = (
-	{ taskRepository }: FetchDatedGoalTasksDeps,
-): Effect.Effect<DatedGoalTask[], TodoistRequestError> =>
+export const fetchDatedGoalTasks = ({
+	taskRepository,
+}: FetchDatedGoalTasksDeps): Effect.Effect<
+	DatedGoalTask[],
+	TodoistRequestError
+> =>
 	Effect.gen(function* () {
 		const tasks = yield* taskRepository.getAll(DATED_GOAL_FILTER);
-		const datedGoals = tasks
-			.filter(hasDeadline)
-			.map((task) => ({
-				id: task.id,
-				summary: task.summary,
-				deadline: task.deadline,
-				order: task.order,
-			}));
+		const datedGoals = tasks.filter(hasDeadline).map((task) => ({
+			id: task.id,
+			summary: task.summary,
+			deadline: task.deadline,
+			order: task.order,
+		}));
 
 		return datedGoals.sort(sortByDeadline);
 	});

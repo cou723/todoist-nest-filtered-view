@@ -8,10 +8,12 @@ import {
 	useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import type { OAuthService } from "@/features/auth/application/oAuthService";
-import { handleOAuthCallback } from "@/features/auth/application/usecases/handleOAuthCallback";
-import { logout as logoutUseCase } from "@/features/auth/application/usecases/logout";
-import { startOAuth as startOAuthUseCase } from "@/features/auth/application/usecases/startOAuth";
+import type { OAuthService } from "@/features/auth/application";
+import {
+	handleOAuthCallback,
+	logout as logoutUseCase,
+	startOAuth as startOAuthUseCase,
+} from "@/features/auth/application";
 
 interface AuthContextType {
 	isAuthenticated: boolean;

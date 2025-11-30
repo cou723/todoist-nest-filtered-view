@@ -3,12 +3,12 @@ import { Effect } from "effect";
 import type {
 	CompletionStatsRepository,
 	CompletionStatsRepositoryError,
-} from "@/features/tasks/application/completionStatsRepository";
+} from "@/features/tasks/application";
 import type {
 	CompletedTask,
 	CompletionStats,
 	DailyCompletionCount,
-} from "@/features/tasks/domain/completionStats";
+} from "@/features/tasks/domain";
 
 const HISTORY_DAYS = 90;
 const MOVING_AVERAGE_LOOKBACK = 6;

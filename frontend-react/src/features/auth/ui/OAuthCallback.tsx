@@ -10,7 +10,7 @@ import {
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/features/auth/ui/AuthContext";
+import { useAuth } from "@/features/auth/ui";
 
 export function OAuthCallback() {
 	const { processOAuthCallback, isAuthenticated, authError } = useAuth();

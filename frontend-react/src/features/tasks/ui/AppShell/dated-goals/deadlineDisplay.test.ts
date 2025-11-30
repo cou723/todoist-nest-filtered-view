@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDeadlineDisplay } from "@/features/tasks/ui/AppShell/dated-goals/deadlineDisplay";
+import { formatDeadlineDisplay } from "@/features/tasks/ui/AppShell/dated-goals";
 
 const baseDate = new Date(2024, 0, 10); // 2024-01-10 local midnight
 

@@ -1,5 +1,5 @@
-import type { ConfigRepository } from "@/features/config/application/configRepository";
-import type { TaskPanelConfig } from "@/features/config/domain/taskPanelConfig";
+import type { ConfigRepository } from "@/features/config/application";
+import type { TaskPanelConfig } from "@/features/config/domain";
 
 interface LoadTaskPanelConfigDeps {
 	readonly configRepository: Pick<ConfigRepository, "getTaskPanelConfig">;
