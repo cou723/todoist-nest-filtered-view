@@ -35,10 +35,8 @@ export function CompletionStatsPanel() {
 	const {
 		stats,
 		remainingCount,
-		excludedLabels,
 		status,
 		error,
-		updateExcludedLabels,
 	} = useCompletionStatsPanel();
 
 	const isLoading = status === "loading";
@@ -47,49 +45,41 @@ export function CompletionStatsPanel() {
 		((stats?.summary.last90DaysTotal ?? 0) > 0 ||
 			(stats?.summary.todayCount ?? 0) > 0);
 
-	const chartData = useMemo(() => {
+	const { chartData, tickValues } = useMemo(() => {
 		if (!stats) {
-			return [];
+			return { chartData: [], tickValues: [] };
 		}
 
-		return [
-			{
-				id: "日次件数",
-				data: stats.daily.map((point) => ({
-					x: formatDateLabel(point.date),
-					y: point.count,
-				})),
-			},
-			{
-				id: "7日移動平均",
-				data: stats.daily.map((point) => ({
-					x: formatDateLabel(point.date),
-					y: Number(point.movingAverage.toFixed(2)),
-				})),
-			},
-		];
+		const labels = stats.daily.map((point) => formatDateLabel(point.date));
+
+		return {
+			chartData: [
+				{
+					id: "日次件数",
+					data: stats.daily.map((point, index) => ({
+						x: labels[index],
+						y: point.count,
+					})),
+				},
+				{
+					id: "7日移動平均",
+					data: stats.daily.map((point, index) => ({
+						x: labels[index],
+						y: Number(point.movingAverage.toFixed(2)),
+					})),
+				},
+			],
+			tickValues: labels.filter(
+				(_, index) =>
+					index % 7 === 0 || index === Math.max(0, labels.length - 1),
+			),
+		};
 	}, [stats]);
 
 	return (
 		<PanelWrapper data-testid="completion-stats-panel">
 			<Stack gap="md">
 				<Title order={3}>ワークタスク完了統計</Title>
-
-				<Stack gap={6}>
-					<Text size="sm" fw={600}>
-						除外ラベル
-					</Text>
-					<TagsInput
-						value={excludedLabels}
-						onChange={updateExcludedLabels}
-						placeholder="@foo, @bar"
-						clearable
-						data={excludedLabels}
-					/>
-					<Text size="xs" c="dimmed">
-						常時除外: @毎日のタスク
-					</Text>
-				</Stack>
 
 				{error ? (
 					<Alert color="red" variant="light">
@@ -132,7 +122,11 @@ export function CompletionStatsPanel() {
 						</SimpleGrid>
 
 						{hasData ? (
-							<Graph chartData={chartData} theme={theme} />
+							<Graph
+								chartData={chartData}
+								tickValues={tickValues}
+								theme={theme}
+							/>
 						) : (
 							<Text c="dimmed" size="sm">
 								完了統計データがありません
@@ -146,9 +140,11 @@ export function CompletionStatsPanel() {
 }
 function Graph({
 	chartData,
+	tickValues,
 	theme,
 }: {
 	chartData: { id: string; data: { x: string; y: number }[] }[];
+	tickValues: string[];
 	theme: MantineTheme;
 }) {
 	const colorScheme = useComputedColorScheme("light");
@@ -170,6 +166,7 @@ function Graph({
 					tickSize: 0,
 					tickPadding: 10,
 					tickRotation: -5,
+					tickValues,
 				}}
 				axisLeft={{
 					tickSize: 0,

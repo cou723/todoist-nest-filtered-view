@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/___ui/AuthContext";
 import { LocalStorageConfigRepository } from "@/features/config/___infrastructure/localStorageConfigRepository";
 import type { CompletionStatsConfig } from "@/features/config/_domain/completionStatsConfig";
@@ -8,19 +8,9 @@ import { TaskRepositoryImpl } from "@/features/tasks/___infrastructure/taskRepos
 import { fetchCompletionStats } from "@/features/tasks/__application/usecases/fetchCompletionStats";
 import { fetchRemainingWorkTasks } from "@/features/tasks/__application/usecases/fetchRemainingWorkTasks";
 import { loadCompletionStatsConfig } from "@/features/tasks/__application/usecases/loadCompletionStatsConfig";
-import { updateCompletionStatsConfig } from "@/features/tasks/__application/usecases/updateCompletionStatsConfig";
 import type { CompletionStats } from "@/features/tasks/_domain/completionStats";
 
 type PanelStatus = "idle" | "loading" | "ready" | "error";
-
-const normalizeExcludedLabels = (labels: string[]): string[] =>
-	Array.from(
-		new Set(
-			labels
-				.map((label) => label.trim().replace(/^@+/, ""))
-				.filter((label) => label.length > 0),
-		),
-	);
 
 const formatErrorMessage = (error: unknown): string => {
 	if (error instanceof Error) {
@@ -112,28 +102,14 @@ export function useCompletionStatsPanel() {
 	}, [
 		completionStatsRepository,
 		config.excludedLabels,
-		configLoaded,
 		taskRepository,
+		configLoaded,
 	]);
-
-	const updateExcludedLabels = useCallback(
-		(labels: string[]) => {
-			const normalized = normalizeExcludedLabels(labels);
-			const nextConfig: CompletionStatsConfig = {
-				excludedLabels: normalized,
-			};
-			updateCompletionStatsConfig(nextConfig, { configRepository });
-			setConfig(nextConfig);
-		},
-		[configRepository],
-	);
 
 	return {
 		stats,
 		remainingCount,
-		excludedLabels: config.excludedLabels,
 		status,
 		error,
-		updateExcludedLabels,
 	};
 }
