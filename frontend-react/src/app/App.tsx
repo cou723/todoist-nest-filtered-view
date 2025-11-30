@@ -1,8 +1,10 @@
 import { MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 import { BrowserRouter } from "react-router-dom";
 
 // Mantine CSS は index.css で読み込む
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import { useMemo } from "react";
 import { Router } from "@/app/router";
 import { OAuthServiceLive } from "@/features/auth/___infrastructure/oAuthService";
@@ -27,6 +29,7 @@ export function App() {
 
 	return (
 		<MantineProvider>
+			<Notifications />
 			<BrowserRouter>
 				<AuthProvider oauthService={oauthServiceLive}>
 					<Router />
