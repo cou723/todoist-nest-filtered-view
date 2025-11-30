@@ -5,10 +5,10 @@
 ## ディレクトリとレイヤ
 - `src/app/` : ルートエントリ。Router、プロバイダ、DI の結線（例: `OAuthServiceLive` を `AuthProvider` に注入）。
 - `src/features/<feature>/` : 機能単位で完結させる。
-  - `_domain` : ドメインモデルとユースケース型。副作用なし。React/ブラウザ API への依存禁止。
-  - `__application` : ユースケース実装とポート（例: `OAuthService`, `TaskRepository`）。Effect で副作用を表現し、UI/インフラに依存しない。
-  - `___infrastructure` : 外部 API/ブラウザ依存の実装（例: `OAuthServiceLive`, RPC クライアント, Todoist API 実装）。ポートを満たす形で提供し、UI から注入されることを前提にする。
-  - `___ui` : React コンポーネントとフック。アプリケーション層のポートを受け取り、UI 状態を管理する。Mantine 等の UI ライブラリへの依存はここに閉じ込める。
+  - `domain` : ドメインモデルとユースケース型。副作用なし。React/ブラウザ API への依存禁止。
+  - `application` : ユースケース実装とポート（例: `OAuthService`, `TaskRepository`）。Effect で副作用を表現し、UI/インフラに依存しない。
+  - `infrastructure` : 外部 API/ブラウザ依存の実装（例: `OAuthServiceLive`, RPC クライアント, Todoist API 実装）。ポートを満たす形で提供し、UI から注入されることを前提にする。
+  - `ui` : React コンポーネントとフック。アプリケーション層のポートを受け取り、UI 状態を管理する。Mantine 等の UI ライブラリへの依存はここに閉じ込める。
 - `src/_olds/` : 旧実装の残骸。参照のみで、新規コードからは依存しない。
 
 依存方向は上位→下位のみ（UI→アプリケーション→ドメイン / インフラ）。ドメインは何にも依存しない。
