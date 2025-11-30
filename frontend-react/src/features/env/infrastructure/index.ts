@@ -1,6 +1,4 @@
-import { Schema as S } from "@effect/schema";
-import * as TreeFormatter from "@effect/schema/TreeFormatter";
-import { Effect } from "effect";
+import { Effect, Schema as S } from "effect";
 import type { getEnv } from "@/features/env/application";
 
 const EnvSchema = S.Struct({
@@ -16,9 +14,7 @@ export const getEnvImpl: getEnv = () =>
 			Effect.mapError(
 				(error) =>
 					// ここでのバリデーションエラーは致命的で、エラーとしてはバグに分類される。そのためフェイルファストの原則に従い、ここで例外を投げる。
-					new Error(
-						`Environment variables validation failed: ${TreeFormatter.formatErrorSync(error)}`,
-					),
+					new Error(`Environment variables validation failed: ${error}`),
 			),
 			Effect.map((env) => ({
 				VITE_TODOIST_CLIENT_ID: env.VITE_TODOIST_CLIENT_ID,

@@ -1,6 +1,18 @@
+import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AuthGate, OAuthCallback } from "@/features/auth/ui";
-import { AppShell } from "@/features/tasks/ui";
+import { AuthGate } from "@/features/auth/ui";
+
+const AppShell = lazy(() =>
+	import("@/features/tasks/ui").then((module) => ({
+		default: module.AppShell,
+	})),
+);
+
+const OAuthCallback = lazy(() =>
+	import("@/features/auth/ui/OAuthCallback").then((module) => ({
+		default: module.OAuthCallback,
+	})),
+);
 
 export function Router() {
 	return (
