@@ -21,7 +21,7 @@ import { ja } from "date-fns/locale";
 import type {
 	ParentTask,
 	TaskTreeNode,
-} from "../../../../_domain/fetchTaskTreesUseCase";
+} from "@/features/tasks/_domain/fetchTaskTreesUseCase";
 
 const buildAncestorChain = (task: TaskTreeNode): ParentTask[] => {
 	const chain: ParentTask[] = [];

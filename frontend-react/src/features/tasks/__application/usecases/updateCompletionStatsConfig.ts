@@ -1,5 +1,5 @@
-import type { ConfigRepository } from "../../../config/__application/configRepository";
-import type { CompletionStatsConfig } from "../../../config/_domain/completionStatsConfig";
+import type { ConfigRepository } from "@/features/config/__application/configRepository";
+import type { CompletionStatsConfig } from "@/features/config/_domain/completionStatsConfig";
 
 interface UpdateCompletionStatsConfigDeps {
 	readonly configRepository: Pick<ConfigRepository, "setCompletionStatsConfig">;

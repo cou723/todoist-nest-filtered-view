@@ -1,4 +1,4 @@
-import type { Task } from "./task";
+import type { Task } from "@/features/tasks/_domain/task";
 
 export type ParentTask = Pick<Task, "id" | "summary" | "order"> & {
 	parent: ParentTask | null;

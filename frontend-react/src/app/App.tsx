@@ -4,10 +4,10 @@ import { BrowserRouter } from "react-router-dom";
 // Mantine CSS は index.css で読み込む
 import "@mantine/core/styles.css";
 import { useMemo } from "react";
-import { OAuthServiceLive } from "../features/auth/___infrastructure/oAuthService";
-import { AuthProvider } from "../features/auth/___ui/AuthContext";
-import { getEnvImpl as getEnv } from "../features/env/___infrastructure";
-import { Router } from "./router";
+import { Router } from "@/app/router";
+import { OAuthServiceLive } from "@/features/auth/___infrastructure/oAuthService";
+import { AuthProvider } from "@/features/auth/___ui/AuthContext";
+import { getEnvImpl as getEnv } from "@/features/env/___infrastructure";
 
 export function App() {
 	const {

@@ -1,6 +1,6 @@
-import type { ConfigRepository } from "../__application/configRepository";
-import type { CompletionStatsConfig } from "../_domain/completionStatsConfig";
-import type { TaskPanelConfig } from "../_domain/taskPanelConfig";
+import type { ConfigRepository } from "@/features/config/__application/configRepository";
+import type { CompletionStatsConfig } from "@/features/config/_domain/completionStatsConfig";
+import type { TaskPanelConfig } from "@/features/config/_domain/taskPanelConfig";
 
 const TASK_PANEL_CONFIG_KEY = "task_panel_config";
 const LEGACY_FILTER_KEY = "todoist_filter_query";

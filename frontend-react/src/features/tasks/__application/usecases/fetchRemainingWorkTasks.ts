@@ -1,6 +1,6 @@
 import type { TodoistRequestError } from "@doist/todoist-api-typescript";
 import { Effect } from "effect";
-import type { TaskRepository } from "../taskRepository";
+import type { TaskRepository } from "@/features/tasks/__application/taskRepository";
 
 const EXCLUDED_LABEL_ALWAYS = "毎日のタスク";
 const normalizeLabel = (label: string) => label.trim().replace(/^@+/, "");

@@ -1,14 +1,14 @@
 import { Effect } from "effect";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAuth } from "../../../../auth/___ui/AuthContext";
-import { LocalStorageConfigRepository } from "../../../../config/___infrastructure/localStorageConfigRepository";
-import type { TaskPanelConfig } from "../../../../config/_domain/taskPanelConfig";
-import { TaskRepositoryImpl } from "../../../___infrastructure/taskRepositoryImpl";
-import { completeTask } from "../../../__application/usecases/completeTask";
-import { fetchTaskTrees } from "../../../__application/usecases/fetchTaskTrees";
-import { loadTaskPanelConfig } from "../../../__application/usecases/loadTaskPanelConfig";
-import { updateTaskPanelConfig } from "../../../__application/usecases/updateTaskPanelConfig";
-import type { TaskTreeNode } from "../../../_domain/fetchTaskTreesUseCase";
+import { useAuth } from "@/features/auth/___ui/AuthContext";
+import { LocalStorageConfigRepository } from "@/features/config/___infrastructure/localStorageConfigRepository";
+import type { TaskPanelConfig } from "@/features/config/_domain/taskPanelConfig";
+import { TaskRepositoryImpl } from "@/features/tasks/___infrastructure/taskRepositoryImpl";
+import { completeTask } from "@/features/tasks/__application/usecases/completeTask";
+import { fetchTaskTrees } from "@/features/tasks/__application/usecases/fetchTaskTrees";
+import { loadTaskPanelConfig } from "@/features/tasks/__application/usecases/loadTaskPanelConfig";
+import { updateTaskPanelConfig } from "@/features/tasks/__application/usecases/updateTaskPanelConfig";
+import type { TaskTreeNode } from "@/features/tasks/_domain/fetchTaskTreesUseCase";
 
 type PanelStatus = "idle" | "loading" | "ready" | "error";
 

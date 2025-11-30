@@ -1,5 +1,5 @@
 import { Effect, Schema as S } from "effect";
-import type { OAuthService } from "../oAuthService";
+import type { OAuthService } from "@/features/auth/__application/oAuthService";
 
 const CallbackParamsSchema = S.Struct({
 	code: S.NonEmptyString,

@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import type { Task } from "../../_domain/task";
-import type { TaskRepository } from "../taskRepository";
-import { fetchTaskTrees } from "./fetchTaskTrees";
+import type { TaskRepository } from "@/features/tasks/__application/taskRepository";
+import { fetchTaskTrees } from "@/features/tasks/__application/usecases/fetchTaskTrees";
+import type { Task } from "@/features/tasks/_domain/task";
 
 const createTaskRepository = (tasks: Task[]): TaskRepository => ({
 	getAll: () => Effect.succeed(tasks),

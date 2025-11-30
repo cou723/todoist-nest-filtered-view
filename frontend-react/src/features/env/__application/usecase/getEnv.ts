@@ -1,3 +1,3 @@
-import type { Env } from "../../_domain/env";
+import type { Env } from "@/features/env/_domain/env";
 
 export type getEnv = () => Env;

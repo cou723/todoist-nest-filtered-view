@@ -1,4 +1,4 @@
-import type { OAuthService } from "../oAuthService";
+import type { OAuthService } from "@/features/auth/__application/oAuthService";
 
 interface StartOAuthDeps {
 	readonly oauthService: Pick<

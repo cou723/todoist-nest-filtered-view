@@ -1,5 +1,5 @@
 import { Stack, Text, Title } from "@mantine/core";
-import { PanelWrapper } from "../PanelWrapper";
+import { PanelWrapper } from "@/features/tasks/___ui/AppShell/PanelWrapper";
 
 export function DatedGoalsPanel() {
 	return (

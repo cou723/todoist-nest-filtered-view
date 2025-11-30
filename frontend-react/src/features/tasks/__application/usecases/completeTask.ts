@@ -1,6 +1,6 @@
 import type { TodoistRequestError } from "@doist/todoist-api-typescript";
 import { Effect } from "effect";
-import type { TaskRepository } from "../taskRepository";
+import type { TaskRepository } from "@/features/tasks/__application/taskRepository";
 
 interface CompleteTaskDeps {
 	readonly taskRepository: Pick<TaskRepository, "complete">;

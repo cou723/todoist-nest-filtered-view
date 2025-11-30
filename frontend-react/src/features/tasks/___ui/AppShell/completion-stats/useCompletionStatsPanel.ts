@@ -1,15 +1,15 @@
 import { Effect } from "effect";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAuth } from "../../../../auth/___ui/AuthContext";
-import { LocalStorageConfigRepository } from "../../../../config/___infrastructure/localStorageConfigRepository";
-import type { CompletionStatsConfig } from "../../../../config/_domain/completionStatsConfig";
-import { CompletionStatsRepositoryImpl } from "../../../___infrastructure/completionStatsRepositoryImpl";
-import { TaskRepositoryImpl } from "../../../___infrastructure/taskRepositoryImpl";
-import { fetchCompletionStats } from "../../../__application/usecases/fetchCompletionStats";
-import { fetchRemainingWorkTasks } from "../../../__application/usecases/fetchRemainingWorkTasks";
-import { loadCompletionStatsConfig } from "../../../__application/usecases/loadCompletionStatsConfig";
-import { updateCompletionStatsConfig } from "../../../__application/usecases/updateCompletionStatsConfig";
-import type { CompletionStats } from "../../../_domain/completionStats";
+import { useAuth } from "@/features/auth/___ui/AuthContext";
+import { LocalStorageConfigRepository } from "@/features/config/___infrastructure/localStorageConfigRepository";
+import type { CompletionStatsConfig } from "@/features/config/_domain/completionStatsConfig";
+import { CompletionStatsRepositoryImpl } from "@/features/tasks/___infrastructure/completionStatsRepositoryImpl";
+import { TaskRepositoryImpl } from "@/features/tasks/___infrastructure/taskRepositoryImpl";
+import { fetchCompletionStats } from "@/features/tasks/__application/usecases/fetchCompletionStats";
+import { fetchRemainingWorkTasks } from "@/features/tasks/__application/usecases/fetchRemainingWorkTasks";
+import { loadCompletionStatsConfig } from "@/features/tasks/__application/usecases/loadCompletionStatsConfig";
+import { updateCompletionStatsConfig } from "@/features/tasks/__application/usecases/updateCompletionStatsConfig";
+import type { CompletionStats } from "@/features/tasks/_domain/completionStats";
 
 type PanelStatus = "idle" | "loading" | "ready" | "error";
 

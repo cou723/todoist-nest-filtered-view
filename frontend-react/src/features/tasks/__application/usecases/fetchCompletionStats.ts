@@ -1,14 +1,14 @@
 import { addDays, format, isBefore, startOfToday, subDays } from "date-fns";
 import { Effect } from "effect";
 import type {
+	CompletionStatsRepository,
+	CompletionStatsRepositoryError,
+} from "@/features/tasks/__application/completionStatsRepository";
+import type {
 	CompletedTask,
 	CompletionStats,
 	DailyCompletionCount,
-} from "../../_domain/completionStats";
-import type {
-	CompletionStatsRepository,
-	CompletionStatsRepositoryError,
-} from "../completionStatsRepository";
+} from "@/features/tasks/_domain/completionStats";
 
 const HISTORY_DAYS = 90;
 const MOVING_AVERAGE_LOOKBACK = 6;

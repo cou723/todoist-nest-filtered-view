@@ -2,6 +2,7 @@ import {
 	Alert,
 	Group,
 	Loader,
+	type MantineTheme,
 	SimpleGrid,
 	Stack,
 	TagsInput,
@@ -9,13 +10,12 @@ import {
 	Title,
 	useComputedColorScheme,
 	useMantineTheme,
-	type MantineTheme,
 } from "@mantine/core";
 import { ResponsiveLine } from "@nivo/line";
 import { format } from "date-fns";
 import { useMemo } from "react";
-import { PanelWrapper } from "../PanelWrapper";
-import { useCompletionStatsPanel } from "./useCompletionStatsPanel";
+import { useCompletionStatsPanel } from "@/features/tasks/___ui/AppShell/completion-stats/useCompletionStatsPanel";
+import { PanelWrapper } from "@/features/tasks/___ui/AppShell/PanelWrapper";
 
 const formatDateLabel = (date: Date) => format(date, "M/d");
 

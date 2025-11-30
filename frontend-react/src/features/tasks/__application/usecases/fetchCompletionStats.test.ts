@@ -1,12 +1,12 @@
 import { addHours, startOfToday, subDays } from "date-fns";
 import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CompletedTask } from "../../_domain/completionStats";
 import type {
 	CompletionStatsRepository,
 	CompletionStatsRepositoryError,
-} from "../completionStatsRepository";
-import { fetchCompletionStats } from "./fetchCompletionStats";
+} from "@/features/tasks/__application/completionStatsRepository";
+import { fetchCompletionStats } from "@/features/tasks/__application/usecases/fetchCompletionStats";
+import type { CompletedTask } from "@/features/tasks/_domain/completionStats";
 
 class StubCompletionStatsRepository implements CompletionStatsRepository {
 	private readonly tasks: CompletedTask[];

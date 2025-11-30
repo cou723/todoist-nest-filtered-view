@@ -1,7 +1,7 @@
 import {
+	type GetCompletedTasksResponse,
 	TodoistApi,
 	TodoistRequestError,
-	type GetCompletedTasksResponse,
 	type Task as TodoistTask,
 } from "@doist/todoist-api-typescript";
 import {
@@ -12,9 +12,9 @@ import {
 	parseISO,
 } from "date-fns";
 import { Effect } from "effect";
-import type { CompletionStatsRepository } from "../__application/completionStatsRepository";
-import { CompletionStatsRepositoryError } from "../__application/completionStatsRepository";
-import type { CompletedTask } from "../_domain/completionStats";
+import type { CompletionStatsRepository } from "@/features/tasks/__application/completionStatsRepository";
+import { CompletionStatsRepositoryError } from "@/features/tasks/__application/completionStatsRepository";
+import type { CompletedTask } from "@/features/tasks/_domain/completionStats";
 
 const DEFAULT_LIMIT = 100;
 // Todoist API の completed by completion date は一度に取得できる期間が ~30 日程度のため安全側で分割する

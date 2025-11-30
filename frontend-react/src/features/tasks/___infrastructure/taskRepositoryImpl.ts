@@ -6,8 +6,8 @@ import {
 } from "@doist/todoist-api-typescript";
 import { parseISO } from "date-fns";
 import { Effect } from "effect";
-import type { TaskRepository } from "../__application/taskRepository";
-import type { Task } from "../_domain/task";
+import type { TaskRepository } from "@/features/tasks/__application/taskRepository";
+import type { Task } from "@/features/tasks/_domain/task";
 
 const mapTodoistTaskToDomain = (task: TodoistTask): Task => ({
 	id: task.id.toString(),
