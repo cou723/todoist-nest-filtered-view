@@ -1,8 +1,23 @@
 import type { ConfigRepository } from "../__application/configRepository";
+import type { CompletionStatsConfig } from "../_domain/completionStatsConfig";
 import type { TaskPanelConfig } from "../_domain/taskPanelConfig";
 
 const TASK_PANEL_CONFIG_KEY = "task_panel_config";
 const LEGACY_FILTER_KEY = "todoist_filter_query";
+const COMPLETION_STATS_CONFIG_KEY = "completion_stats_config";
+
+const normalizeLabels = (labels: unknown): string[] => {
+	if (!Array.isArray(labels)) {
+		return [];
+	}
+
+	const normalized = labels
+		.map((label) => (typeof label === "string" ? label.trim() : ""))
+		.filter((label): label is string => label.length > 0)
+		.map((label) => label.replace(/^@+/, ""));
+
+	return Array.from(new Set(normalized));
+};
 
 export class LocalStorageConfigRepository implements ConfigRepository {
 	private readonly storage: Storage;
@@ -36,6 +51,29 @@ export class LocalStorageConfigRepository implements ConfigRepository {
 		this.storage.setItem(
 			TASK_PANEL_CONFIG_KEY,
 			JSON.stringify({ filter: config.filter }),
+		);
+	}
+
+	getCompletionStatsConfig(): CompletionStatsConfig {
+		const raw = this.storage.getItem(COMPLETION_STATS_CONFIG_KEY);
+		if (!raw) {
+			return { excludedLabels: [] };
+		}
+
+		try {
+			const parsed = JSON.parse(raw);
+			const labels = normalizeLabels(parsed?.excludedLabels);
+			return { excludedLabels: labels };
+		} catch {
+			return { excludedLabels: [] };
+		}
+	}
+
+	setCompletionStatsConfig(config: CompletionStatsConfig): void {
+		const normalized = normalizeLabels(config.excludedLabels);
+		this.storage.setItem(
+			COMPLETION_STATS_CONFIG_KEY,
+			JSON.stringify({ excludedLabels: normalized }),
 		);
 	}
 }

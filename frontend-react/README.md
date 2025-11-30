@@ -66,7 +66,7 @@ frontend-react/
 
 - `VITE_TODOIST_CLIENT_ID`: Todoist Developer Console の Client ID
 - `VITE_TODOIST_REDIRECT_URI`: 例 `http://localhost:5173/callback`
-- `VITE_PROXY_URL`: OAuth/Completed API を中継するプロキシの URL（開発は `http://localhost:8000`）
+- `VITE_PROXY_URL`: OAuth API を中継するプロキシの URL（開発は `http://localhost:8000`）
 - `VITE_USE_MOCK_CLIENT`: モック利用時のみ `true`
 
 ### インストール

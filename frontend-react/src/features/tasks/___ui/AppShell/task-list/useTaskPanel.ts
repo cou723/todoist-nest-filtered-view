@@ -5,8 +5,8 @@ import { LocalStorageConfigRepository } from "../../../../config/___infrastructu
 import type { TaskPanelConfig } from "../../../../config/_domain/taskPanelConfig";
 import { TaskRepositoryImpl } from "../../../___infrastructure/taskRepositoryImpl";
 import { completeTask } from "../../../__application/usecases/completeTask";
-import { loadTaskPanelConfig } from "../../../__application/usecases/loadTaskPanelConfig";
 import { fetchTaskTrees } from "../../../__application/usecases/fetchTaskTrees";
+import { loadTaskPanelConfig } from "../../../__application/usecases/loadTaskPanelConfig";
 import { updateTaskPanelConfig } from "../../../__application/usecases/updateTaskPanelConfig";
 import type { TaskTreeNode } from "../../../_domain/fetchTaskTreesUseCase";
 
@@ -24,10 +24,7 @@ export function useTaskPanel() {
 	if (token === null) {
 		throw new Error("useTaskPanelは認証済みの状態でのみ使用できます");
 	}
-	const taskRepository = useMemo(
-		() => new TaskRepositoryImpl(token),
-		[token],
-	);
+	const taskRepository = useMemo(() => new TaskRepositoryImpl(token), [token]);
 	const configRepository = useMemo(
 		() => new LocalStorageConfigRepository(localStorage),
 		[],

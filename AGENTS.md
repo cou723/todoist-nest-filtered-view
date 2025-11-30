@@ -18,6 +18,7 @@ Todoistのタスクをツリー構造上に表示したり、統計データを�
 
 後述するfrontend-lit-legacyをreactで書き直しているディレクトリです。
 フロントエンドの改修を依頼された場合は基本的にこちらを編集してください。
+基本的にEffect.tsのエコシステムに乗せたいので、throwなどをしたい場合はEffectを返すようにしてください。
 
 ### frontend-lit-legacy
 
