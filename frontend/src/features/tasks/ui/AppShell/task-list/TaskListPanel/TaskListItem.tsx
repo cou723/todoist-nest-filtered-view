@@ -32,21 +32,6 @@ const buildAncestorChain = (task: TaskTreeNode): ParentTask[] => {
 	return chain;
 };
 
-const priorityToMeta = (
-	priority: number,
-): { label: string; color: MantineColor } => {
-	switch (priority) {
-		case 4:
-			return { label: "緊急/重要", color: "red" };
-		case 3:
-			return { label: "不急/重要", color: "orange" };
-		case 2:
-			return { label: "緊急/些末", color: "yellow" };
-		default:
-			return { label: "不急/些末", color: "gray" };
-	}
-};
-
 const formatDeadline = (deadline: Date): string => {
 	const today = new Date();
 	if (isToday(deadline)) {
@@ -93,7 +78,6 @@ interface TaskListItemProps {
 
 export function TaskListItem({ task, onComplete, loading }: TaskListItemProps) {
 	const ancestors = buildAncestorChain(task);
-	const priority = priorityToMeta(task.priority);
 
 	return (
 		<Card withBorder shadow="xs" radius="md" p="md">
@@ -103,7 +87,7 @@ export function TaskListItem({ task, onComplete, loading }: TaskListItemProps) {
 				<Group justify="space-between" align="flex-start">
 					<Stack gap={4} flex={1}>
 						<TaskTitle task={task} />
-						<TaskMeta priority={priority} task={task} />
+						<TaskMeta task={task} />
 					</Stack>
 
 					<CompleteButton
@@ -142,18 +126,22 @@ function CompleteButton({
 	);
 }
 
-function TaskMeta({
-	priority,
-	task,
-}: {
-	priority: { label: string; color: MantineColor };
-	task: TaskTreeNode;
-}) {
+function TaskMeta({ task }: { task: TaskTreeNode }) {
+	const isEmergency = task.priority >= 3;
+	const isImportant = task.priority === 4 || task.priority === 2;
+
 	return (
 		<Group gap={8}>
-			<Badge color={priority.color} variant="light">
-				{priority.label}
-			</Badge>
+			{isEmergency && (
+				<Badge color={"red"} variant="light">
+					緊急
+				</Badge>
+			)}
+			{isImportant && (
+				<Badge color={"blue"} variant="light">
+					重要
+				</Badge>
+			)}
 			{task.deadline ? (
 				<Badge color={deadlineTone(task.deadline)} variant="light">
 					📅 {formatDeadline(task.deadline)}
