@@ -6,14 +6,17 @@ import {
 	Stack,
 	Text,
 	Title,
+	useComputedColorScheme,
+	useMantineTheme,
 } from "@mantine/core";
 import { PanelWrapper } from "@/features/tasks/ui";
+import { openTodoistPreferApp, todoistTaskLinks } from "../todoistLinks";
 import { formatDeadlineDisplay } from "./deadlineDisplay";
 import { useDatedGoalsPanel } from "./useDatedGoalsPanel";
 
-const taskUrl = (taskId: string) => `https://todoist.com/showTask?id=${taskId}`;
-
 export function DatedGoalsPanel() {
+	const colorScheme = useComputedColorScheme("light");
+	const theme = useMantineTheme();
 	const { tasks, status, error } = useDatedGoalsPanel();
 	const isLoading = status === "loading";
 
@@ -39,14 +42,17 @@ export function DatedGoalsPanel() {
 
 				<Stack gap="xs">
 					{tasks.map((task) => {
+						const taskLinks = todoistTaskLinks(task.id);
 						const deadlineDisplay = formatDeadlineDisplay(task.deadline);
 						return (
 							<Group key={task.id} justify="space-between" align="center">
 								<Anchor
-									href={taskUrl(task.id)}
+									href={taskLinks.web}
 									target="_blank"
 									rel="noreferrer"
 									fw={600}
+									c={colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.dark[4]}
+									onClick={(event) => openTodoistPreferApp(event, task.id)}
 								>
 									{task.summary}
 								</Anchor>

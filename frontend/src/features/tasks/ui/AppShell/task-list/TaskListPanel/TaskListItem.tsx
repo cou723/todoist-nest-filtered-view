@@ -8,6 +8,8 @@ import {
 	type MantineColor,
 	Stack,
 	Tooltip,
+	useComputedColorScheme,
+	useMantineTheme,
 } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import {
@@ -19,6 +21,7 @@ import {
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { ParentTask, TaskTreeNode } from "@/features/tasks/domain";
+import { openTodoistPreferApp, todoistTaskLinks } from "@/features/tasks/ui/AppShell/todoistLinks";
 
 const buildAncestorChain = (task: TaskTreeNode): ParentTask[] => {
 	const chain: ParentTask[] = [];
@@ -67,8 +70,6 @@ const deadlineTone = (deadline: Date): MantineColor => {
 	}
 	return "gray";
 };
-
-const taskUrl = (taskId: string) => `https://todoist.com/showTask?id=${taskId}`;
 
 interface TaskListItemProps {
 	task: TaskTreeNode;
@@ -149,7 +150,7 @@ function TaskMeta({ task }: { task: TaskTreeNode }) {
 			)}
 			{task.labels.length > 0 &&
 				task.labels.map((label) => (
-					<Badge key={label} variant="outline" color="blue">
+					<Badge key={label} color="gray" variant="light">
 						@{label}
 					</Badge>
 				))}
@@ -158,8 +159,19 @@ function TaskMeta({ task }: { task: TaskTreeNode }) {
 }
 
 function TaskTitle({ task }: { task: TaskTreeNode }) {
+	const colorScheme = useComputedColorScheme("light");
+	const theme = useMantineTheme();
+	const taskLinks = todoistTaskLinks(task.id);
+
 	return (
-		<Anchor href={taskUrl(task.id)} target="_blank" rel="noreferrer" fw={600}>
+		<Anchor
+			href={taskLinks.web}
+			target="_blank"
+			rel="noreferrer"
+			fw={700}
+			c={colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.dark[4]}
+			onClick={(event) => openTodoistPreferApp(event, task.id)}
+		>
 			{task.summary}
 		</Anchor>
 	);
@@ -171,10 +183,11 @@ function ParentTree({ ancestors }: { ancestors: ParentTask[] }) {
 			{ancestors.map((parent) => (
 				<Anchor
 					key={parent.id}
-					href={taskUrl(parent.id)}
+					href={todoistTaskLinks(parent.id).web}
 					target="_blank"
 					rel="noreferrer"
 					c="dimmed"
+					onClick={(event) => openTodoistPreferApp(event, parent.id)}
 				>
 					{parent.summary}
 				</Anchor>

@@ -14,16 +14,18 @@ import { CompletionStatsPanel } from "@/features/tasks/ui/AppShell/completion-st
 import { DatedGoalsPanel } from "@/features/tasks/ui/AppShell/dated-goals";
 import { GoalRatePanel } from "@/features/tasks/ui/AppShell/goal-rate";
 import { TaskListPanel } from "@/features/tasks/ui/AppShell/task-list";
+import { useViewportSize } from "@mantine/hooks";
 
 export function AppShell() {
 	const { logout } = useAuth();
+	const { width } = useViewportSize();
 
 	return (
 		<MantineAppShell header={{ height: 60 }} padding="md">
 			<MantineAppShell.Header>
 				<Container size="xl" h="100%">
 					<Flex justify="space-between" align="center" h="100%">
-						<Title order={2}>Todoist Nest Filtered View</Title>
+						{width > 480 && <Title order={2}>Todoist Nest Filtered View</Title>}
 						<Group gap="sm">
 							<ThemeToggle />
 							<Button

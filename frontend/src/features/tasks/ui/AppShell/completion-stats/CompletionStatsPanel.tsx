@@ -20,7 +20,7 @@ const formatDateLabel = (date: Date) => format(date, "M/d");
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
 	return (
-		<Stack gap={2} p="xs" /* bg="gray.0" */ style={{ borderRadius: 8 }}>
+		<Stack gap={2} p="xs" style={{ borderRadius: 8 }}>
 			<Text size="xs" c="dimmed">
 				{label}
 			</Text>
@@ -92,7 +92,7 @@ export function CompletionStatsPanel() {
 
 				{!isLoading && !error && stats ? (
 					<Stack gap="md">
-						<SimpleGrid cols={{ xs: 1, sm: 5, md: 5 }} spacing="sm">
+						<SimpleGrid cols={{ base: 2, xs: 3, sm: 5, md: 5 }} spacing="sm">
 							<SummaryItem
 								label="90日合計"
 								value={`${stats.summary.last90DaysTotal}件`}
