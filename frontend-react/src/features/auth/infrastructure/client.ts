@@ -1,8 +1,8 @@
 import {
 	FetchHttpClient,
+	Headers,
 	HttpClient,
 	HttpClientRequest,
-	Headers,
 } from "@effect/platform";
 import { RpcClient, RpcSerialization } from "@effect/rpc";
 import type { RpcClientError } from "@effect/rpc/RpcClientError";
@@ -14,9 +14,7 @@ const normalizeBaseUrl = (url: string) => url.replace(/\/$/, "");
 
 type ProxyClient = RpcClient.FromGroup<typeof ProxyRpc, RpcClientError>;
 
-const stripTracingHeaders = (
-	request: HttpClientRequest.HttpClientRequest,
-) => {
+const stripTracingHeaders = (request: HttpClientRequest.HttpClientRequest) => {
 	const headers = Headers.remove(request.headers, [
 		"traceparent",
 		"tracestate",
