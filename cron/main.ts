@@ -148,7 +148,10 @@ async function runAutomation() {
   }
 }
 
-// Deno.cronを使って1時間おきに実行
-Deno.cron("todoist-automation", "0 * * * *", runAutomation);
-
-console.log("Todoist automation service started - running every hour with Deno.cron");
+Deno.serve(() =>
+  new Response("cron service http entrypoint (cron disabled)", {
+    status: 200,
+    headers: { "Content-Type": "text/plain" },
+  })
+);
+console.log("HTTP entrypoint enabled; cron automation not scheduled");
