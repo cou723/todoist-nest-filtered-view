@@ -8,7 +8,7 @@ Todoには@goalもしくは@taskが付与されていることを前提として
 @non-milestoneにはサブTodoとして「${Todo名}のマイルストーンを置く」というTodoを追加する。このTodoはラベルを持たない
 */
 
-import { TodoistApi } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
+import { TodoistApi } from "todoist";
 import { TodoService } from "./task-service.ts";
 import { DependencyLabelAutomation } from "./dependency-label-automation.ts";
 
@@ -148,7 +148,12 @@ async function runAutomation() {
   }
 }
 
-// Deno.cronを使って1時間おきに実行
-Deno.cron("todoist-automation", "0 * * * *", runAutomation);
+// setIntervalを使って1時間おきに実行
+await runAutomation();
+setInterval(() => {
+  runAutomation();
+}, 60 * 60 * 1000);
 
-console.log("Todoist automation service started - running every hour with Deno.cron");
+console.log(
+  "Todoist automation service started - running every hour with setInterval",
+);

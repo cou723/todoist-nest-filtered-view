@@ -37,9 +37,9 @@
 
 ## プロジェクト構成
 
-これはフロントエンドとプロキシサーバーで構成されたTodoistタスク管理アプリケーションです：
+これはフロントエンドとプロキシサーバーで構成されたTodoistタスク管理アプリケーションです（Lit 版 = `frontend-lit-legacy/`, React 版 = `frontend-react/`）：
 
-### フロントエンド（`frontend/`）
+### フロントエンド（Lit legacy: `frontend-lit-legacy/`）
 
 * **技術スタック**：Lit（Web Components）、TypeScript、Vite
 * **アーキテクチャ**：LitのReactiveControllerを使用したコントローラーベースのリアクティブパターン
@@ -73,7 +73,7 @@
 ### フロントエンド
 
 ```bash
-cd frontend
+cd frontend-lit-legacy
 pnpm install           # 依存関係のインストール
 pnpm run dev           # 開発サーバーを起動（ポート5173）
 pnpm run build         # 本番用ビルド
@@ -95,7 +95,7 @@ deno task check        # 型チェック
 
 ### 開発ワークフロー
 
-* `./dev.sh` でフロントエンドとプロキシを同時起動
+* `./dev.sh` で React 版フロントエンドとプロキシを同時起動（Lit 版を個別に触る場合は `cd frontend-lit-legacy && pnpm dev`）
 * 開発サーバー: localhost:5173
 * プロキシサーバー: localhost:8000
 

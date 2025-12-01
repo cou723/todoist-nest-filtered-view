@@ -1,25 +1,40 @@
 import { MantineProvider } from "@mantine/core";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AppShell } from "./AppShell";
+import { Notifications } from "@mantine/notifications";
+import { BrowserRouter } from "react-router-dom";
 
 // Mantine CSS は index.css で読み込む
 import "@mantine/core/styles.css";
-
-const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			staleTime: 1000 * 60 * 5, // 5 minutes
-			retry: 1,
-		},
-	},
-});
+import "@mantine/notifications/styles.css";
+import { useMemo } from "react";
+import { Router } from "@/app/router";
+import { OAuthServiceLive } from "@/features/auth/infrastructure";
+import { AuthProvider } from "@/features/auth/ui";
+import { getEnvImpl as getEnv } from "@/features/env";
 
 export function App() {
+	const {
+		VITE_TODOIST_CLIENT_ID: clientId,
+		VITE_TODOIST_REDIRECT_URI: redirectUri,
+	} = useMemo(() => getEnv(), []);
+
+	const oauthServiceLive = useMemo(
+		() =>
+			new OAuthServiceLive(
+				{ clientId, redirectUri, permissions: ["data:read", "task:add"] },
+				localStorage,
+				sessionStorage,
+			),
+		[clientId, redirectUri],
+	);
+
 	return (
-		<QueryClientProvider client={queryClient}>
-			<MantineProvider>
-				<AppShell />
-			</MantineProvider>
-		</QueryClientProvider>
+		<MantineProvider>
+			<Notifications />
+			<BrowserRouter>
+				<AuthProvider oauthService={oauthServiceLive}>
+					<Router />
+				</AuthProvider>
+			</BrowserRouter>
+		</MantineProvider>
 	);
 }

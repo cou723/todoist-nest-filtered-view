@@ -3,8 +3,8 @@
  * Todoistタスクの取得・管理・操作を統括するサービス層
  */
 
-import { TodoistApi } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
-import type { Task, Label } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
+import { TodoistApi } from "todoist";
+import type { Task, Label } from "todoist";
 
 /**
  * タスクフィルタの設定
@@ -301,7 +301,7 @@ export class TodoService {
     // 既存ラベルとの重複チェック
     const existingLabels = await this.getLabels();
     const duplicate = existingLabels.find(label => label.name === name);
-    
+
     if (duplicate) {
       console.log(`Label "${name}" already exists, skipping creation`);
       return duplicate;
@@ -309,10 +309,10 @@ export class TodoService {
 
     console.log(`Creating new label: ${name}`);
     const newLabel = await this.api.addLabel({ name });
-    
+
     // キャッシュをクリア（変更があったため）
     this.clearCache();
-    
+
     return newLabel;
   }
 
@@ -321,7 +321,7 @@ export class TodoService {
    */
   async deleteLabel(labelId: string): Promise<void> {
     await this.api.deleteLabel(labelId);
-    
+
     // キャッシュをクリア（変更があったため）
     this.clearCache();
   }

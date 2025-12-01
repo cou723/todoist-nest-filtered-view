@@ -2,7 +2,7 @@
   "folders": [
     {
       "path": "frontend",
-      "name": "frontend (Biome)"
+      "name": "frontend"
     },
     {
       "path": "cron",
@@ -11,6 +11,10 @@
     {
       "path": "proxy",
       "name": "proxy (Deno)"
+    },
+    {
+      "path": ".",
+      "name": "root"
     }
   ],
   "settings": {

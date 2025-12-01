@@ -1,6 +1,6 @@
 # Frontend - Todoist Nest Filtered View
 
-Vite + React 19 + TypeScript で構築された SPA フロントエンドプロジェクトです。
+Vite + React 19 + TypeScript で構築された SPA フロントエンドプロジェクトです。リポジトリ内では `frontend-react/` ディレクトリに配置され、現行運用中の Lit 版は `frontend-lit-legacy/` に残しています。
 
 ## 技術スタック
 
@@ -25,7 +25,7 @@ Vite + React 19 + TypeScript で構築された SPA フロントエンドプロ�
 ## プロジェクト構成
 
 ```
-frontend/
+frontend-react/
 ├── src/
 │   ├── app/            # アプリケーションのエントリーポイントとルート設定
 │   ├── features/       # 機能別のモジュール（ドメインロジック、コンポーネント）
@@ -59,6 +59,15 @@ frontend/
 ### 前提条件
 - Node.js 18 以上
 - pnpm (推奨)
+
+### 環境変数
+
+`.env.sample` をコピーして `.env` を作成し、少なくとも以下を設定してください。
+
+- `VITE_TODOIST_CLIENT_ID`: Todoist Developer Console の Client ID
+- `VITE_TODOIST_REDIRECT_URI`: 例 `http://localhost:5173/callback`
+- `VITE_PROXY_URL`: OAuth API を中継するプロキシの URL（開発は `http://localhost:8000`）
+- `VITE_USE_MOCK_CLIENT`: モック利用時のみ `true`
 
 ### インストール
 
@@ -120,6 +129,21 @@ pnpm test
 # UI 付きでテストを実行
 pnpm test:ui
 ```
+
+## プロキシ (Deno Deploy / ローカル)
+
+- ルート直下の `proxy/main.ts` を Deno で動かす。
+- 必須環境変数: `TODOIST_CLIENT_SECRET`、`ALLOWED_ORIGIN`（例 `http://localhost:5173`）。
+- ローカル起動例:
+
+```bash
+cd ../proxy
+ALLOWED_ORIGIN=http://localhost:5173 \
+TODOIST_CLIENT_SECRET=xxx \
+deno run --allow-net --allow-env main.ts
+```
+
+本番デプロイ時は Deno Deploy の環境変数を本番ドメインに合わせて更新すること。
 
 ## Phase 1 完了内容
 

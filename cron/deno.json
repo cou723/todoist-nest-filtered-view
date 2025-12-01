@@ -1,9 +1,11 @@
 {
+  "imports": {
+    "todoist": "npm:@doist/todoist-api-typescript@6.1.10"
+  },
   "compilerOptions": {
     "lib": [
       "deno.window",
-      "deno.ns",
-      "deno.unstable"
+      "deno.ns"
     ],
     "strict": true
   },
