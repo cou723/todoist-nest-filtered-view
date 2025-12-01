@@ -147,15 +147,12 @@ function TaskMeta({ task }: { task: TaskTreeNode }) {
 					📅 {formatDeadline(task.deadline)}
 				</Badge>
 			)}
-			{task.labels.length > 0 ? (
-				<Group gap={6}>
-					{task.labels.map((label) => (
-						<Badge key={label} variant="outline" color="blue">
-							@{label}
-						</Badge>
-					))}
-				</Group>
-			) : null}
+			{task.labels.length > 0 &&
+				task.labels.map((label) => (
+					<Badge key={label} variant="outline" color="blue">
+						@{label}
+					</Badge>
+				))}
 		</Group>
 	);
 }
