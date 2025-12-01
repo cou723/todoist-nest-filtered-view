@@ -103,24 +103,15 @@ export const fetchCompletionStats = (
 			});
 		}
 
-		const todayCount = daily[daily.length - 1]?.count ?? 0;
 		const historyCounts = daily
 			.slice(0, HISTORY_DAYS)
 			.map((item) => item.count);
 		const last90DaysTotal = sum(historyCounts);
 
-		const last7 = daily.slice(-7);
-		const last7DaysTotal = sum(last7.map((item) => item.count));
-		const last7DaysAverage =
-			last7.length > 0 ? last7DaysTotal / last7.length : 0;
-
 		return {
 			daily,
 			summary: {
 				last90DaysTotal,
-				last7DaysTotal,
-				last7DaysAverage,
-				todayCount,
 			},
 		};
 	});

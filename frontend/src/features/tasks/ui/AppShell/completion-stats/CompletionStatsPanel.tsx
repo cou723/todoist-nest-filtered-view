@@ -35,9 +35,7 @@ export function CompletionStatsPanel() {
 
 	const isLoading = status === "loading";
 	const hasData =
-		Boolean(stats) &&
-		((stats?.summary.last90DaysTotal ?? 0) > 0 ||
-			(stats?.summary.todayCount ?? 0) > 0);
+		stats?.daily.some((point) => point.count > 0) ?? false;
 
 	const { chartData, tickValues } = useMemo(() => {
 		if (!stats) {
@@ -92,22 +90,10 @@ export function CompletionStatsPanel() {
 
 				{!isLoading && !error && stats ? (
 					<Stack gap="md">
-						<SimpleGrid cols={{ base: 2, xs: 3, sm: 5, md: 5 }} spacing="sm">
+						<SimpleGrid cols={{ base: 2 }} spacing="sm">
 							<SummaryItem
 								label="90日合計"
 								value={`${stats.summary.last90DaysTotal}件`}
-							/>
-							<SummaryItem
-								label="当日件数"
-								value={`${stats.summary.todayCount}件`}
-							/>
-							<SummaryItem
-								label="直近7日平均"
-								value={`${stats.summary.last7DaysAverage.toFixed(1)}件`}
-							/>
-							<SummaryItem
-								label="直近7日合計"
-								value={`${stats.summary.last7DaysTotal}件`}
 							/>
 							<SummaryItem
 								label="@task 残数"

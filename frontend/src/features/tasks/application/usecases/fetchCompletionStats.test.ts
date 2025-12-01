@@ -67,10 +67,7 @@ describe("fetchCompletionStats", () => {
 			fetchCompletionStats(["skip"], { completionStatsRepository: repository }),
 		);
 
-		expect(result.summary.todayCount).toBe(2);
 		expect(result.summary.last90DaysTotal).toBe(7);
-		expect(result.summary.last7DaysTotal).toBe(6);
-		expect(result.summary.last7DaysAverage).toBeCloseTo(6 / 7, 5);
 
 		const todayPoint = result.daily[result.daily.length - 1];
 		expect(todayPoint.count).toBe(2);

@@ -13,9 +13,6 @@ export type DailyCompletionCount = {
 
 export type CompletionSummary = {
 	last90DaysTotal: number;
-	last7DaysTotal: number;
-	last7DaysAverage: number;
-	todayCount: number;
 };
 
 export type CompletionStats = {
