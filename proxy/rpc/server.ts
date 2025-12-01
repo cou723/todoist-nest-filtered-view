@@ -3,9 +3,6 @@ import { RpcServer } from "@effect/rpc";
 import { Effect, Layer, Logger, Schema } from "effect";
 import { env } from "../config.ts";
 import {
-  CompletedByDateRequest,
-  CompletedByDateResponse,
-  CompletedByDateResponseSchema,
   OAuthRevokeRequest,
   OAuthRevokeResponse,
   OAuthRevokeResponseSchema,
@@ -87,43 +84,9 @@ export const revokeOAuthToken = (
     catch: toProxyError,
   });
 
-export const fetchCompletedByDate = (
-  payload: CompletedByDateRequest,
-): Effect.Effect<CompletedByDateResponse, ProxyError> =>
-  Effect.tryPromise({
-    try: async () => {
-      const upstream = new URL(
-        "https://api.todoist.com/api/v1/tasks/completed/by_completion_date",
-      );
-      Object.entries(payload.query ?? {}).forEach(([key, value]) => {
-        upstream.searchParams.set(key, value);
-      });
-
-      const response = await fetch(upstream, {
-        method: "GET",
-        headers: { Authorization: payload.authorization },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new ProxyError({
-          message: typeof data === "string"
-            ? data
-            : JSON.stringify(data, null, 2),
-          status: response.status,
-        });
-      }
-
-      return Schema.decodeUnknownSync(CompletedByDateResponseSchema)(data);
-    },
-    catch: toProxyError,
-  });
-
 export const RpcLayer = ProxyRpc.toLayer({
   ExchangeOAuthToken: exchangeOAuthToken,
   RevokeOAuthToken: revokeOAuthToken,
-  CompletedByDate: fetchCompletedByDate,
 }).pipe(Layer.provide(LoggerLayer));
 
 export const RpcWebHandler = RpcServer.toHttpApp(ProxyRpc).pipe(

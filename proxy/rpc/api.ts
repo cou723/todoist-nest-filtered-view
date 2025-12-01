@@ -48,15 +48,6 @@ export const CompletedByDateRequestSchema = Schema.Struct({
   ),
 });
 
-export const CompletedByDateResponseSchema = Schema.Unknown;
-
-export type CompletedByDateRequest = SchemaType<
-  typeof CompletedByDateRequestSchema
->;
-export type CompletedByDateResponse = SchemaType<
-  typeof CompletedByDateResponseSchema
->;
-
 export class ProxyRpc extends RpcGroup.make(
   Rpc.make("ExchangeOAuthToken", {
     error: ProxyError,
@@ -67,10 +58,5 @@ export class ProxyRpc extends RpcGroup.make(
     error: ProxyError,
     success: OAuthRevokeResponseSchema,
     payload: OAuthRevokeRequestSchema,
-  }),
-  Rpc.make("CompletedByDate", {
-    error: ProxyError,
-    success: CompletedByDateResponseSchema,
-    payload: CompletedByDateRequestSchema,
-  }),
+  })
 ) {}
