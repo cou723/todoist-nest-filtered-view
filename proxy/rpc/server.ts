@@ -1,5 +1,5 @@
 import { HttpApp } from "@effect/platform";
-import { RpcSerialization, RpcServer } from "@effect/rpc";
+import { RpcServer } from "@effect/rpc";
 import { Effect, Layer, Logger, Schema } from "effect";
 import { env } from "../config.ts";
 import {
@@ -120,7 +120,7 @@ export const fetchCompletedByDate = (
     catch: toProxyError,
   });
 
-const RpcLayer = ProxyRpc.toLayer({
+export const RpcLayer = ProxyRpc.toLayer({
   ExchangeOAuthToken: exchangeOAuthToken,
   RevokeOAuthToken: revokeOAuthToken,
   CompletedByDate: fetchCompletedByDate,
@@ -128,5 +128,4 @@ const RpcLayer = ProxyRpc.toLayer({
 
 export const RpcWebHandler = RpcServer.toHttpApp(ProxyRpc).pipe(
   Effect.map(HttpApp.toWebHandler),
-  Effect.provide([RpcLayer, RpcSerialization.layerNdjson]),
 );

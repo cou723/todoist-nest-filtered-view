@@ -1,4 +1,6 @@
-import { Effect, Exit, Schema } from "effect";
+import { RpcSerialization } from "@effect/rpc";
+import { Effect, Exit, Layer, Schema } from "effect";
+import * as Runtime from "effect/Runtime";
 import { env } from "./config.ts";
 import {
   CompletedByDateRequestSchema,
@@ -10,23 +12,40 @@ import {
   exchangeOAuthToken,
   fetchCompletedByDate,
   revokeOAuthToken,
+  RpcLayer,
   RpcWebHandler,
 } from "./rpc/server.ts";
 import { pipe } from "effect/Function";
 
-const rpcHandler = await Effect.runPromise(RpcWebHandler.pipe(Effect.scoped));
+const RpcRuntimeLayer = Layer.mergeAll(RpcSerialization.layerNdjson, RpcLayer);
+const rpcRuntime = await Effect.runPromise(
+  Layer.toRuntime(RpcRuntimeLayer).pipe(Effect.scoped),
+);
 
-const buildCorsHeaders = (): Headers => {
+const allowedOrigin = env.ALLOWED_ORIGIN.replace(/\/$/, "");
+
+const buildCorsHeaders = (request: Request): Headers | null => {
+  const origin = request.headers.get("origin")?.replace(/\/$/, "");
+  if (!origin || origin !== allowedOrigin) return null;
+
   const headers = new Headers();
-  headers.set("Access-Control-Allow-Origin", env.ALLOWED_ORIGIN);
+  headers.set("Access-Control-Allow-Origin", allowedOrigin);
   headers.set("Access-Control-Allow-Credentials", "true");
   headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, traceparent, tracestate",
+  );
+  headers.set("Vary", "Origin");
   return headers;
 };
 
-const withCors = (response: Response): Response => {
-  const headers = buildCorsHeaders();
+const withCors = (request: Request, response: Response): Response => {
+  const headers = buildCorsHeaders(request);
+  if (!headers) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
   response.headers.forEach((value, key) => headers.set(key, value));
 
   return new Response(response.body, {
@@ -36,8 +55,13 @@ const withCors = (response: Response): Response => {
   });
 };
 
-const preflightResponse = (): Response =>
-  new Response(null, { status: 200, headers: buildCorsHeaders() });
+const preflightResponse = (request: Request): Response => {
+  const headers = buildCorsHeaders(request);
+  if (!headers) {
+    return new Response("Forbidden", { status: 403 });
+  }
+  return new Response(null, { status: 200, headers });
+};
 
 const jsonResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
@@ -101,9 +125,11 @@ function requestBodyToJson(
   });
 }
 
-const handleOAuthToken = async (request: Request): Promise<Response> => {
+const handleOAuthToken = (request: Request): Promise<Response> => {
   if (request.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return new Promise((r) =>
+      r(jsonResponse({ error: "Method not allowed" }, 405))
+    );
   }
 
   return runProxyEffect(
@@ -117,9 +143,11 @@ const handleOAuthToken = async (request: Request): Promise<Response> => {
   );
 };
 
-const handleOAuthRevoke = async (request: Request): Promise<Response> => {
+const handleOAuthRevoke = (request: Request): Promise<Response> => {
   if (request.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return new Promise((r) =>
+      r(jsonResponse({ error: "Method not allowed" }, 405))
+    );
   }
 
   return runProxyEffect(
@@ -134,9 +162,11 @@ const handleOAuthRevoke = async (request: Request): Promise<Response> => {
   );
 };
 
-const handleCompletedByDate = async (request: Request): Promise<Response> => {
+const handleCompletedByDate = (request: Request): Promise<Response> => {
   if (request.method !== "GET") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return new Promise((r) =>
+      r(jsonResponse({ error: "Method not allowed" }, 405))
+    );
   }
 
   const url = new URL(request.url);
@@ -174,7 +204,12 @@ const handleRpc = async (request: Request): Promise<Response> => {
   }
 
   try {
-    const response = await rpcHandler(request);
+    const response = await Runtime.runPromise(rpcRuntime)(
+      RpcWebHandler.pipe(
+        Effect.flatMap((handler) => Effect.tryPromise(() => handler(request))),
+        Effect.scoped,
+      ),
+    );
     return response;
   } catch (error) {
     return handleError(error);
@@ -183,23 +218,26 @@ const handleRpc = async (request: Request): Promise<Response> => {
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
-    return preflightResponse();
+    return preflightResponse(request);
   }
 
   const url = new URL(request.url);
   switch (url.pathname) {
     case "/rpc":
-      return withCors(await handleRpc(request));
+      console.log("[Proxy] Handling RPC request");
+      return withCors(request, await handleRpc(request));
     case "/oauth/token":
-      return withCors(await handleOAuthToken(request));
+      return withCors(request, await handleOAuthToken(request));
     case "/oauth/revoke":
-      return withCors(await handleOAuthRevoke(request));
+      return withCors(request, await handleOAuthRevoke(request));
     case "/v1/tasks/completed/by_completion_date":
       return withCors(
+        request,
         await handleCompletedByDate(request),
       );
     default:
       return withCors(
+        request,
         new Response("Not Found", {
           status: 404,
           headers: new Headers({ "Content-Type": "text/plain" }),
