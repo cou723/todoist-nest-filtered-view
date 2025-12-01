@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Cause, Effect } from "effect";
 import type React from "react";
 import {
 	createContext,
@@ -58,37 +58,49 @@ export function AuthProvider({
 	}, [oauthService, navigate]);
 
 	const completeOAuth = useCallback(
-		async ({ code, state }: { code: string; state: string }) => {
-			setIsLoading(true);
-			setAuthError(null);
-			await Effect.runPromise(
-				oauthService
-					.getToken(code, state)
-					.pipe(Effect.tap((result) => setToken(result.accessToken)))
-					.pipe(Effect.tap(() => setIsAuthenticated(true)))
-					.pipe(
-						Effect.mapError((error) => {
-							console.error("[Auth] トークン交換失敗", error);
-							setAuthError(error.message);
+		({
+			code,
+			state,
+		}: {
+			code: string;
+			state: string;
+		}): Effect.Effect<void, Error> => {
+			return Effect.gen(function* () {
+				const token = yield* oauthService.getToken(code, state).pipe(
+					Effect.tapErrorCause((cause) =>
+						Effect.sync(() => {
+							const message = Cause.isFailType(cause)
+								? cause.error.message
+								: "プロキシに接続できませんでした";
+							setAuthError(message);
 							oauthService.clearToken();
 							setIsAuthenticated(false);
 						}),
 					),
-			);
-			setIsLoading(false);
+				);
+				setToken(token.accessToken);
+				setIsAuthenticated(true);
+			});
 		},
 		[oauthService],
 	);
 
 	const processOAuthCallback = useCallback(
 		(href: string) => {
-			Effect.runSync(
-				handleOAuthCallback(href, oauthService).pipe(
-					Effect.tap(completeOAuth),
-					Effect.mapError((e) => {
-						setAuthError(e.message);
-						setIsAuthenticated(false);
-					}),
+			setIsLoading(true);
+			setAuthError(null);
+			void Effect.runPromise(
+				Effect.gen(function* () {
+					const result = yield* handleOAuthCallback(href, oauthService);
+					yield* completeOAuth(result);
+				}).pipe(
+					Effect.tapError((e) =>
+						Effect.sync(() => {
+							setAuthError(e.message);
+							setIsAuthenticated(false);
+						}),
+					),
+					Effect.ensuring(Effect.sync(() => setIsLoading(false))),
 				),
 			);
 		},
@@ -98,20 +110,20 @@ export function AuthProvider({
 	const logout = useCallback(async () => {
 		setIsLoading(true);
 		setAuthError(null);
-		try {
-			await Effect.runPromise(
-				logoutUseCase({
-					oauthService,
-					token,
-				}),
-			);
-		} catch (error) {
-			console.warn("[Auth] トークン無効化に失敗しました", error);
-		} finally {
-			setToken(null);
-			setIsAuthenticated(false);
-			setIsLoading(false);
-		}
+		await Effect.runPromise(
+			logoutUseCase({
+				oauthService,
+				token,
+			}),
+		)
+			.catch((e) => {
+				console.warn("[Auth] トークン無効化に失敗しました", e);
+			})
+			.finally(() => {
+				setToken(null);
+				setIsAuthenticated(false);
+				setIsLoading(false);
+			});
 	}, [oauthService, token]);
 
 	return (
