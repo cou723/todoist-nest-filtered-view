@@ -42,16 +42,20 @@ export function AppShell() {
 			<MantineAppShell.Main>
 				<Container size="xl">
 					<Grid gutter="md">
-						<Grid.Col span={{ base: 12, md: 6 }}>
-							<GoalRatePanel />
-						</Grid.Col>
-						<Grid.Col span={{ base: 12, md: 6 }}>
-							<DatedGoalsPanel />
-						</Grid.Col>
 						<Grid.Col span={12}>
 							<CompletionStatsPanel />
 						</Grid.Col>
-						<Grid.Col span={12}>
+						<Grid.Col span={{ base: 12, md: 4 }}>
+							<Grid>
+								<Grid.Col span={12}>
+									<GoalRatePanel />
+								</Grid.Col>
+								<Grid.Col span={12}>
+									<DatedGoalsPanel />
+								</Grid.Col>
+							</Grid>
+						</Grid.Col>
+						<Grid.Col span={{ base: 12, md: 8 }}>
 							<TaskListPanel />
 						</Grid.Col>
 					</Grid>
