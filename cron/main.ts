@@ -124,7 +124,8 @@ async function runAutomation() {
   try {
     const token = Deno.env.get("TODOIST_TOKEN");
     if (!token) {
-      throw new Error("TODOIST_TOKEN environment variable is required");
+      console.log("TODOIST_TOKEN not set; skipping automation run");
+      return;
     }
 
     console.log(`[${new Date().toISOString()}] Starting automation...`);
