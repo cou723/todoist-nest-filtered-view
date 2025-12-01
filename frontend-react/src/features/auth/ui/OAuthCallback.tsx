@@ -13,7 +13,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/ui";
 
 export function OAuthCallback() {
-	const { processOAuthCallback, isAuthenticated, authError } = useAuth();
+	const { processOAuthCallback, isAuthenticated, authError, isLoading } =
+		useAuth();
 	const handledRef = useRef(false);
 	const navigate = useNavigate();
 
@@ -35,7 +36,7 @@ export function OAuthCallback() {
 		<Center style={{ minHeight: "100vh" }}>
 			<Stack align="center" gap="md">
 				<Title order={3}>認証処理中...</Title>
-				<Loader color="red" size="lg" />
+				{isLoading && <Loader color="red" size="lg" />}
 				<Text size="sm" c="dimmed">
 					Todoist からの応答を確認しています
 				</Text>
@@ -46,14 +47,16 @@ export function OAuthCallback() {
 						title="OAuth エラー"
 						color="red"
 					>
-						{errorMessage}
-						<Button
-							mt="sm"
-							variant="light"
-							onClick={() => window.location.assign("/")}
-						>
-							ログイン画面に戻る
-						</Button>
+						<Stack gap={"xs"}>
+							{errorMessage}
+							<Button
+								mt="sm"
+								variant="default"
+								onClick={() => window.location.assign("/")}
+							>
+								ログイン画面に戻る
+							</Button>
+						</Stack>
 					</Alert>
 				)}
 			</Stack>
