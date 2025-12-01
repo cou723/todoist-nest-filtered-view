@@ -142,13 +142,9 @@ function TaskMeta({ task }: { task: TaskTreeNode }) {
 					重要
 				</Badge>
 			)}
-			{task.deadline ? (
+			{task.deadline && (
 				<Badge color={deadlineTone(task.deadline)} variant="light">
 					📅 {formatDeadline(task.deadline)}
-				</Badge>
-			) : (
-				<Badge color="gray" variant="light">
-					期限なし
 				</Badge>
 			)}
 			{task.labels.length > 0 ? (
