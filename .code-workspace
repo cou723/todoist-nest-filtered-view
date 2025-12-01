@@ -1,12 +1,8 @@
 {
   "folders": [
     {
-      "path": "frontend-react",
-      "name": "frontend-react (Biome)"
-    },
-    {
-      "path": "frontend-lit-legacy",
-      "name": "frontend-lit-legacy (Lit)"
+      "path": "frontend",
+      "name": "frontend"
     },
     {
       "path": "cron",
