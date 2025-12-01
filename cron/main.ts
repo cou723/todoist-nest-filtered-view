@@ -8,7 +8,7 @@ Todoには@goalもしくは@taskが付与されていることを前提として
 @non-milestoneにはサブTodoとして「${Todo名}のマイルストーンを置く」というTodoを追加する。このTodoはラベルを持たない
 */
 
-import { TodoistApi } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
+import { TodoistApi } from "todoist";
 import { TodoService } from "./task-service.ts";
 import { DependencyLabelAutomation } from "./dependency-label-automation.ts";
 
