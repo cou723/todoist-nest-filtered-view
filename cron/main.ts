@@ -148,7 +148,13 @@ async function runAutomation() {
   }
 }
 
-// Deno.cronを使って1時間おきに実行
-Deno.cron("todoist-automation", "0 * * * *", runAutomation);
-
-console.log("Todoist automation service started - running every hour with Deno.cron");
+// デプロイ確認用: Cron登録を止めてログだけにする
+const enableCron = false;
+if (enableCron) {
+  Deno.cron("todoist-automation", "0 * * * *", runAutomation);
+  console.log(
+    "Todoist automation service started - running every hour with Deno.cron",
+  );
+} else {
+  console.log("Cron disabled for deploy test; no automation executed");
+}
