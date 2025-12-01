@@ -51,7 +51,11 @@ export function DatedGoalsPanel() {
 									target="_blank"
 									rel="noreferrer"
 									fw={600}
-									c={colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.dark[4]}
+									c={
+										colorScheme === "dark"
+											? theme.colors.dark[0]
+											: theme.colors.dark[4]
+									}
 									onClick={(event) => openTodoistPreferApp(event, task.id)}
 								>
 									{task.summary}

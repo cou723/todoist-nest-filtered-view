@@ -21,7 +21,10 @@ import {
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { ParentTask, TaskTreeNode } from "@/features/tasks/domain";
-import { openTodoistPreferApp, todoistTaskLinks } from "@/features/tasks/ui/AppShell/todoistLinks";
+import {
+	openTodoistPreferApp,
+	todoistTaskLinks,
+} from "@/features/tasks/ui/AppShell/todoistLinks";
 
 const buildAncestorChain = (task: TaskTreeNode): ParentTask[] => {
 	const chain: ParentTask[] = [];

@@ -7,6 +7,7 @@ import {
 	AppShell as MantineAppShell,
 	Title,
 } from "@mantine/core";
+import { useViewportSize } from "@mantine/hooks";
 import { IconLogout } from "@tabler/icons-react";
 import { useAuth } from "@/features/auth/ui";
 import { ThemeToggle } from "@/features/tasks/ui";
@@ -14,7 +15,6 @@ import { CompletionStatsPanel } from "@/features/tasks/ui/AppShell/completion-st
 import { DatedGoalsPanel } from "@/features/tasks/ui/AppShell/dated-goals";
 import { GoalRatePanel } from "@/features/tasks/ui/AppShell/goal-rate";
 import { TaskListPanel } from "@/features/tasks/ui/AppShell/task-list";
-import { useViewportSize } from "@mantine/hooks";
 
 export function AppShell() {
 	const { logout } = useAuth();
