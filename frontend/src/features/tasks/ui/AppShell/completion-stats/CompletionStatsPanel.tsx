@@ -34,8 +34,7 @@ export function CompletionStatsPanel() {
 	const { stats, remainingCount, status, error } = useCompletionStatsPanel();
 
 	const isLoading = status === "loading";
-	const hasData =
-		stats?.daily.some((point) => point.count > 0) ?? false;
+	const hasData = stats?.daily.some((point) => point.count > 0) ?? false;
 
 	const { chartData, tickValues } = useMemo(() => {
 		if (!stats) {
