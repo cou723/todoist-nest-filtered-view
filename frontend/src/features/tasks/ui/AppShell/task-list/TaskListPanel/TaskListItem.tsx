@@ -2,8 +2,8 @@ import {
 	Anchor,
 	Badge,
 	Breadcrumbs,
-	Button,
 	Card,
+	Checkbox,
 	Group,
 	type MantineColor,
 	Stack,
@@ -11,7 +11,6 @@ import {
 	useComputedColorScheme,
 	useMantineTheme,
 } from "@mantine/core";
-import { IconCheck } from "@tabler/icons-react";
 import {
 	differenceInCalendarDays,
 	format,
@@ -32,8 +31,13 @@ const buildAncestorChain = (task: TaskTreeNode): ParentTask[] => {
 
 	while (current) {
 		chain.unshift(current);
+
+
 		current = current.parent;
 	}
+
+
+
 
 	return chain;
 };
@@ -116,16 +120,15 @@ function CompleteButton({
 }) {
 	return (
 		<Tooltip label="タスクを完了にする">
-			<Button
-				size="xs"
-				variant="light"
+			<Checkbox
+				aria-label="タスクを完了にする"
 				color="green"
-				leftSection={<IconCheck size={14} />}
-				loading={loading}
-				onClick={() => onComplete(task.id)}
-			>
-				完了
-			</Button>
+				size="md"
+				radius="sm"
+				checked={loading}
+				disabled={loading}
+				onChange={() => onComplete(task.id)}
+			/>
 		</Tooltip>
 	);
 }
