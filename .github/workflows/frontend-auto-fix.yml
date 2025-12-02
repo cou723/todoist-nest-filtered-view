@@ -43,16 +43,12 @@ jobs:
             }
 
             const shouldFix = failedSteps.length > 0;
-            const baseRef =
-              run.event === 'pull_request' && run.pull_requests?.length
-                ? run.pull_requests[0].base.ref
-                : run.head_branch;
             const headRef = run.head_branch;
             const headSha = run.head_sha;
             const branchSafeRef = headRef.replace(/[^0-9A-Za-z._-]/g, '-');
 
             core.setOutput('should_fix', shouldFix ? 'true' : 'false');
-            core.setOutput('base_ref', baseRef);
+            core.setOutput('base_ref', headRef);
             core.setOutput('head_ref', headRef);
             core.setOutput('head_sha', headSha);
             core.setOutput('branch_name', `auto/frontend-fix/${branchSafeRef}`);
