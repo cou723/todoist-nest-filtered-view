@@ -123,6 +123,10 @@ pnpm test
 pnpm test:ui
 ```
 
+### 自動修正CI
+
+- `Frontend CI` でフォーマット/リントが失敗した場合、`Frontend Auto Fix` が元ブランチを起点に `pnpm format` と `pnpm lint -- --fix` を適用した `auto/frontend-fix/<元ブランチ名>` ブランチのPRを自動作成します（リント以外の失敗やフォークからのPRは対象外）。
+
 ## プロキシ (Deno Deploy / ローカル)
 
 - リポジトリルート配下の `proxy/main.ts` を Deno で動かす。
