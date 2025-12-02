@@ -32,12 +32,8 @@ const buildAncestorChain = (task: TaskTreeNode): ParentTask[] => {
 	while (current) {
 		chain.unshift(current);
 
-
 		current = current.parent;
 	}
-
-
-
 
 	return chain;
 };
