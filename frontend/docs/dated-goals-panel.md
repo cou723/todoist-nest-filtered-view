@@ -13,7 +13,7 @@
 
 ## 並び順
 - 期限昇順で固定。
-- 期限が同一の場合の優先順位は未指定。特に要件がなければ Todoist `child_order` など既存 `Task` の `order` をそのまま使う単純昇順を推奨（必要になれば別途指定する）。
+- 期限が同一の場合は Todoist `child_order` を移した `order` の昇順で並べる。
 
 ## UI 要件
 - パネルタイトルは「日付付きゴール」。`PanelWrapper` を利用し TaskListPanel と同等の枠で表示する。

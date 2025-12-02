@@ -13,7 +13,7 @@
     - Filter
     - Todoistによって定義されるフィルタリング用のクエリ文字列、基本的にこちらでパースすることはなく、そのままAPIに渡す。
   - 子要素
-    - ChlidTask
+    - ChildTask
     - parentIdを持つ**タスク**
   - 親要素
     - ParentTask
@@ -29,5 +29,4 @@
     - ゴールタスクとワークタスクによって構成されるツリー構造
   - 外部タスクDTO
     - TodoistTaskDTO
-    - TodoistのSDKから返されるデータ構造の総称。できるだけ変換層をかませずにこれを使いたい気持ち。
-  - 
+    - TodoistのSDKから返されるデータ構造の総称。現行実装では `TaskRepository` でドメイン `Task` に正規化したうえで扱う。

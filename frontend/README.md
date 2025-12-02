@@ -1,6 +1,6 @@
 # Frontend - Todoist Nest Filtered View
 
-Vite + React 19 + TypeScript で構築された SPA フロントエンドプロジェクトです。リポジトリ内では `frontend-react/` ディレクトリに配置され、現行運用中の Lit 版は `frontend-lit-legacy/` に残しています。
+Vite + React 19 + TypeScript で構築された SPA です。
 
 ## 技術スタック
 
@@ -10,11 +10,12 @@ Vite + React 19 + TypeScript で構築された SPA フロントエンドプロ�
 - **Vite 7** - ビルドツール
 
 ### 主要ライブラリ
-- **Effect エコシステム** (`effect`, `@effect/schema`, `@effect/platform`) - ドメインロジックと API 呼び出しの型安全な管理
-- **@tanstack/react-query** - データ取得・キャッシュ管理
-- **Mantine** - UI コンポーネントライブラリ
-- **Recharts** - グラフ描画
+- **Effect エコシステム** (`effect`, `effect/Schema`, `@effect/platform`, `@effect/rpc`) - ドメインロジックと API 呼び出しの型安全な管理
+- **Mantine** (`@mantine/core`, `@mantine/notifications`) - UI コンポーネントライブラリ
+- **@nivo/line** - 完了統計のラインチャート描画
 - **date-fns** - 日付処理
+- **React Router v6** - ルーティング
+- **Todoist TypeScript SDK** - Todoist API へのアクセス
 
 ### 開発ツール
 - **Vitest** - テストフレームワーク
@@ -25,10 +26,10 @@ Vite + React 19 + TypeScript で構築された SPA フロントエンドプロ�
 ## プロジェクト構成
 
 ```
-frontend-react/
+./
 ├── src/
-│   ├── app/            # アプリケーションのエントリーポイントとルート設定
-│   ├── features/       # 機能別のモジュール（ドメインロジック、コンポーネント）
+│   ├── app/            # エントリーポイントとルーター、プロバイダ
+│   ├── features/       # 機能別モジュール（認証、タスク/統計 UI など）
 │   ├── shared/         # 共通ユーティリティとコンポーネント
 │   ├── main.tsx        # エントリーポイント
 │   └── index.css       # グローバルスタイル
@@ -42,17 +43,9 @@ frontend-react/
 
 ### ディレクトリの役割
 
-- **`src/app/`**: アプリケーション全体の設定とルートコンポーネント
-- **`src/features/`**: 機能単位のモジュール（今後実装予定）
-  - Todoist タスク一覧
-  - ゴール管理
-  - 統計グラフ
-  - など
-- **`src/shared/`**: 複数の機能で共有される汎用的なコード
-  - UI コンポーネント
-  - ユーティリティ関数
-  - 型定義
-  - など
+- **`src/app/`**: アプリ全体の設定とルートコンポーネント（OAuth 注入、テーマ、ルーティング）
+- **`src/features/`**: 認証・環境変数・タスク/統計 UI など機能単位のモジュール
+- **`src/shared/`**: 汎用的な UI コンポーネントやユーティリティ
 
 ## セットアップ
 
@@ -132,7 +125,7 @@ pnpm test:ui
 
 ## プロキシ (Deno Deploy / ローカル)
 
-- ルート直下の `proxy/main.ts` を Deno で動かす。
+- リポジトリルート配下の `proxy/main.ts` を Deno で動かす。
 - 必須環境変数: `TODOIST_CLIENT_SECRET`、`ALLOWED_ORIGIN`（例 `http://localhost:5173`）。
 - ローカル起動例:
 
@@ -145,32 +138,13 @@ deno run --allow-net --allow-env main.ts
 
 本番デプロイ時は Deno Deploy の環境変数を本番ドメインに合わせて更新すること。
 
-## Phase 1 完了内容
+## 現在の主な機能
 
-✅ プロジェクトセットアップ完了:
-- Vite + React 19 + TypeScript の SPA プロジェクト作成
-- 必要な依存関係をすべて導入
-  - Effect エコシステム
-  - @tanstack/react-query
-  - Mantine UI
-  - Recharts
-  - date-fns
-  - Vitest
-  - biome
-- ディレクトリ構成の確立 (`app/`, `features/`, `shared/`)
-- 基本的なアプリシェルの実装
-- テスト環境の整備
-- Lint/フォーマットの設定
-
-## 次のステップ
-
-Phase 2 以降では、以下の機能を段階的に実装していきます:
-- Todoist API との連携
-- OAuth 認証フロー
-- タスク一覧表示
-- ゴール管理機能
-- 統計グラフの可視化
-- フィルタリング機能
+- Todoist OAuth 認証（リダイレクト処理、ログアウト、テーマトグル付き AppShell）
+- CompletionStatsPanel: 過去 90 日 + 当日の完了件数と 7 日移動平均を @nivo/line で可視化、除外ラベル設定（localStorage 既存値を適用）
+- GoalRatePanel: @goal タスクに対する @non-milestone 割合の表示
+- DatedGoalsPanel: 期限付き @goal タスクを期日順に一覧表示（Todoist へのリンク付き）
+- TaskListPanel: フィルタ設定の読み出し、タスクツリー表示、完了操作と手動リフレッシュ
 
 ## ライセンス
 
