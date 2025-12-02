@@ -1,0 +1,134 @@
+name: Frontend Auto Fix
+
+on:
+  workflow_run:
+    workflows:
+      - Frontend CI
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  autofix:
+    if: >
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Detect lint/format failure
+        id: detect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const { owner, repo } = context.repo;
+            const jobs = await github.paginate(
+              github.rest.actions.listJobsForWorkflowRun,
+              { owner, repo, run_id: run.id }
+            );
+
+            const failedSteps = [];
+            for (const job of jobs) {
+              for (const step of job.steps ?? []) {
+                const name = step.name ?? '';
+                if (step.conclusion === 'failure' && (name.includes('Run lint') || name.includes('Run format'))) {
+                  failedSteps.push(name);
+                }
+              }
+            }
+
+            const shouldFix = failedSteps.length > 0;
+            const baseRef =
+              run.event === 'pull_request' && run.pull_requests?.length
+                ? run.pull_requests[0].base.ref
+                : run.head_branch;
+            const headRef = run.head_branch;
+            const headSha = run.head_sha;
+            const branchSafeRef = headRef.replace(/[^0-9A-Za-z._-]/g, '-');
+
+            core.setOutput('should_fix', shouldFix ? 'true' : 'false');
+            core.setOutput('base_ref', baseRef);
+            core.setOutput('head_ref', headRef);
+            core.setOutput('head_sha', headSha);
+            core.setOutput('branch_name', `auto/frontend-fix/${branchSafeRef}`);
+            core.setOutput('failed_steps', failedSteps.join(', '));
+
+      - name: Checkout
+        if: steps.detect.outputs.should_fix == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.detect.outputs.head_sha }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        if: steps.detect.outputs.should_fix == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        if: steps.detect.outputs.should_fix == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Get pnpm store directory
+        if: steps.detect.outputs.should_fix == 'true'
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        if: steps.detect.outputs.should_fix == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        if: steps.detect.outputs.should_fix == 'true'
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Run format (fix)
+        if: steps.detect.outputs.should_fix == 'true'
+        working-directory: frontend
+        run: pnpm format --fix
+
+      - name: Run lint --fix
+        if: steps.detect.outputs.should_fix == 'true'
+        working-directory: frontend
+        run: pnpm lint --fix
+
+      - name: Check for changes
+        id: diff
+        if: steps.detect.outputs.should_fix == 'true'
+        run: |
+          if git status --porcelain | grep .; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create pull request with fixes
+        if: steps.diff.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: auto-fix format and lint"
+          title: "chore: auto-fix format and lint for ${{ steps.detect.outputs.head_ref }}"
+          body: |
+            Frontend CI detected a format/lint failure (steps: ${{ steps.detect.outputs.failed_steps }}).
+
+            This PR applies `pnpm format` and `pnpm lint -- --fix` to the branch `${{ steps.detect.outputs.head_ref }}`.
+          branch: ${{ steps.detect.outputs.branch_name }}
+          base: ${{ steps.detect.outputs.base_ref }}
+          add-paths: |
+            frontend/**
