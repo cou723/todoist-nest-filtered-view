@@ -100,12 +100,12 @@ jobs:
       - name: Run format (fix)
         if: steps.detect.outputs.should_fix == 'true'
         working-directory: frontend
-        run: pnpm format --fix
+        run: pnpm format
 
       - name: Run lint --fix
         if: steps.detect.outputs.should_fix == 'true'
         working-directory: frontend
-        run: pnpm lint --fix
+        run: pnpm lint -- --fix
 
       - name: Check for changes
         id: diff
