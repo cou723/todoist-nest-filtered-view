@@ -148,12 +148,8 @@ async function runAutomation() {
   }
 }
 
-// setIntervalを使って1時間おきに実行
-await runAutomation();
-setInterval(() => {
-  runAutomation();
-}, 60 * 60 * 1000);
 
-console.log(
-  "Todoist automation service started - running every hour with setInterval",
-);
+Deno.cron("sample cron", "0 */3 * * *", () => {
+  console.log("=== Running scheduled automation ===");
+  runAutomation();
+});

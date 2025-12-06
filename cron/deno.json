@@ -5,7 +5,8 @@
   "compilerOptions": {
     "lib": [
       "deno.window",
-      "deno.ns"
+      "deno.ns",
+      "deno.unstable"
     ],
     "strict": true
   },
@@ -25,11 +26,14 @@
     "proseWrap": "preserve"
   },
   "tasks": {
-    "start": "deno run --allow-net --allow-env --allow-read --env main.ts",
-    "dev": "deno run --allow-net --allow-env --allow-read --watch --env main.ts",
-    "debug": "deno run --allow-net --allow-env --allow-read --env debug.ts",
+    "start": "deno run --allow-net --allow-env --allow-read --unstable-cron --env main.ts",
+    "dev": "deno run --allow-net --allow-env --allow-read --unstable-cron --watch --env main.ts",
+    "debug": "deno run --allow-net --allow-env --allow-read --unstable-cron --env debug.ts",
     "fmt": "deno fmt",
     "lint": "deno lint",
     "check": "deno check main.ts"
-  }
+  },
+  "unstable": [
+    "cron"
+  ]
 }
