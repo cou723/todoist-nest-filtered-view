@@ -149,7 +149,7 @@ async function runAutomation() {
 }
 
 
-Deno.cron("sample cron", "0 */1 * * *", async () => {
+Deno.cron("sample cron", "0 * * * *", async () => {
   console.log("=== Running scheduled automation ===");
   await runAutomation();
 });
