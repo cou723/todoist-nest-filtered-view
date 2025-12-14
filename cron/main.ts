@@ -27,7 +27,7 @@ async function assignNonMilestoneToGoals(
 
   for (const goalTodo of analysis.leafGoalTodos) {
     await todoService.updateTask(goalTodo.id, {
-      labels: [...goalTodo.labels, "non-milestone"],
+      labels: [...(goalTodo.labels ?? []), "non-milestone"],
     });
   }
 
@@ -57,7 +57,7 @@ async function createMilestoneTodosForGoals(
     // この@goalが@non-milestone削除条件に合致するかチェック
     const hasTaskOrGoalChildren = allTodos.some((todo) =>
       todo.parentId === goalTodo.id &&
-      (todo.labels.includes("task") || todo.labels.includes("goal"))
+      (todo.labels?.includes("task") || todo.labels?.includes("goal"))
     );
 
     // @non-milestone削除条件に合致する場合はマイルストーンTodo作成をスキップ
@@ -107,7 +107,7 @@ async function cleanupNonMilestoneTodos(todoService: TodoService) {
 
   for (const todo of analysis.nonMilestoneParentTodos) {
     // @non-milestoneタグを削除
-    const updatedLabels = todo.labels.filter((label) =>
+    const updatedLabels = (todo.labels ?? []).filter((label) =>
       label !== "non-milestone"
     );
     await todoService.updateTask(todo.id, { labels: updatedLabels });
@@ -149,7 +149,7 @@ async function runAutomation() {
 }
 
 
-// Deno.cron("sample cron", "0 */3 * * *", async () => {
-//   console.log("=== Running scheduled automation ===");
+Deno.cron("sample cron", "0 */1 * * *", async () => {
+  console.log("=== Running scheduled automation ===");
   await runAutomation();
-// });
+});

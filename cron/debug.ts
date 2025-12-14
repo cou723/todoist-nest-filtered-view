@@ -3,7 +3,7 @@
  * 依存関係ラベル管理システムのテスト実行用
  */
 
-import { TodoistApi } from "https://esm.sh/@doist/todoist-api-typescript@3.0.2";
+import { TodoistApi } from "todoist";
 import { TodoService } from "./task-service.ts";
 import { DependencyLabelAutomation } from "./dependency-label-automation.ts";
 

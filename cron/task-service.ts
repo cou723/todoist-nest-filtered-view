@@ -51,24 +51,14 @@ export class TodoService {
    * 指定されたラベルのタスクを取得（キャッシュ対応）
    */
   async getTodosByLabel(label: string): Promise<Task[]> {
-    const now = Date.now();
-    const cacheKey = `@${label}`;
-
-    // キャッシュチェック
-    if (this.taskCache.has(cacheKey) && this.cacheExpiry.get(cacheKey)! > now) {
-      console.log(`Using cached ${label} tasks`);
-      return this.taskCache.get(cacheKey)!;
-    }
-
-    console.log(`Fetching ${label} tasks from API`);
-    const tasks = await this.api.getTasks({ filter: `@${label}` });
-
-    // キャッシュに保存
-    this.taskCache.set(cacheKey, tasks);
-    this.cacheExpiry.set(cacheKey, now + this.CACHE_DURATION);
-
-    console.log(`Retrieved ${tasks.length} @${label} tasks from API`);
-    return tasks;
+    const allTasks = await this.getAllTasks();
+    const filteredTasks = allTasks.filter((task) =>
+      task.labels?.includes(label)
+    );
+    console.log(
+      `Filtered ${filteredTasks.length} @${label} tasks from all tasks`,
+    );
+    return filteredTasks;
   }
 
   /**
@@ -97,7 +87,7 @@ export class TodoService {
     nonMilestoneTodos: readonly Task[],
   ): Task[] {
     const unlabeledGoalTodos = goalTodos.filter((task) =>
-      !task.labels.includes("non-milestone")
+      !task.labels?.includes("non-milestone")
     );
 
     console.log(
@@ -127,10 +117,10 @@ export class TodoService {
    */
   static findNonMilestoneParentTodos(todos: readonly Task[]): Task[] {
     const nonMilestoneTodos = todos.filter((task) =>
-      task.labels.includes("non-milestone")
+      task.labels?.includes("non-milestone")
     );
-    const taskTodos = todos.filter((t) => t.labels.includes("task"));
-    const goalTodos = todos.filter((t) => t.labels.includes("goal"));
+    const taskTodos = todos.filter((t) => t.labels?.includes("task"));
+    const goalTodos = todos.filter((t) => t.labels?.includes("goal"));
 
     console.log(`Found ${nonMilestoneTodos.length} non-milestone todos`);
 
@@ -224,7 +214,10 @@ export class TodoService {
     }
 
     console.log("Fetching all todos from API");
-    const tasks = await this.api.getTasks();
+    const tasksResult = await this.api.getTasks();
+    const tasks: Task[] = Array.isArray(tasksResult)
+      ? tasksResult
+      : (tasksResult as any).items || (tasksResult as any).data || [];
 
     // キャッシュに保存
     this.taskCache.set(cacheKey, tasks);
@@ -284,7 +277,10 @@ export class TodoService {
     }
 
     console.log("Fetching labels from API");
-    const labels = await this.api.getLabels();
+    const labelsResult = await this.api.getLabels();
+    const labels: Label[] = Array.isArray(labelsResult)
+      ? labelsResult
+      : (labelsResult as any).items || (labelsResult as any).data || [];
 
     // キャッシュに保存
     this.labelCache.set(cacheKey, labels);
