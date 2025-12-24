@@ -4,7 +4,7 @@ TodoistTodoの自動タグ管理サービス
 
 ## 機能
 
-1時間おきに以下の自動処理を実行：
+5分おきに以下の自動処理を実行：
 
 ### 1. GoalTodoの自動処理
 
@@ -70,7 +70,7 @@ deno run --allow-net --allow-env --allow-read --env remove_milestone_tasks.ts
    - 公式TodoistApiクライアントを使用
 2. 各自動処理を順次実行
 3. 変更内容をコンソールに出力
-4. 1時間後に再実行
+4. 5分後に再実行
 
 ## API効率化
 
