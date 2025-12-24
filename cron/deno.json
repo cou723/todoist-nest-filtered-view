@@ -1,5 +1,6 @@
 {
   "imports": {
+    "effect": "npm:effect@^3.19.12",
     "todoist": "npm:@doist/todoist-api-typescript@6.1.10"
   },
   "compilerOptions": {
@@ -27,11 +28,13 @@
   },
   "tasks": {
     "start": "deno run --allow-net --allow-env --allow-read --unstable-cron --env main.ts",
-    "dev": "deno run --allow-net --allow-env --allow-read --unstable-cron --watch --env main.ts",
-    "debug": "deno run --allow-net --allow-env --allow-read --unstable-cron --env debug.ts",
+    "dev": "deno run --allow-net --allow-env --allow-read --unstable-cron --watch --env src/presentation/cron/main.ts",
+    "debug": "deno run --allow-net --allow-env --allow-read --unstable-cron --env src/presentation/cli/debug.ts",
     "fmt": "deno fmt",
     "lint": "deno lint",
-    "check": "deno check main.ts"
+    "check": "deno check main.ts",
+    "test": "deno test src/presentation/cli/manage-milestones.test.ts",
+    "e2e": "deno test --allow-env src/presentation/cron/main.e2e.ts"
   },
   "unstable": [
     "cron"

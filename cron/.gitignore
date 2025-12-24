@@ -1,1 +1,3 @@
 .env
+# lsmcp cache
+.lsmcp/cache
