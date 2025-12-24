@@ -27,12 +27,11 @@
     "proseWrap": "preserve"
   },
   "tasks": {
-    "start": "deno run --allow-net --allow-env --allow-read --unstable-cron --env src/presentation/cron/main.ts",
-    "dev": "deno run --allow-net --allow-env --allow-read --unstable-cron --watch --env src/presentation/cron/main.ts",
+    "dev": "deno run --allow-net --allow-env --allow-read --unstable-cron --watch --env src/presentation/cron/index.ts",
     "debug": "deno run --allow-net --allow-env --allow-read --unstable-cron --env src/presentation/cli/debug.ts",
     "fmt": "deno fmt",
     "lint": "deno lint",
-    "check": "deno check src/presentation/cron/main.ts",
+    "check": "deno check src/presentation/cron/index.ts",
     "test": "deno test src/presentation/cli/manage-milestones.test.ts",
     "e2e": "deno test --allow-env src/presentation/cron/main.e2e.ts"
   },

@@ -38,9 +38,3 @@ export async function runCronJob() {
     // Cron job should not crash the process, but log the error
   }
 }
-
-Deno.cron("sample cron", "* * * * *", async () => {
-  console.log("=== Running scheduled automation ===");
-  await runCronJob();
-  console.log("=== Scheduled automation completed ===");
-});
